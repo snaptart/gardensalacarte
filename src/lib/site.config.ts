@@ -11,36 +11,36 @@
 const siteConfig = {
   // ── Branding ────────────────────────────────────────────────────────
   /** Default site title (used in metadata, admin UI, seed data) */
-  siteName: process.env.NEXT_PUBLIC_SITE_NAME || "My Site",
+  siteName: process.env.NEXT_PUBLIC_SITE_NAME || "Gardens a la Carte",
 
   /** Fallback meta description when none is set in the DB */
   siteDescription:
-    process.env.NEXT_PUBLIC_SITE_DESCRIPTION || "Welcome to our website",
+    process.env.NEXT_PUBLIC_SITE_DESCRIPTION || "Custom landscape design services",
 
   /** Default admin email for seeding */
-  defaultAdminEmail: process.env.ADMIN_EMAIL || "admin@example.com",
+  defaultAdminEmail: process.env.ADMIN_EMAIL || "celine@gardensalacarte.com",
 
   /** Upload folder prefix in Vercel Blob storage */
-  uploadFolder: process.env.UPLOAD_FOLDER || "uploads",
+  uploadFolder: process.env.UPLOAD_FOLDER || "gardensalacarte",
 
   // ── Terminology ─────────────────────────────────────────────────────
   // Controls labels in the admin sidebar, page headings, empty states,
   // and public routes. Change these to match your site's domain.
   labels: {
-    gallery: "Gallery",
-    galleries: "Galleries",
-    photo: "Photo",
-    photos: "Photos",
+    gallery: "Portfolio",
+    galleries: "Portfolios",
+    photo: "Image",
+    photos: "Images",
     /** Public URL prefix for gallery pages (no leading/trailing slash) */
-    gallerySlug: "gallery",
+    gallerySlug: "portfolio",
   },
 
   // ── Feature flags ───────────────────────────────────────────────────
   features: {
     /** Show "Stories" section in admin sidebar */
-    stories: true,
+    stories: false,
     /** Show photography-specific metadata (camera settings, location) */
-    photoMetadata: true,
+    photoMetadata: false,
     /** Show "Submissions" section in admin sidebar */
     submissions: true,
   },
@@ -51,9 +51,9 @@ const siteConfig = {
   lightboxMetadataOptions: [
     { key: "title", label: "Title", enabled: true },
     { key: "description", label: "Description", enabled: true },
-    { key: "location", label: "Location", enabled: true },
-    { key: "camera", label: "Camera Settings", enabled: true },
-    { key: "filename", label: "Filename", enabled: true },
+    { key: "location", label: "Location", enabled: false },
+    { key: "camera", label: "Camera Settings", enabled: false },
+    { key: "filename", label: "Filename", enabled: false },
   ],
 } as const;
 
