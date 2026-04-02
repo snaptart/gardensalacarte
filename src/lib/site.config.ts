@@ -18,7 +18,7 @@ const siteConfig = {
     process.env.NEXT_PUBLIC_SITE_DESCRIPTION || "Custom landscape design services",
 
   /** Default admin email for seeding */
-  defaultAdminEmail: process.env.ADMIN_EMAIL || "admin@gardensalacarte.com",
+  defaultAdminEmail: process.env.ADMIN_EMAIL || "celine@gardensalacarte.com",
 
   /** Upload folder prefix in Vercel Blob storage */
   uploadFolder: process.env.UPLOAD_FOLDER || "gardensalacarte",
