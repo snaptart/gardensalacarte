@@ -1,7 +1,7 @@
-# SnaptArt — Custom Photo CMS
+# Photo CMS — Upstream Core
 
 ## Project Overview
-A custom photo CMS website rebuilding snaptart.com (previously Squarespace). Photography portfolio for Michael Schroeder featuring galleries, pages, short stories, and a full admin dashboard.
+A custom photo CMS: galleries, pages, short stories, a Puck page builder, and a full admin dashboard. This repo is the **upstream core** — individual sites (snaptart.com, gardensalacarte.com) are separate repos that track it as an `upstream` remote and merge in CMS updates. See `PROMOTING.md` for the workflow and for the `site.config.defaults.ts` (upstream-owned) vs `site.config.ts` (site-owned) contract. No site-specific branding or content belongs in this repo.
 
 ## Tech Stack
 - **Framework**: Next.js 16 (App Router) + TypeScript
