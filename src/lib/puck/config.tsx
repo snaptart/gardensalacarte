@@ -113,6 +113,19 @@ type ContainerProps = {
   paddingRight: number;
 };
 
+type FloatBoxProps = {
+  offsetX: number;
+  offsetY: number;
+  anchorX: "left" | "center" | "right";
+  width: number;
+  reservedHeight: number;
+  zIndex: number;
+  padding: number;
+  bgColor: string;
+  bgOpacity: number;
+  borderRadius: number;
+};
+
 type ColumnsProps = {
   columns: "2" | "3";
   distribution: string;
@@ -191,6 +204,7 @@ type Components = {
   ImageBlock: ImageBlockProps;
   Spacer: SpacerProps;
   Container: ContainerProps;
+  FloatBox: FloatBoxProps;
   Columns: ColumnsProps;
   GalleryEmbed: GalleryEmbedProps;
   Carousel: CarouselProps;
@@ -208,7 +222,7 @@ type Components = {
 export const puckConfig: Config<Components> = {
   categories: {
     content: { components: ["RichText", "ImageBlock", "GalleryEmbed", "Carousel"] },
-    layout: { components: ["Columns", "Spacer", "Container"] },
+    layout: { components: ["Columns", "Spacer", "Container", "FloatBox"] },
     hero: { components: ["Hero", "HeroSlideshow"] },
     forms: { components: ["Form", "TextField", "TextArea", "SelectField", "RadioGroup", "CheckboxGroup", "Checkbox"] },
   },
@@ -590,6 +604,103 @@ export const puckConfig: Config<Components> = {
           <DropZone zone="container-content" />
         </div>
       ),
+    },
+
+    FloatBox: {
+      label: "Floating Container",
+      fields: {
+        offsetX: {
+          type: "custom",
+          label: "Horizontal Position (% of parent width; negative or >100 goes outside)",
+          render: ({ value, onChange }) => (
+            <SliderField value={value} onChange={onChange} min={-100} max={200} step={1} unit="%" label="Horizontal Position" />
+          ),
+        },
+        anchorX: {
+          type: "select",
+          label: "Horizontal Anchor (which edge of the box sits at the position)",
+          options: [
+            { label: "Left edge", value: "left" },
+            { label: "Center", value: "center" },
+            { label: "Right edge", value: "right" },
+          ],
+        },
+        offsetY: { type: "number", label: "Vertical Offset (px, negative moves up)", min: -2000, max: 2000 },
+        width: {
+          type: "custom",
+          label: "Width (% of parent; >100 exceeds parent)",
+          render: ({ value, onChange }) => (
+            <SliderField value={value} onChange={onChange} min={5} max={200} step={1} unit="%" label="Width" />
+          ),
+        },
+        reservedHeight: { type: "number", label: "Reserved Height in Flow (px, 0 = fully floating)", min: 0, max: 2000 },
+        zIndex: { type: "number", label: "Stacking Order (z-index)", min: -10, max: 100 },
+        padding: { type: "number", label: "Inner Padding (px)", min: 0, max: 100 },
+        bgColor: {
+          type: "custom",
+          label: "Background Color",
+          render: ({ value, onChange }) => (
+            <ColorField value={value} onChange={onChange} />
+          ),
+        },
+        bgOpacity: {
+          type: "custom",
+          label: "Background Opacity",
+          render: ({ value, onChange }) => (
+            <SliderField value={value} onChange={onChange} min={0} max={100} step={5} unit="%" label="Background Opacity" />
+          ),
+        },
+        borderRadius: {
+          type: "custom",
+          label: "Corner Radius (px)",
+          render: ({ value, onChange }) => (
+            <SliderField value={value} onChange={onChange} min={0} max={32} step={1} unit="px" label="Corner Radius" />
+          ),
+        },
+      },
+      defaultProps: {
+        offsetX: 50,
+        offsetY: 0,
+        anchorX: "center",
+        width: 50,
+        reservedHeight: 0,
+        zIndex: 10,
+        padding: 0,
+        bgColor: "#ffffff",
+        bgOpacity: 0,
+        borderRadius: 0,
+      },
+      render: ({ offsetX, offsetY, anchorX, width, reservedHeight, zIndex, padding, bgColor, bgOpacity, borderRadius, puck }) => {
+        const isEditing = puck?.isEditing;
+        const translateX = anchorX === "center" ? "-50%" : anchorX === "right" ? "-100%" : "0";
+        return (
+          <div
+            style={{
+              position: "relative",
+              height: reservedHeight,
+              // In the editor, keep a visible, clickable anchor even when fully floating
+              minHeight: isEditing ? 24 : undefined,
+              outline: isEditing ? "1px dashed #cbd5e1" : undefined,
+            }}
+          >
+            <div
+              style={{
+                position: "absolute",
+                left: `${offsetX}%`,
+                top: offsetY,
+                transform: `translateX(${translateX})`,
+                width: `${width}%`,
+                zIndex,
+                padding,
+                backgroundColor: bgOpacity > 0 ? hexToRgba(bgColor, bgOpacity / 100) : "transparent",
+                borderRadius,
+              }}
+            >
+              <DropZone zone="float-content" />
+            </div>
+          </div>
+        );
+      },
     },
 
     Columns: {
