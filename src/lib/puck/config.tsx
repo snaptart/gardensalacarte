@@ -98,6 +98,7 @@ type ImageBlockProps = {
   captionBgColor: string;
   captionBgOpacity: number;
   borderRadius: number;
+  imageOpacity: number;
   linkUrl: string;
   linkTarget: "_self" | "_blank";
   focalX: number;
@@ -124,6 +125,7 @@ type FloatBoxProps = {
   bgColor: string;
   bgOpacity: number;
   borderRadius: number;
+  mobileBehavior: "stack" | "float";
 };
 
 type ColumnsProps = {
@@ -257,6 +259,8 @@ export const puckConfig: Config<Components> = {
               .richtext-render h3 { font-size: 1.25em; font-weight: 600; margin: 0.75em 0 0.25em; }
               .richtext-render blockquote { border-left: 3px solid #d4d4d4; padding-left: 1em; margin: 0.5em 0; font-style: italic; }
               .richtext-render ul, .richtext-render ol { padding-left: 1.5em; margin: 0.25em 0; }
+              .richtext-render ul { list-style: disc; }
+              .richtext-render ol { list-style: decimal; }
               .richtext-render a { text-decoration: underline; }
               .richtext-render hr { border-top: 1px solid #d4d4d4; margin: 1em 0; }
             `}</style>
@@ -386,6 +390,13 @@ export const puckConfig: Config<Components> = {
             <SliderField value={value} onChange={onChange} min={0} max={32} step={1} unit="px" label="Corner Radius" />
           ),
         },
+        imageOpacity: {
+          type: "custom",
+          label: "Image Opacity",
+          render: ({ value, onChange }) => (
+            <SliderField value={value ?? 100} onChange={onChange} min={0} max={100} step={5} unit="%" label="Image Opacity" />
+          ),
+        },
         caption: { type: "text", label: "Caption" },
         captionX: {
           type: "custom",
@@ -490,13 +501,15 @@ export const puckConfig: Config<Components> = {
         captionBgColor: "#000000",
         captionBgOpacity: 0,
         borderRadius: 4,
+        imageOpacity: 100,
         linkUrl: "",
         linkTarget: "_self",
         focalX: 50,
         focalY: 50,
       },
-      render: ({ url, alt, aspectRatio, caption, width, captionX, captionY, captionFontSize, captionColor, captionBold, captionItalic, captionBgColor, captionBgOpacity, borderRadius, linkUrl, linkTarget, focalX, focalY }) => {
+      render: ({ url, alt, aspectRatio, caption, width, captionX, captionY, captionFontSize, captionColor, captionBold, captionItalic, captionBgColor, captionBgOpacity, borderRadius, imageOpacity, linkUrl, linkTarget, focalX, focalY }) => {
         const isPriority = useImagePriority();
+        const imgOpacity = (imageOpacity ?? 100) / 100;
         const isOverlay = captionY >= 0 && captionY <= 100;
         const arMap: Record<string, string> = { square: "1/1", "4:3": "4/3", "3:2": "3/2", "16:9": "16/9" };
         const arValue = arMap[aspectRatio];
@@ -520,7 +533,7 @@ export const puckConfig: Config<Components> = {
 
         const imageEl = url ? (
           arValue ? (
-            <div className="relative overflow-hidden w-full" style={{ aspectRatio: arValue, borderRadius: `${borderRadius}px` }}>
+            <div className="relative overflow-hidden w-full" style={{ aspectRatio: arValue, borderRadius: `${borderRadius}px`, opacity: imgOpacity }}>
               <img
                 src={url}
                 alt={alt}
@@ -533,16 +546,18 @@ export const puckConfig: Config<Components> = {
               />
             </div>
           ) : (
-            <img
-              src={url}
-              alt={alt}
-              className="w-full opacity-0 transition-opacity duration-300"
-              style={{ borderRadius: `${borderRadius}px`, objectPosition: focalPos }}
-              loading={isPriority ? "eager" : "lazy"}
-              fetchPriority={isPriority ? "high" : undefined}
-              ref={(el) => { if (el?.complete) el.classList.remove("opacity-0"); }}
-              onLoad={(e) => { (e.target as HTMLImageElement).classList.remove("opacity-0"); }}
-            />
+            <div className="w-full" style={{ opacity: imgOpacity }}>
+              <img
+                src={url}
+                alt={alt}
+                className="w-full opacity-0 transition-opacity duration-300"
+                style={{ borderRadius: `${borderRadius}px`, objectPosition: focalPos }}
+                loading={isPriority ? "eager" : "lazy"}
+                fetchPriority={isPriority ? "high" : undefined}
+                ref={(el) => { if (el?.complete) el.classList.remove("opacity-0"); }}
+                onLoad={(e) => { (e.target as HTMLImageElement).classList.remove("opacity-0"); }}
+              />
+            </div>
           )
         ) : (
           <div className="flex h-48 items-center justify-center rounded bg-neutral-100 text-neutral-400">
@@ -634,6 +649,14 @@ export const puckConfig: Config<Components> = {
           ),
         },
         reservedHeight: { type: "number", label: "Reserved Height in Flow (px, 0 = fully floating)", min: 0, max: 2000 },
+        mobileBehavior: {
+          type: "select",
+          label: "On Mobile (below 768px)",
+          options: [
+            { label: "Stack in normal flow (full width)", value: "stack" },
+            { label: "Keep floating (may overflow screen)", value: "float" },
+          ],
+        },
         zIndex: { type: "number", label: "Stacking Order (z-index)", min: -10, max: 100 },
         padding: { type: "number", label: "Inner Padding (px)", min: 0, max: 100 },
         bgColor: {
@@ -669,32 +692,36 @@ export const puckConfig: Config<Components> = {
         bgColor: "#ffffff",
         bgOpacity: 0,
         borderRadius: 0,
+        mobileBehavior: "stack",
       },
-      render: ({ offsetX, offsetY, anchorX, width, reservedHeight, zIndex, padding, bgColor, bgOpacity, borderRadius, puck }) => {
+      render: ({ offsetX, offsetY, anchorX, width, reservedHeight, zIndex, padding, bgColor, bgOpacity, borderRadius, mobileBehavior, puck }) => {
         const isEditing = puck?.isEditing;
         const translateX = anchorX === "center" ? "-50%" : anchorX === "right" ? "-100%" : "0";
+        // Positioning lives in CSS vars so globals.css can disable it below the
+        // mobile breakpoint (stacked flow) unless data-mobile="float"
         return (
           <div
+            className="puck-floatbox"
+            data-mobile={mobileBehavior === "float" ? "float" : "stack"}
             style={{
-              position: "relative",
-              height: reservedHeight,
+              "--fb-reserved": `${reservedHeight}px`,
               // In the editor, keep a visible, clickable anchor even when fully floating
               minHeight: isEditing ? 24 : undefined,
               outline: isEditing ? "1px dashed #cbd5e1" : undefined,
-            }}
+            } as React.CSSProperties}
           >
             <div
+              className="puck-floatbox-inner"
               style={{
-                position: "absolute",
-                left: `${offsetX}%`,
-                top: offsetY,
-                transform: `translateX(${translateX})`,
-                width: `${width}%`,
+                "--fb-left": `${offsetX}%`,
+                "--fb-top": `${offsetY}px`,
+                "--fb-width": `${width}%`,
+                "--fb-transform": `translateX(${translateX})`,
                 zIndex,
                 padding,
                 backgroundColor: bgOpacity > 0 ? hexToRgba(bgColor, bgOpacity / 100) : "transparent",
                 borderRadius,
-              }}
+              } as React.CSSProperties}
             >
               <DropZone zone="float-content" />
             </div>
