@@ -51,6 +51,39 @@ body {
   }
 }
 
+/* Puck Floating Container: stacks in normal flow on mobile, floats at md+.
+   data-mobile="float" opts a box into floating at all widths. */
+.puck-floatbox {
+  position: relative;
+}
+.puck-floatbox > .puck-floatbox-inner {
+  position: static;
+  width: 100%;
+  transform: none;
+}
+.puck-floatbox[data-mobile="float"] {
+  height: var(--fb-reserved);
+}
+.puck-floatbox[data-mobile="float"] > .puck-floatbox-inner {
+  position: absolute;
+  left: var(--fb-left);
+  top: var(--fb-top);
+  width: var(--fb-width);
+  transform: var(--fb-transform);
+}
+@media (min-width: 768px) {
+  .puck-floatbox {
+    height: var(--fb-reserved);
+  }
+  .puck-floatbox > .puck-floatbox-inner {
+    position: absolute;
+    left: var(--fb-left);
+    top: var(--fb-top);
+    width: var(--fb-width);
+    transform: var(--fb-transform);
+  }
+}
+
 /* Tiptap: ensure empty paragraphs (line breaks) render with height */
 .ProseMirror p.is-editor-empty:first-child::before {
   content: attr(data-placeholder);
