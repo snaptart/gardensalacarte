@@ -20,6 +20,7 @@ interface StoryRecord {
   slug: string;
   content: Data | null;
   isPublished: boolean;
+  showTitle: boolean;
   metaTitle: string | null;
   metaDescription: string | null;
 }
@@ -97,6 +98,7 @@ export default function StoryEditorPage() {
         onPublish={handleSave}
         headerTitle={story.title}
         headerPath={`/stories/${story.slug}`}
+        metadata={{ pageTitle: story.title, showPageTitle: story.showTitle }}
         overrides={draggableOutlinePlugin().overrides}
       />
       {saving && (

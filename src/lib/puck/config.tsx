@@ -199,6 +199,13 @@ type CarouselProps = {
   borderRadius: number;
 };
 
+type RootProps = {
+  titleAlign: "left" | "center" | "right";
+  titlePaddingTop: number;
+  titlePaddingBottom: number;
+  titleMinHeight: number;
+};
+
 type Components = {
   RichText: RichTextProps;
   Hero: HeroProps;
@@ -221,7 +228,59 @@ type Components = {
 
 // ----- Puck config -----
 
-export const puckConfig: Config<Components> = {
+export const puckConfig: Config<Components, RootProps> = {
+  root: {
+    fields: {
+      titleAlign: {
+        type: "select",
+        label: "Page Title Alignment",
+        options: [
+          { label: "Left", value: "left" },
+          { label: "Center", value: "center" },
+          { label: "Right", value: "right" },
+        ],
+      },
+      titlePaddingTop: { type: "number", label: "Title Padding Top (px)", min: 0, max: 300 },
+      titlePaddingBottom: { type: "number", label: "Title Padding Bottom (px)", min: 0, max: 300 },
+      titleMinHeight: { type: "number", label: "Title Container Height (px, 0 = auto)", min: 0, max: 600 },
+    },
+    defaultProps: {
+      titleAlign: "center",
+      titlePaddingTop: 0,
+      titlePaddingBottom: 32,
+      titleMinHeight: 0,
+    },
+    render: ({ children, titleAlign, titlePaddingTop, titlePaddingBottom, titleMinHeight, puck }) => {
+      const meta = (puck?.metadata ?? {}) as { pageTitle?: string; showPageTitle?: boolean };
+      const align = titleAlign ?? "center";
+      const alignItems = align === "left" ? "flex-start" : align === "right" ? "flex-end" : "center";
+      return (
+        <>
+          {meta.showPageTitle && meta.pageTitle && (
+            <div
+              style={{
+                display: "flex",
+                flexDirection: "column",
+                justifyContent: "center",
+                alignItems,
+                paddingTop: titlePaddingTop ?? 0,
+                paddingBottom: titlePaddingBottom ?? 32,
+                minHeight: titleMinHeight || undefined,
+              }}
+            >
+              <h1
+                className="text-4xl font-semibold tracking-tight"
+                style={{ fontFamily: "var(--theme-font-headings)", textAlign: align }}
+              >
+                {meta.pageTitle}
+              </h1>
+            </div>
+          )}
+          {children}
+        </>
+      );
+    },
+  },
   categories: {
     content: { components: ["RichText", "ImageBlock", "GalleryEmbed", "Carousel"] },
     layout: { components: ["Columns", "Spacer", "Container", "FloatBox"] },
