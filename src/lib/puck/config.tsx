@@ -135,6 +135,21 @@ type ButtonProps = {
 type ContainerProps = {
   paddingLeft: number;
   paddingRight: number;
+  paddingTop: number;
+  paddingBottom: number;
+  marginTop: number;
+  marginBottom: number;
+  marginLeft: number;
+  marginRight: number;
+  bgColor: string;
+  bgOpacity: number;
+  textColorEnabled: boolean;
+  textColor: string;
+  borderWidth: number;
+  borderColor: string;
+  borderRadius: number;
+  contentMaxWidth: number;
+  fullBleed: boolean;
 };
 
 type FloatBoxProps = {
@@ -147,6 +162,10 @@ type FloatBoxProps = {
   padding: number;
   bgColor: string;
   bgOpacity: number;
+  textColorEnabled: boolean;
+  textColor: string;
+  borderWidth: number;
+  borderColor: string;
   borderRadius: number;
   mobileBehavior: "stack" | "float";
 };
@@ -913,15 +932,132 @@ export const puckConfig: Config<Components, RootProps> = {
     Container: {
       label: "Container",
       fields: {
+        bgColor: {
+          type: "custom",
+          label: "Background Color",
+          render: ({ value, onChange }) => (
+            <ColorField value={value ?? "#f5f5f5"} onChange={onChange} />
+          ),
+        },
+        bgOpacity: {
+          type: "custom",
+          label: "Background Opacity",
+          render: ({ value, onChange }) => (
+            <SliderField value={value ?? 0} onChange={onChange} min={0} max={100} step={5} unit="%" label="Background Opacity" />
+          ),
+        },
+        textColorEnabled: {
+          type: "radio",
+          label: "Override Text Color",
+          options: [
+            { label: "Yes", value: true },
+            { label: "No (inherit)", value: false },
+          ],
+        },
+        textColor: {
+          type: "custom",
+          label: "Text Color",
+          render: ({ value, onChange }) => (
+            <ColorField value={value ?? "#171717"} onChange={onChange} />
+          ),
+        },
+        paddingTop: { type: "number", label: "Top Padding (px)", min: 0, max: 300 },
+        paddingBottom: { type: "number", label: "Bottom Padding (px)", min: 0, max: 300 },
         paddingLeft: { type: "number", label: "Left Padding (px)", min: 0, max: 300 },
         paddingRight: { type: "number", label: "Right Padding (px)", min: 0, max: 300 },
+        marginTop: { type: "number", label: "Top Margin (px, negative overlaps upward)", min: -200, max: 300 },
+        marginBottom: { type: "number", label: "Bottom Margin (px)", min: -200, max: 300 },
+        marginLeft: { type: "number", label: "Left Margin (px, ignored when full bleed)", min: -200, max: 300 },
+        marginRight: { type: "number", label: "Right Margin (px, ignored when full bleed)", min: -200, max: 300 },
+        borderWidth: {
+          type: "custom",
+          label: "Border Width (px)",
+          render: ({ value, onChange }) => (
+            <SliderField value={value ?? 0} onChange={onChange} min={0} max={6} step={1} unit="px" label="Border Width" />
+          ),
+        },
+        borderColor: {
+          type: "custom",
+          label: "Border Color",
+          render: ({ value, onChange }) => (
+            <ColorField value={value ?? "#d4d4d4"} onChange={onChange} />
+          ),
+        },
+        borderRadius: {
+          type: "custom",
+          label: "Corner Radius (px)",
+          render: ({ value, onChange }) => (
+            <SliderField value={value ?? 0} onChange={onChange} min={0} max={40} step={1} unit="px" label="Corner Radius" />
+          ),
+        },
+        contentMaxWidth: {
+          type: "custom",
+          label: "Content Max Width (% of container)",
+          render: ({ value, onChange }) => (
+            <SliderField value={value ?? 100} onChange={onChange} min={20} max={100} step={5} unit="%" label="Content Max Width" />
+          ),
+        },
+        fullBleed: {
+          type: "radio",
+          label: "Full Bleed Background (edge-to-edge)",
+          options: [
+            { label: "Yes", value: true },
+            { label: "No", value: false },
+          ],
+        },
       },
-      defaultProps: { paddingLeft: 0, paddingRight: 0 },
-      render: ({ paddingLeft, paddingRight, puck }) => (
-        <div style={{ paddingLeft, paddingRight }}>
-          <DropZone zone="container-content" />
-        </div>
-      ),
+      defaultProps: {
+        paddingLeft: 0,
+        paddingRight: 0,
+        paddingTop: 0,
+        paddingBottom: 0,
+        marginTop: 0,
+        marginBottom: 0,
+        marginLeft: 0,
+        marginRight: 0,
+        bgColor: "#f5f5f5",
+        bgOpacity: 0,
+        textColorEnabled: false,
+        textColor: "#171717",
+        borderWidth: 0,
+        borderColor: "#d4d4d4",
+        borderRadius: 0,
+        contentMaxWidth: 100,
+        fullBleed: false,
+      },
+      render: ({ paddingLeft, paddingRight, paddingTop, paddingBottom, marginTop, marginBottom, marginLeft, marginRight, bgColor, bgOpacity, textColorEnabled, textColor, borderWidth, borderColor, borderRadius, contentMaxWidth, fullBleed, puck }) => {
+        const maxW = contentMaxWidth ?? 100;
+        const fullBleedStyle: React.CSSProperties = fullBleed
+          ? { marginLeft: "calc(-50vw + 50%)", marginRight: "calc(-50vw + 50%)", width: "100vw" }
+          : { marginLeft: marginLeft ?? 0, marginRight: marginRight ?? 0 };
+        return (
+          <div
+            style={{
+              marginTop: marginTop ?? 0,
+              marginBottom: marginBottom ?? 0,
+              ...fullBleedStyle,
+              backgroundColor: (bgOpacity ?? 0) > 0 ? hexToRgba(bgColor ?? "#f5f5f5", bgOpacity / 100) : undefined,
+              color: textColorEnabled ? textColor : undefined,
+              border: (borderWidth ?? 0) > 0 ? `${borderWidth}px solid ${borderColor ?? "#d4d4d4"}` : undefined,
+              borderRadius: borderRadius ? `${borderRadius}px` : undefined,
+            }}
+          >
+            <div
+              style={{
+                paddingLeft,
+                paddingRight,
+                paddingTop: paddingTop ?? 0,
+                paddingBottom: paddingBottom ?? 0,
+                maxWidth: maxW < 100 ? `${maxW}%` : undefined,
+                marginLeft: maxW < 100 ? "auto" : undefined,
+                marginRight: maxW < 100 ? "auto" : undefined,
+              }}
+            >
+              <DropZone zone="container-content" />
+            </div>
+          </div>
+        );
+      },
     },
 
     FloatBox: {
@@ -976,6 +1112,35 @@ export const puckConfig: Config<Components, RootProps> = {
             <SliderField value={value} onChange={onChange} min={0} max={100} step={5} unit="%" label="Background Opacity" />
           ),
         },
+        textColorEnabled: {
+          type: "radio",
+          label: "Override Text Color",
+          options: [
+            { label: "Yes", value: true },
+            { label: "No (inherit)", value: false },
+          ],
+        },
+        textColor: {
+          type: "custom",
+          label: "Text Color",
+          render: ({ value, onChange }) => (
+            <ColorField value={value ?? "#171717"} onChange={onChange} />
+          ),
+        },
+        borderWidth: {
+          type: "custom",
+          label: "Border Width (px)",
+          render: ({ value, onChange }) => (
+            <SliderField value={value ?? 0} onChange={onChange} min={0} max={6} step={1} unit="px" label="Border Width" />
+          ),
+        },
+        borderColor: {
+          type: "custom",
+          label: "Border Color",
+          render: ({ value, onChange }) => (
+            <ColorField value={value ?? "#d4d4d4"} onChange={onChange} />
+          ),
+        },
         borderRadius: {
           type: "custom",
           label: "Corner Radius (px)",
@@ -994,10 +1159,14 @@ export const puckConfig: Config<Components, RootProps> = {
         padding: 0,
         bgColor: "#ffffff",
         bgOpacity: 0,
+        textColorEnabled: false,
+        textColor: "#171717",
+        borderWidth: 0,
+        borderColor: "#d4d4d4",
         borderRadius: 0,
         mobileBehavior: "stack",
       },
-      render: ({ offsetX, offsetY, anchorX, width, reservedHeight, zIndex, padding, bgColor, bgOpacity, borderRadius, mobileBehavior, puck }) => {
+      render: ({ offsetX, offsetY, anchorX, width, reservedHeight, zIndex, padding, bgColor, bgOpacity, textColorEnabled, textColor, borderWidth, borderColor, borderRadius, mobileBehavior, puck }) => {
         const isEditing = puck?.isEditing;
         const translateX = anchorX === "center" ? "-50%" : anchorX === "right" ? "-100%" : "0";
         // Positioning lives in CSS vars so globals.css can disable it below the
@@ -1023,6 +1192,8 @@ export const puckConfig: Config<Components, RootProps> = {
                 zIndex,
                 padding,
                 backgroundColor: bgOpacity > 0 ? hexToRgba(bgColor, bgOpacity / 100) : "transparent",
+                color: textColorEnabled ? textColor : undefined,
+                border: (borderWidth ?? 0) > 0 ? `${borderWidth}px solid ${borderColor ?? "#d4d4d4"}` : undefined,
                 borderRadius,
               } as React.CSSProperties}
             >
