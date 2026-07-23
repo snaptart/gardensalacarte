@@ -172,15 +172,7 @@ export default async function StoryPage({ params }: Props) {
       {googleFontsUrl && (
         <link rel="stylesheet" href={googleFontsUrl} />
       )}
-      {story.showTitle && (
-        <h1
-          className="mb-8 text-center text-4xl font-semibold tracking-tight"
-          style={headingStyle}
-        >
-          {story.title}
-        </h1>
-      )}
-      <PuckRenderer data={story.content} galleryPhotos={galleryPhotos} globalLightbox={globalLightbox} />
+      <PuckRenderer data={story.content} galleryPhotos={galleryPhotos} globalLightbox={globalLightbox} pageTitle={story.title} showTitle={story.showTitle} />
     </div>
   );
 }

@@ -10,15 +10,21 @@ export interface PuckRendererProps {
   data: Data;
   galleryPhotos?: Record<string, EmbedPhoto[]>;
   globalLightbox?: GlobalLightboxSettings;
+  pageTitle?: string;
+  showTitle?: boolean;
 }
 
-export default function PuckRenderer({ data, galleryPhotos, globalLightbox }: PuckRendererProps) {
+export default function PuckRenderer({ data, galleryPhotos, globalLightbox, pageTitle, showTitle }: PuckRendererProps) {
   const counterRef = useRef(0);
   const ctx = useRef({ next: () => counterRef.current++ });
 
   return (
     <ImageCounterContext.Provider value={ctx.current}>
-      <Render config={puckConfig} data={data} metadata={{ galleryPhotos: galleryPhotos ?? {}, globalLightbox }} />
+      <Render
+        config={puckConfig}
+        data={data}
+        metadata={{ galleryPhotos: galleryPhotos ?? {}, globalLightbox, pageTitle, showPageTitle: showTitle }}
+      />
     </ImageCounterContext.Provider>
   );
 }

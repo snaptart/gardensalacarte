@@ -10,6 +10,7 @@ export interface ThemeSettings {
   logoSize: number;
   menuFontSize: number;
   menuJustify: "left" | "center" | "right";
+  headerBehavior: "scroll" | "static";
   footerFontSize: number;
   colorSiteBg: string;
   colorHeaderBg: string;
@@ -34,6 +35,7 @@ export const THEME_DEFAULTS: ThemeSettings = {
   logoSize: 40,
   menuFontSize: 14,
   menuJustify: "right",
+  headerBehavior: "scroll",
   footerFontSize: 14,
   colorSiteBg: "#ffffff",
   colorHeaderBg: "#ffffff",

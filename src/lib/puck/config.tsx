@@ -109,9 +109,47 @@ type SpacerProps = {
   height: number;
 };
 
+type ButtonProps = {
+  label: string;
+  linkUrl: string;
+  linkTarget: "_self" | "_blank";
+  align: "left" | "center" | "right";
+  font: "body" | "headings" | "captions";
+  fontSize: number;
+  bold: boolean;
+  uppercase: boolean;
+  letterSpacing: number;
+  textColor: string;
+  bgColor: string;
+  bgOpacity: number;
+  borderWidth: number;
+  borderColor: string;
+  borderRadius: number;
+  paddingX: number;
+  paddingY: number;
+  height: number;
+  fullWidth: boolean;
+  hoverEffect: "none" | "fade" | "lift" | "grow";
+};
+
 type ContainerProps = {
   paddingLeft: number;
   paddingRight: number;
+  paddingTop: number;
+  paddingBottom: number;
+  marginTop: number;
+  marginBottom: number;
+  marginLeft: number;
+  marginRight: number;
+  bgColor: string;
+  bgOpacity: number;
+  textColorEnabled: boolean;
+  textColor: string;
+  borderWidth: number;
+  borderColor: string;
+  borderRadius: number;
+  contentMaxWidth: number;
+  fullBleed: boolean;
 };
 
 type FloatBoxProps = {
@@ -124,6 +162,10 @@ type FloatBoxProps = {
   padding: number;
   bgColor: string;
   bgOpacity: number;
+  textColorEnabled: boolean;
+  textColor: string;
+  borderWidth: number;
+  borderColor: string;
   borderRadius: number;
   mobileBehavior: "stack" | "float";
 };
@@ -199,11 +241,19 @@ type CarouselProps = {
   borderRadius: number;
 };
 
+type RootProps = {
+  titleAlign: "left" | "center" | "right";
+  titlePaddingTop: number;
+  titlePaddingBottom: number;
+  titleMinHeight: number;
+};
+
 type Components = {
   RichText: RichTextProps;
   Hero: HeroProps;
   HeroSlideshow: HeroSlideshowProps;
   ImageBlock: ImageBlockProps;
+  Button: ButtonProps;
   Spacer: SpacerProps;
   Container: ContainerProps;
   FloatBox: FloatBoxProps;
@@ -221,9 +271,61 @@ type Components = {
 
 // ----- Puck config -----
 
-export const puckConfig: Config<Components> = {
+export const puckConfig: Config<Components, RootProps> = {
+  root: {
+    fields: {
+      titleAlign: {
+        type: "select",
+        label: "Page Title Alignment",
+        options: [
+          { label: "Left", value: "left" },
+          { label: "Center", value: "center" },
+          { label: "Right", value: "right" },
+        ],
+      },
+      titlePaddingTop: { type: "number", label: "Title Padding Top (px)", min: 0, max: 300 },
+      titlePaddingBottom: { type: "number", label: "Title Padding Bottom (px)", min: 0, max: 300 },
+      titleMinHeight: { type: "number", label: "Title Container Height (px, 0 = auto)", min: 0, max: 600 },
+    },
+    defaultProps: {
+      titleAlign: "center",
+      titlePaddingTop: 0,
+      titlePaddingBottom: 32,
+      titleMinHeight: 0,
+    },
+    render: ({ children, titleAlign, titlePaddingTop, titlePaddingBottom, titleMinHeight, puck }) => {
+      const meta = (puck?.metadata ?? {}) as { pageTitle?: string; showPageTitle?: boolean };
+      const align = titleAlign ?? "center";
+      const alignItems = align === "left" ? "flex-start" : align === "right" ? "flex-end" : "center";
+      return (
+        <>
+          {meta.showPageTitle && meta.pageTitle && (
+            <div
+              style={{
+                display: "flex",
+                flexDirection: "column",
+                justifyContent: "center",
+                alignItems,
+                paddingTop: titlePaddingTop ?? 0,
+                paddingBottom: titlePaddingBottom ?? 32,
+                minHeight: titleMinHeight || undefined,
+              }}
+            >
+              <h1
+                className="text-4xl font-semibold tracking-tight"
+                style={{ fontFamily: "var(--theme-font-headings)", textAlign: align }}
+              >
+                {meta.pageTitle}
+              </h1>
+            </div>
+          )}
+          {children}
+        </>
+      );
+    },
+  },
   categories: {
-    content: { components: ["RichText", "ImageBlock", "GalleryEmbed", "Carousel"] },
+    content: { components: ["RichText", "ImageBlock", "Button", "GalleryEmbed", "Carousel"] },
     layout: { components: ["Columns", "Spacer", "Container", "FloatBox"] },
     hero: { components: ["Hero", "HeroSlideshow"] },
     forms: { components: ["Form", "TextField", "TextArea", "SelectField", "RadioGroup", "CheckboxGroup", "Checkbox"] },
@@ -607,18 +709,355 @@ export const puckConfig: Config<Components> = {
       ),
     },
 
+    Button: {
+      label: "Button",
+      fields: {
+        label: { type: "text", label: "Button Text" },
+        linkUrl: {
+          type: "custom",
+          label: "Link URL",
+          render: ({ value, onChange }) => (
+            <LinkPicker value={value} onChange={onChange} />
+          ),
+        },
+        linkTarget: {
+          type: "select",
+          label: "Link Opens In",
+          options: [
+            { label: "Same Tab", value: "_self" },
+            { label: "New Tab", value: "_blank" },
+          ],
+        },
+        align: {
+          type: "select",
+          label: "Alignment",
+          options: [
+            { label: "Left", value: "left" },
+            { label: "Center", value: "center" },
+            { label: "Right", value: "right" },
+          ],
+        },
+        fullWidth: {
+          type: "radio",
+          label: "Full Width",
+          options: [
+            { label: "Yes", value: true },
+            { label: "No", value: false },
+          ],
+        },
+        font: {
+          type: "select",
+          label: "Font",
+          options: [
+            { label: "Body", value: "body" },
+            { label: "Headings", value: "headings" },
+            { label: "Captions", value: "captions" },
+          ],
+        },
+        fontSize: {
+          type: "custom",
+          label: "Font Size (px)",
+          render: ({ value, onChange }) => (
+            <SliderField value={value} onChange={onChange} min={10} max={32} step={1} unit="px" label="Font Size" />
+          ),
+        },
+        bold: {
+          type: "radio",
+          label: "Bold",
+          options: [
+            { label: "Yes", value: true },
+            { label: "No", value: false },
+          ],
+        },
+        uppercase: {
+          type: "radio",
+          label: "Uppercase",
+          options: [
+            { label: "Yes", value: true },
+            { label: "No", value: false },
+          ],
+        },
+        letterSpacing: {
+          type: "custom",
+          label: "Letter Spacing (px)",
+          render: ({ value, onChange }) => (
+            <SliderField value={value} onChange={onChange} min={0} max={8} step={0.5} unit="px" label="Letter Spacing" />
+          ),
+        },
+        textColor: {
+          type: "custom",
+          label: "Text Color",
+          render: ({ value, onChange }) => (
+            <ColorField value={value} onChange={onChange} />
+          ),
+        },
+        bgColor: {
+          type: "custom",
+          label: "Background Color",
+          render: ({ value, onChange }) => (
+            <ColorField value={value} onChange={onChange} />
+          ),
+        },
+        bgOpacity: {
+          type: "custom",
+          label: "Background Opacity (0 = ghost button)",
+          render: ({ value, onChange }) => (
+            <SliderField value={value} onChange={onChange} min={0} max={100} step={5} unit="%" label="Background Opacity" />
+          ),
+        },
+        borderWidth: {
+          type: "custom",
+          label: "Border Width (px)",
+          render: ({ value, onChange }) => (
+            <SliderField value={value} onChange={onChange} min={0} max={6} step={1} unit="px" label="Border Width" />
+          ),
+        },
+        borderColor: {
+          type: "custom",
+          label: "Border Color",
+          render: ({ value, onChange }) => (
+            <ColorField value={value} onChange={onChange} />
+          ),
+        },
+        borderRadius: {
+          type: "custom",
+          label: "Corner Radius (px)",
+          render: ({ value, onChange }) => (
+            <SliderField value={value} onChange={onChange} min={0} max={40} step={1} unit="px" label="Corner Radius" />
+          ),
+        },
+        paddingX: {
+          type: "custom",
+          label: "Horizontal Padding (px)",
+          render: ({ value, onChange }) => (
+            <SliderField value={value} onChange={onChange} min={4} max={64} step={2} unit="px" label="Horizontal Padding" />
+          ),
+        },
+        paddingY: {
+          type: "custom",
+          label: "Vertical Padding (px)",
+          render: ({ value, onChange }) => (
+            <SliderField value={value} onChange={onChange} min={2} max={32} step={1} unit="px" label="Vertical Padding" />
+          ),
+        },
+        height: {
+          type: "custom",
+          label: "Height (px, 0 = auto from padding)",
+          render: ({ value, onChange }) => (
+            <SliderField value={value ?? 0} onChange={onChange} min={0} max={120} step={2} unit="px" label="Height" />
+          ),
+        },
+        hoverEffect: {
+          type: "select",
+          label: "Hover Effect",
+          options: [
+            { label: "None", value: "none" },
+            { label: "Fade", value: "fade" },
+            { label: "Lift", value: "lift" },
+            { label: "Grow", value: "grow" },
+          ],
+        },
+      },
+      defaultProps: {
+        label: "Learn More",
+        linkUrl: "",
+        linkTarget: "_self",
+        align: "center",
+        font: "body",
+        fontSize: 15,
+        bold: false,
+        uppercase: false,
+        letterSpacing: 1,
+        textColor: "#ffffff",
+        bgColor: "#171717",
+        bgOpacity: 100,
+        borderWidth: 0,
+        borderColor: "#171717",
+        borderRadius: 4,
+        paddingX: 28,
+        paddingY: 12,
+        height: 0,
+        fullWidth: false,
+        hoverEffect: "fade",
+      },
+      render: ({ label, linkUrl, linkTarget, align, font, fontSize, bold, uppercase, letterSpacing, textColor, bgColor, bgOpacity, borderWidth, borderColor, borderRadius, paddingX, paddingY, height, fullWidth, hoverEffect }) => {
+        const fontVarMap = { body: "var(--theme-font-body)", headings: "var(--theme-font-headings)", captions: "var(--theme-font-captions)" };
+        const justifyMap = { left: "flex-start", center: "center", right: "flex-end" };
+        const hoverClass = hoverEffect && hoverEffect !== "none" ? `puck-btn-${hoverEffect}` : "";
+        const fixedHeight = (height ?? 0) > 0;
+        const btnStyle: React.CSSProperties = {
+          display: fixedHeight ? (fullWidth ? "flex" : "inline-flex") : (fullWidth ? "block" : "inline-block"),
+          alignItems: fixedHeight ? "center" : undefined,
+          justifyContent: fixedHeight ? "center" : undefined,
+          height: fixedHeight ? `${height}px` : undefined,
+          width: fullWidth ? "100%" : undefined,
+          textAlign: "center",
+          fontFamily: fontVarMap[font ?? "body"],
+          fontSize: `${fontSize}px`,
+          fontWeight: bold ? 600 : 400,
+          textTransform: uppercase ? "uppercase" : undefined,
+          letterSpacing: `${letterSpacing}px`,
+          color: textColor,
+          backgroundColor: bgOpacity > 0 ? hexToRgba(bgColor, bgOpacity / 100) : "transparent",
+          border: borderWidth > 0 ? `${borderWidth}px solid ${borderColor}` : "none",
+          borderRadius: `${borderRadius}px`,
+          padding: `${paddingY}px ${paddingX}px`,
+          cursor: "pointer",
+          textDecoration: "none",
+        };
+        const btnEl = linkUrl ? (
+          <a
+            href={linkUrl}
+            target={linkTarget}
+            rel={linkTarget === "_blank" ? "noopener noreferrer" : undefined}
+            className={`puck-btn ${hoverClass}`}
+            style={btnStyle}
+          >
+            {label || "Button"}
+          </a>
+        ) : (
+          <span className={`puck-btn ${hoverClass}`} style={btnStyle}>
+            {label || "Button"}
+          </span>
+        );
+        if (fullWidth) return btnEl;
+        return (
+          <div style={{ display: "flex", justifyContent: justifyMap[align ?? "center"] }}>
+            {btnEl}
+          </div>
+        );
+      },
+    },
+
     Container: {
       label: "Container",
       fields: {
+        bgColor: {
+          type: "custom",
+          label: "Background Color",
+          render: ({ value, onChange }) => (
+            <ColorField value={value ?? "#f5f5f5"} onChange={onChange} />
+          ),
+        },
+        bgOpacity: {
+          type: "custom",
+          label: "Background Opacity",
+          render: ({ value, onChange }) => (
+            <SliderField value={value ?? 0} onChange={onChange} min={0} max={100} step={5} unit="%" label="Background Opacity" />
+          ),
+        },
+        textColorEnabled: {
+          type: "radio",
+          label: "Override Text Color",
+          options: [
+            { label: "Yes", value: true },
+            { label: "No (inherit)", value: false },
+          ],
+        },
+        textColor: {
+          type: "custom",
+          label: "Text Color",
+          render: ({ value, onChange }) => (
+            <ColorField value={value ?? "#171717"} onChange={onChange} />
+          ),
+        },
+        paddingTop: { type: "number", label: "Top Padding (px)", min: 0, max: 300 },
+        paddingBottom: { type: "number", label: "Bottom Padding (px)", min: 0, max: 300 },
         paddingLeft: { type: "number", label: "Left Padding (px)", min: 0, max: 300 },
         paddingRight: { type: "number", label: "Right Padding (px)", min: 0, max: 300 },
+        marginTop: { type: "number", label: "Top Margin (px, negative overlaps upward)", min: -200, max: 300 },
+        marginBottom: { type: "number", label: "Bottom Margin (px)", min: -200, max: 300 },
+        marginLeft: { type: "number", label: "Left Margin (px, ignored when full bleed)", min: -200, max: 300 },
+        marginRight: { type: "number", label: "Right Margin (px, ignored when full bleed)", min: -200, max: 300 },
+        borderWidth: {
+          type: "custom",
+          label: "Border Width (px)",
+          render: ({ value, onChange }) => (
+            <SliderField value={value ?? 0} onChange={onChange} min={0} max={6} step={1} unit="px" label="Border Width" />
+          ),
+        },
+        borderColor: {
+          type: "custom",
+          label: "Border Color",
+          render: ({ value, onChange }) => (
+            <ColorField value={value ?? "#d4d4d4"} onChange={onChange} />
+          ),
+        },
+        borderRadius: {
+          type: "custom",
+          label: "Corner Radius (px)",
+          render: ({ value, onChange }) => (
+            <SliderField value={value ?? 0} onChange={onChange} min={0} max={40} step={1} unit="px" label="Corner Radius" />
+          ),
+        },
+        contentMaxWidth: {
+          type: "custom",
+          label: "Content Max Width (% of container)",
+          render: ({ value, onChange }) => (
+            <SliderField value={value ?? 100} onChange={onChange} min={20} max={100} step={5} unit="%" label="Content Max Width" />
+          ),
+        },
+        fullBleed: {
+          type: "radio",
+          label: "Full Bleed Background (edge-to-edge)",
+          options: [
+            { label: "Yes", value: true },
+            { label: "No", value: false },
+          ],
+        },
       },
-      defaultProps: { paddingLeft: 0, paddingRight: 0 },
-      render: ({ paddingLeft, paddingRight, puck }) => (
-        <div style={{ paddingLeft, paddingRight }}>
-          <DropZone zone="container-content" />
-        </div>
-      ),
+      defaultProps: {
+        paddingLeft: 0,
+        paddingRight: 0,
+        paddingTop: 0,
+        paddingBottom: 0,
+        marginTop: 0,
+        marginBottom: 0,
+        marginLeft: 0,
+        marginRight: 0,
+        bgColor: "#f5f5f5",
+        bgOpacity: 0,
+        textColorEnabled: false,
+        textColor: "#171717",
+        borderWidth: 0,
+        borderColor: "#d4d4d4",
+        borderRadius: 0,
+        contentMaxWidth: 100,
+        fullBleed: false,
+      },
+      render: ({ paddingLeft, paddingRight, paddingTop, paddingBottom, marginTop, marginBottom, marginLeft, marginRight, bgColor, bgOpacity, textColorEnabled, textColor, borderWidth, borderColor, borderRadius, contentMaxWidth, fullBleed, puck }) => {
+        const maxW = contentMaxWidth ?? 100;
+        const fullBleedStyle: React.CSSProperties = fullBleed
+          ? { marginLeft: "calc(-50vw + 50%)", marginRight: "calc(-50vw + 50%)", width: "100vw" }
+          : { marginLeft: marginLeft ?? 0, marginRight: marginRight ?? 0 };
+        return (
+          <div
+            style={{
+              marginTop: marginTop ?? 0,
+              marginBottom: marginBottom ?? 0,
+              ...fullBleedStyle,
+              backgroundColor: (bgOpacity ?? 0) > 0 ? hexToRgba(bgColor ?? "#f5f5f5", bgOpacity / 100) : undefined,
+              color: textColorEnabled ? textColor : undefined,
+              border: (borderWidth ?? 0) > 0 ? `${borderWidth}px solid ${borderColor ?? "#d4d4d4"}` : undefined,
+              borderRadius: borderRadius ? `${borderRadius}px` : undefined,
+            }}
+          >
+            <div
+              style={{
+                paddingLeft,
+                paddingRight,
+                paddingTop: paddingTop ?? 0,
+                paddingBottom: paddingBottom ?? 0,
+                maxWidth: maxW < 100 ? `${maxW}%` : undefined,
+                marginLeft: maxW < 100 ? "auto" : undefined,
+                marginRight: maxW < 100 ? "auto" : undefined,
+              }}
+            >
+              <DropZone zone="container-content" />
+            </div>
+          </div>
+        );
+      },
     },
 
     FloatBox: {
@@ -673,6 +1112,35 @@ export const puckConfig: Config<Components> = {
             <SliderField value={value} onChange={onChange} min={0} max={100} step={5} unit="%" label="Background Opacity" />
           ),
         },
+        textColorEnabled: {
+          type: "radio",
+          label: "Override Text Color",
+          options: [
+            { label: "Yes", value: true },
+            { label: "No (inherit)", value: false },
+          ],
+        },
+        textColor: {
+          type: "custom",
+          label: "Text Color",
+          render: ({ value, onChange }) => (
+            <ColorField value={value ?? "#171717"} onChange={onChange} />
+          ),
+        },
+        borderWidth: {
+          type: "custom",
+          label: "Border Width (px)",
+          render: ({ value, onChange }) => (
+            <SliderField value={value ?? 0} onChange={onChange} min={0} max={6} step={1} unit="px" label="Border Width" />
+          ),
+        },
+        borderColor: {
+          type: "custom",
+          label: "Border Color",
+          render: ({ value, onChange }) => (
+            <ColorField value={value ?? "#d4d4d4"} onChange={onChange} />
+          ),
+        },
         borderRadius: {
           type: "custom",
           label: "Corner Radius (px)",
@@ -691,10 +1159,14 @@ export const puckConfig: Config<Components> = {
         padding: 0,
         bgColor: "#ffffff",
         bgOpacity: 0,
+        textColorEnabled: false,
+        textColor: "#171717",
+        borderWidth: 0,
+        borderColor: "#d4d4d4",
         borderRadius: 0,
         mobileBehavior: "stack",
       },
-      render: ({ offsetX, offsetY, anchorX, width, reservedHeight, zIndex, padding, bgColor, bgOpacity, borderRadius, mobileBehavior, puck }) => {
+      render: ({ offsetX, offsetY, anchorX, width, reservedHeight, zIndex, padding, bgColor, bgOpacity, textColorEnabled, textColor, borderWidth, borderColor, borderRadius, mobileBehavior, puck }) => {
         const isEditing = puck?.isEditing;
         const translateX = anchorX === "center" ? "-50%" : anchorX === "right" ? "-100%" : "0";
         // Positioning lives in CSS vars so globals.css can disable it below the
@@ -720,6 +1192,8 @@ export const puckConfig: Config<Components> = {
                 zIndex,
                 padding,
                 backgroundColor: bgOpacity > 0 ? hexToRgba(bgColor, bgOpacity / 100) : "transparent",
+                color: textColorEnabled ? textColor : undefined,
+                border: (borderWidth ?? 0) > 0 ? `${borderWidth}px solid ${borderColor ?? "#d4d4d4"}` : undefined,
                 borderRadius,
               } as React.CSSProperties}
             >

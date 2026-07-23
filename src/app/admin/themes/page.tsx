@@ -292,6 +292,15 @@ export default function ThemesPage() {
                   onChange={(v) => updateTheme("menuJustify", v as ThemeSettings["menuJustify"])}
                 />
               </div>
+              <div>
+                <label className="mb-1 block text-sm font-medium text-neutral-700">Header Behavior</label>
+                <RadioGroup
+                  options={["scroll", "static"]}
+                  value={themeDraft.headerBehavior}
+                  onChange={(v) => updateTheme("headerBehavior", v as ThemeSettings["headerBehavior"])}
+                />
+                <p className="mt-1 text-xs text-neutral-400">Static keeps the header pinned to the top of the screen while scrolling.</p>
+              </div>
             </div>
           </div>
 
