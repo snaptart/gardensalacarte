@@ -8,6 +8,7 @@ import {
   closestCenter,
   KeyboardSensor,
   PointerSensor,
+  useDroppable,
   useSensor,
   useSensors,
   type DragEndEvent,
@@ -71,9 +72,42 @@ function getComponentLabel(type: string, config: Config): string {
   return (config.components[type] as { label?: string } | undefined)?.label ?? type;
 }
 
-/** Extract all zone compounds that belong to a given component ID */
-function getChildZones(componentId: string, zones: Record<string, ZoneContent>): string[] {
-  return Object.keys(zones).filter((z) => z.startsWith(`${componentId}:`));
+/** Zones each container-type component provides, even before anything is dropped in
+    (data.zones only gains a key once a zone has content) */
+const COMPONENT_ZONES: Record<string, (props: Record<string, unknown>) => string[]> = {
+  Container: () => ["container-content"],
+  FloatBox: () => ["float-content"],
+  Columns: (props) =>
+    Array.from({ length: props.columns === "3" ? 3 : 2 }, (_, i) => `column-${i}`),
+};
+
+/** Extract all zone compounds that belong to a given component */
+function getChildZones(comp: ComponentData, zones: Record<string, ZoneContent>): string[] {
+  const id = comp.props.id;
+  const fromData = Object.keys(zones).filter((z) => z.startsWith(`${id}:`));
+  const expected = (COMPONENT_ZONES[comp.type]?.(comp.props) ?? []).map((z) => `${id}:${z}`);
+  return [...new Set([...expected, ...fromData])];
+}
+
+/** True if destZone is owned by draggedId or any of its descendants (would nest a
+    component inside itself) */
+function isOwnDescendantZone(destZone: string, draggedId: string, data: Data): boolean {
+  let owner = destZone.split(":")[0];
+  const seen = new Set<string>();
+  while (owner && owner !== "root" && !seen.has(owner)) {
+    if (owner === draggedId) return true;
+    seen.add(owner);
+    let parentZone: string | undefined;
+    for (const [zc, content] of Object.entries(data.zones ?? {})) {
+      if (content.some((c) => c.props.id === owner)) {
+        parentZone = zc;
+        break;
+      }
+    }
+    if (!parentZone) break;
+    owner = parentZone.split(":")[0];
+  }
+  return false;
 }
 
 /** Get content for a zone compound from data */
@@ -229,7 +263,7 @@ function SortableZone({
     label: getComponentLabel(comp.type, config),
     zone: zoneCompound,
     index: i,
-    childZones: getChildZones(comp.props.id, data.zones ?? {}),
+    childZones: getChildZones(comp, data.zones ?? {}),
   }));
 
   const itemIds = items.map((it) => it.id);
@@ -244,9 +278,7 @@ function SortableZone({
       <SortableContext items={itemIds} strategy={verticalListSortingStrategy}>
         <ul className="m-0 list-none p-0">
           {items.length === 0 && (
-            <li className="py-2 text-center text-xs text-neutral-400">
-              No items
-            </li>
+            <EmptyZoneDropTarget zoneCompound={zoneCompound} />
           )}
           {items.map((item) => (
             <SortableLayer
@@ -267,6 +299,27 @@ function SortableZone({
   );
 }
 
+// ── Empty zone drop target ─────────────────────────────────────────
+
+function EmptyZoneDropTarget({ zoneCompound }: { zoneCompound: string }) {
+  const { setNodeRef, isOver } = useDroppable({
+    id: `empty:${zoneCompound}`,
+    data: { zone: zoneCompound, index: 0 },
+  });
+  return (
+    <li
+      ref={setNodeRef}
+      className={`list-none rounded border border-dashed px-2 py-2 text-center text-xs transition-colors ${
+        isOver
+          ? "border-blue-400 bg-blue-50 text-blue-600"
+          : "border-neutral-200 text-neutral-400"
+      }`}
+    >
+      Drop here
+    </li>
+  );
+}
+
 // ── Main Outline Component ─────────────────────────────────────────
 
 export default function DraggableOutline() {
@@ -279,6 +332,20 @@ export default function DraggableOutline() {
 
   // Track which items are expanded (show child zones)
   const [expandedItems, setExpandedItems] = useState<Set<string>>(new Set());
+  const [isDragging, setIsDragging] = useState(false);
+
+  // Every component that has child zones — expanded during a drag so all
+  // zones are visible drop targets
+  const allContainerIds = useMemo(() => {
+    const set = new Set<string>();
+    const collect = (content: ZoneContent) =>
+      content.forEach((c) => {
+        if (getChildZones(c, data.zones ?? {}).length > 0) set.add(c.props.id);
+      });
+    collect(data.content ?? []);
+    Object.values(data.zones ?? {}).forEach(collect);
+    return set;
+  }, [data]);
 
   const sensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 4 } }),
@@ -310,6 +377,7 @@ export default function DraggableOutline() {
 
   const handleDragEnd = useCallback(
     (event: DragEndEvent) => {
+      setIsDragging(false);
       const { active, over } = event;
 
       if (!over || active.id === over.id) return;
@@ -323,6 +391,9 @@ export default function DraggableOutline() {
       const destZone = overData.zone;
       const sourceIndex = activeData.index;
       const destIndex = overData.index;
+
+      // Never move a container into itself or one of its descendants
+      if (isOwnDescendantZone(destZone, String(active.id), data)) return;
 
       // If same zone, use reorder
       if (sourceZone === destZone) {
@@ -344,12 +415,17 @@ export default function DraggableOutline() {
         });
       }
     },
-    [dispatch]
+    [dispatch, data]
   );
 
-  // Auto-expand parent of selected item
+  // Auto-expand parent of selected item; expand everything while dragging so
+  // any container zone can receive the drop
   const expandedWithSelected = useMemo(() => {
     const set = new Set(expandedItems);
+    if (isDragging) {
+      allContainerIds.forEach((id) => set.add(id));
+      return set;
+    }
     if (selectedId && data.zones) {
       // Check if selected item is inside a zone — expand its parent
       for (const [zoneCompound, content] of Object.entries(data.zones)) {
@@ -360,13 +436,15 @@ export default function DraggableOutline() {
       }
     }
     return set;
-  }, [expandedItems, selectedId, data.zones]);
+  }, [expandedItems, selectedId, data.zones, isDragging, allContainerIds]);
 
   return (
     <div className="puck-draggable-outline font-sans text-sm">
       <DndContext
         sensors={sensors}
         collisionDetection={closestCenter}
+        onDragStart={() => setIsDragging(true)}
+        onDragCancel={() => setIsDragging(false)}
         onDragEnd={handleDragEnd}
       >
         <SortableZone

@@ -84,6 +84,20 @@ body {
   }
 }
 
+/* Puck Button hover effects */
+.puck-btn {
+  transition: opacity 0.2s ease, transform 0.2s ease;
+}
+.puck-btn-fade:hover {
+  opacity: 0.75;
+}
+.puck-btn-lift:hover {
+  transform: translateY(-2px);
+}
+.puck-btn-grow:hover {
+  transform: scale(1.05);
+}
+
 /* Tiptap: ensure empty paragraphs (line breaks) render with height */
 .ProseMirror p.is-editor-empty:first-child::before {
   content: attr(data-placeholder);

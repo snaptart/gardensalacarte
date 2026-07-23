@@ -21,6 +21,7 @@ interface PageRecord {
   content: Data | null;
   pageType: string;
   isPublished: boolean;
+  showTitle: boolean;
   metaTitle: string | null;
   metaDescription: string | null;
 }
@@ -99,6 +100,7 @@ export default function PuckEditorPage() {
         onPublish={handleSave}
         headerTitle={page.title}
         headerPath={`/${page.slug}`}
+        metadata={{ pageTitle: page.title, showPageTitle: page.showTitle }}
         overrides={draggableOutlinePlugin().overrides}
       />
       {saving && (
