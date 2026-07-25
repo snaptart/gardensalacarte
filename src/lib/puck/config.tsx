@@ -312,8 +312,13 @@ export const puckConfig: Config<Components, RootProps> = {
               }}
             >
               <h1
-                className="text-4xl font-semibold tracking-tight"
-                style={{ fontFamily: "var(--theme-font-headings)", textAlign: align }}
+                className="text-4xl"
+                style={{
+                  fontFamily: "var(--theme-font-headings)",
+                  fontWeight: "var(--theme-weight-headings)" as React.CSSProperties["fontWeight"],
+                  letterSpacing: "var(--theme-tracking-headings)",
+                  textAlign: align,
+                }}
               >
                 {meta.pageTitle}
               </h1>
@@ -439,12 +444,12 @@ export const puckConfig: Config<Components, RootProps> = {
           )}
           <div className="relative z-10 text-center px-4">
             {title && (
-              <h1 className="text-4xl md:text-6xl font-semibold tracking-tight mb-4" style={{ fontFamily: "var(--theme-font-headings)", color: "var(--theme-color-hero-overlay)" }}>
+              <h1 className="text-4xl md:text-6xl mb-4" style={{ fontFamily: "var(--theme-font-headings)", fontWeight: "var(--theme-weight-headings)" as React.CSSProperties["fontWeight"], letterSpacing: "var(--theme-tracking-headings)", color: "var(--theme-color-hero-overlay)" }}>
                 {title}
               </h1>
             )}
             {subtitle && (
-              <p className="text-xl md:text-2xl" style={{ fontFamily: "var(--theme-font-overlay)", color: "var(--theme-color-hero-overlay)", opacity: 0.9 }}>
+              <p className="text-xl md:text-2xl" style={{ fontFamily: "var(--theme-font-overlay)", fontWeight: "var(--theme-weight-overlay)" as React.CSSProperties["fontWeight"], letterSpacing: "var(--theme-tracking-overlay)", color: "var(--theme-color-hero-overlay)", opacity: 0.9 }}>
                 {subtitle}
               </p>
             )}
@@ -687,7 +692,7 @@ export const puckConfig: Config<Components, RootProps> = {
               <div className="relative overflow-visible">
                 {imageEl}
                 {caption && (
-                  <figcaption style={{ ...captionStyle, fontFamily: "var(--theme-font-captions)" }}>
+                  <figcaption style={{ ...captionStyle, fontFamily: "var(--theme-font-captions)", fontWeight: "var(--theme-weight-captions)" as React.CSSProperties["fontWeight"], letterSpacing: "var(--theme-tracking-captions)" }}>
                     {caption}
                   </figcaption>
                 )}
@@ -2529,7 +2534,7 @@ function CarouselClient({
           className="flex flex-col items-center justify-center p-6 text-center"
           style={{ ...slideStyle, backgroundColor: slide.bgColor, color: slide.textColor }}
         >
-          {slide.title && <h3 className="text-xl font-semibold mb-2" style={{ fontFamily: "var(--theme-font-headings)" }}>{slide.title}</h3>}
+          {slide.title && <h3 className="text-xl mb-2" style={{ fontFamily: "var(--theme-font-headings)", fontWeight: "var(--theme-weight-headings)" as React.CSSProperties["fontWeight"], letterSpacing: "var(--theme-tracking-headings)" }}>{slide.title}</h3>}
           {slide.subtitle && <p className="text-sm opacity-80">{slide.subtitle}</p>}
         </div>
       );
@@ -2553,7 +2558,7 @@ function CarouselClient({
         )}
         <div className="absolute inset-0 bg-black/30" style={{ borderRadius: `${borderRadius}px` }} />
         <div className="absolute inset-0 flex flex-col items-center justify-center p-4 text-center" style={{ color: slide.textColor || "#fff" }}>
-          {slide.title && <h3 className="text-xl font-semibold mb-1" style={{ fontFamily: "var(--theme-font-headings)" }}>{slide.title}</h3>}
+          {slide.title && <h3 className="text-xl mb-1" style={{ fontFamily: "var(--theme-font-headings)", fontWeight: "var(--theme-weight-headings)" as React.CSSProperties["fontWeight"], letterSpacing: "var(--theme-tracking-headings)" }}>{slide.title}</h3>}
           {slide.subtitle && <p className="text-sm opacity-90">{slide.subtitle}</p>}
         </div>
       </div>
@@ -2764,7 +2769,7 @@ function GalleryEmbedRenderer({ slug, max, layout, columns, aspectRatio, gap, im
     return (
       <div className="mt-1.5 space-y-0.5 text-sm" style={{ color: "var(--theme-color-gallery-captions)" }}>
         {metadataFields.includes("title") && photo.title && (
-          <p className="font-medium" style={{ fontFamily: "var(--theme-font-captions)" }}>{parseLinks(photo.title)}</p>
+          <p className="font-medium" style={{ fontFamily: "var(--theme-font-captions)", letterSpacing: "var(--theme-tracking-captions)" }}>{parseLinks(photo.title)}</p>
         )}
         {metadataFields.includes("filename") && photo.filename && (
           <p className="text-xs" style={{ opacity: 0.65 }}>{photo.filename}</p>

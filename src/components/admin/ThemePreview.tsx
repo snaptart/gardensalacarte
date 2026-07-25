@@ -31,7 +31,7 @@ export default function ThemePreview({ theme, siteTitle, logoUrl }: ThemePreview
 
       {/* Mini Navbar */}
       <div
-        className="border-b border-neutral-200 px-4 py-3"
+        className="border-b border-neutral-200 px-8 py-6"
         style={{ backgroundColor: theme.colorHeaderBg }}
       >
         <div
@@ -44,12 +44,12 @@ export default function ThemePreview({ theme, siteTitle, logoUrl }: ThemePreview
           <div style={{ justifySelf: theme.logoPosition === "left" ? "start" : "start" }}>
             {theme.logoPosition === "left" && (
               logoUrl ? (
-                <img src={logoUrl} alt={siteTitle} style={{ height: `${theme.logoSize * 0.5}px` }} />
+                <img src={logoUrl} alt={siteTitle} style={{ height: `${theme.logoSize}px` }} />
               ) : (
                 <span
                   style={{
                     fontFamily: getFontFallback(theme.fontHeadings),
-                    fontSize: `${theme.logoSize * 0.3}px`,
+                    fontSize: `${theme.logoSize * 0.6}px`,
                     fontWeight: 300,
                     letterSpacing: "0.1em",
                   }}
@@ -62,12 +62,12 @@ export default function ThemePreview({ theme, siteTitle, logoUrl }: ThemePreview
           <div style={{ justifySelf: "center" }}>
             {theme.logoPosition === "center" && (
               logoUrl ? (
-                <img src={logoUrl} alt={siteTitle} style={{ height: `${theme.logoSize * 0.5}px` }} />
+                <img src={logoUrl} alt={siteTitle} style={{ height: `${theme.logoSize}px` }} />
               ) : (
                 <span
                   style={{
                     fontFamily: getFontFallback(theme.fontHeadings),
-                    fontSize: `${theme.logoSize * 0.3}px`,
+                    fontSize: `${theme.logoSize * 0.6}px`,
                     fontWeight: 300,
                     letterSpacing: "0.1em",
                   }}
@@ -78,23 +78,25 @@ export default function ThemePreview({ theme, siteTitle, logoUrl }: ThemePreview
             )}
           </div>
           <div
-            className="flex gap-3"
+            className="flex gap-6"
             style={{
               justifySelf: "end",
               fontFamily: getFontFallback(theme.fontNavMenu),
-              fontSize: `${theme.menuFontSize * 0.75}px`,
+              fontSize: `${theme.menuFontSize * 1.5}px`,
+              fontWeight: theme.weightNavMenu,
+              letterSpacing: `${theme.trackingNavMenu}em`,
               justifyContent: justifyMap[theme.menuJustify],
             }}
           >
             {theme.logoPosition === "right" && (
               logoUrl ? (
-                <img src={logoUrl} alt={siteTitle} style={{ height: `${theme.logoSize * 0.5}px` }} className="mr-4" />
+                <img src={logoUrl} alt={siteTitle} style={{ height: `${theme.logoSize}px` }} className="mr-8" />
               ) : (
                 <span
-                  className="mr-4"
+                  className="mr-8"
                   style={{
                     fontFamily: getFontFallback(theme.fontHeadings),
-                    fontSize: `${theme.logoSize * 0.3}px`,
+                    fontSize: `${theme.logoSize * 0.6}px`,
                     fontWeight: 300,
                     letterSpacing: "0.1em",
                   }}
@@ -112,56 +114,63 @@ export default function ThemePreview({ theme, siteTitle, logoUrl }: ThemePreview
 
       {/* Sample Content */}
       <div
-        className="px-6 py-6"
+        className="px-12 py-12"
         style={{
           backgroundColor: theme.colorSiteBg,
           color: theme.colorText,
         }}
       >
         <h2
-          className="mb-2"
+          className="mb-4"
           style={{
             fontFamily: getFontFallback(theme.fontHeadings),
-            fontSize: "18px",
-            fontWeight: 400,
+            fontSize: "36px",
+            fontWeight: theme.weightHeadings,
+            letterSpacing: `${theme.trackingHeadings}em`,
           }}
         >
           Sample Heading
         </h2>
         <p
-          className="mb-3"
+          className="mb-6"
           style={{
             fontFamily: getFontFallback(theme.fontBody),
-            fontSize: "13px",
+            fontSize: "26px",
+            fontWeight: theme.weightBody,
+            letterSpacing: `${theme.trackingBody}em`,
             lineHeight: 1.6,
           }}
         >
           This is sample body text showing how your chosen font and colors look together.
           This is how your chosen font and colors look on longer paragraphs of text.
         </p>
-        <div className="flex gap-3">
-          <div className="h-16 w-24 rounded bg-neutral-300" />
-          <div className="h-16 w-24 rounded bg-neutral-300" />
-          <div className="h-16 w-24 rounded bg-neutral-300" />
+        <div className="flex gap-6">
+          <div className="h-32 w-48 rounded bg-neutral-300" />
+          <div className="h-32 w-48 rounded bg-neutral-300" />
+          <div className="h-32 w-48 rounded bg-neutral-300" />
         </div>
         <p
-          className="mt-2"
+          className="mt-4"
           style={{
             fontFamily: getFontFallback(theme.fontCaptions),
-            fontSize: "11px",
+            fontSize: "22px",
+            fontWeight: theme.weightCaptions,
+            letterSpacing: `${theme.trackingCaptions}em`,
             color: theme.colorGalleryCaptions,
           }}
         >
           Caption text — Sample image caption
         </p>
         <div
-          className="mt-1 rounded px-2 py-1"
+          className="mt-2 rounded px-4 py-2"
           style={{ backgroundColor: "#1a1a1a", display: "inline-block" }}
         >
           <p
             style={{
               fontFamily: getFontFallback(theme.fontOverlay),
-              fontSize: "11px",
+              fontSize: "22px",
+              fontWeight: theme.weightOverlay,
+              letterSpacing: `${theme.trackingOverlay}em`,
               color: theme.colorHeroOverlay,
             }}
           >
@@ -172,16 +181,18 @@ export default function ThemePreview({ theme, siteTitle, logoUrl }: ThemePreview
 
       {/* Mini Footer */}
       <div
-        className="border-t border-neutral-200 px-4 py-3 text-center"
+        className="border-t border-neutral-200 px-8 py-6 text-center"
         style={{
           backgroundColor: theme.colorFooterBg,
           fontFamily: getFontFallback(theme.fontFooter),
           color: theme.colorFooterText,
-          fontSize: `${theme.footerFontSize * 0.75}px`,
+          fontSize: `${theme.footerFontSize * 1.5}px`,
+          fontWeight: theme.weightFooter,
+          letterSpacing: `${theme.trackingFooter}em`,
         }}
       >
         <p>&copy; {new Date().getFullYear()} {siteTitle || "Your Site"}. All rights reserved.</p>
-        <p className="mt-0.5">
+        <p className="mt-1">
           <span style={{ color: theme.colorAccent }}>contact@example.com</span>
         </p>
       </div>

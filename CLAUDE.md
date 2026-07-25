@@ -87,6 +87,7 @@ src/
 
 ### Auth Flow
 - NextAuth v5 with credentials provider (src/lib/auth.ts)
+- **`AUTH_SECRET` is required in every environment** (generate with `openssl rand -base64 32`). Without it in production, NextAuth cannot sign/verify session tokens: `/api/auth/*` returns 500 and auth fails **open** — admin pages and APIs become reachable with no valid session. It is read by NextAuth internally (not via `process.env` in our code), so it's easy to omit; see `.env.example`.
 - Route protection via proxy middleware (src/proxy.ts) — protects /admin/* except /admin/login
 - Admin layout (src/app/admin/layout.tsx) checks session; unauthenticated users see login page without sidebar
 - Single admin user seeded via db:seed

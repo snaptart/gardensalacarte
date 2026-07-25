@@ -58,8 +58,13 @@ export async function Navbar() {
   // Desktop menu (hidden on mobile)
   const menuEl = (
     <div
-      className="hidden md:flex items-center gap-8 tracking-wide"
-      style={{ fontSize: `${theme.menuFontSize}px`, fontFamily: "var(--theme-font-nav-menu)" }}
+      className="hidden md:flex items-center gap-8"
+      style={{
+        fontSize: `${theme.menuFontSize}px`,
+        fontFamily: "var(--theme-font-nav-menu)",
+        fontWeight: "var(--theme-weight-nav-menu)" as React.CSSProperties["fontWeight"],
+        letterSpacing: "var(--theme-tracking-nav-menu)",
+      }}
     >
       {items.map((item) => (
         <Link
