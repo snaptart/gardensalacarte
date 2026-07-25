@@ -16,6 +16,7 @@ const navItems = [
   { label: "Menus", href: "/admin/menus" },
   { label: "Themes", href: "/admin/themes" },
   { label: "Settings", href: "/admin/settings" },
+  { label: "Users", href: "/admin/users" },
 ];
 
 function HamburgerIcon() {
