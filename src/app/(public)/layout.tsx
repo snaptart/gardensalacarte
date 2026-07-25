@@ -54,6 +54,8 @@ export default async function PublicLayout({
         style={{
           fontFamily: "var(--theme-font-body)",
           fontSize: "var(--theme-body-font-size)",
+          fontWeight: "var(--theme-weight-body)" as React.CSSProperties["fontWeight"],
+          letterSpacing: "var(--theme-tracking-body)",
           backgroundColor: "var(--theme-color-site-bg)",
           color: "var(--theme-color-text)",
         }}

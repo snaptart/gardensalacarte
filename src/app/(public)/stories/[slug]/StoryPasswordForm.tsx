@@ -37,8 +37,12 @@ export default function StoryPasswordForm({
   return (
     <div className="mx-auto flex max-w-md flex-col items-center px-4 py-24">
       <h1
-        className="mb-4 text-center text-3xl font-semibold tracking-tight"
-        style={{ fontFamily: "var(--theme-font-headings)" }}
+        className="mb-4 text-center text-3xl"
+        style={{
+          fontFamily: "var(--theme-font-headings)",
+          fontWeight: "var(--theme-weight-headings)" as React.CSSProperties["fontWeight"],
+          letterSpacing: "var(--theme-tracking-headings)",
+        }}
       >
         {title}
       </h1>

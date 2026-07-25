@@ -40,8 +40,13 @@ export function MobileMenu({ items, instagramUrl, menuFontSize }: MobileMenuProp
           style={{ backgroundColor: "var(--theme-color-header-bg)" }}
         >
           <div
-            className="flex flex-col items-center gap-6 px-6 py-6 tracking-wide"
-            style={{ fontSize: `${menuFontSize}px`, fontFamily: "var(--theme-font-nav-menu)" }}
+            className="flex flex-col items-center gap-6 px-6 py-6"
+            style={{
+              fontSize: `${menuFontSize}px`,
+              fontFamily: "var(--theme-font-nav-menu)",
+              fontWeight: "var(--theme-weight-nav-menu)" as React.CSSProperties["fontWeight"],
+              letterSpacing: "var(--theme-tracking-nav-menu)",
+            }}
           >
             {items.map((item) => (
               <Link

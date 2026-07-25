@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import ThemePreview from "@/components/admin/ThemePreview";
-import { CURATED_FONTS } from "@/lib/theme/fonts";
+import { CURATED_FONTS, getFontWeightRange } from "@/lib/theme/fonts";
 import { THEME_DEFAULTS, type ThemeSettings } from "@/lib/theme/types";
 
 interface SiteSettings {
@@ -221,12 +221,60 @@ export default function ThemesPage() {
           <div className="border-t border-neutral-200 pt-4">
             <h3 className="mb-3 text-base font-semibold text-neutral-800">Fonts</h3>
             <div className="space-y-3">
-              <FontSelect label="Headings" value={themeDraft.fontHeadings} onChange={(v) => updateTheme("fontHeadings", v)} />
-              <FontSelect label="Body" value={themeDraft.fontBody} onChange={(v) => updateTheme("fontBody", v)} />
-              <FontSelect label="Nav Menu" value={themeDraft.fontNavMenu} onChange={(v) => updateTheme("fontNavMenu", v)} />
-              <FontSelect label="Footer" value={themeDraft.fontFooter} onChange={(v) => updateTheme("fontFooter", v)} />
-              <FontSelect label="Captions" value={themeDraft.fontCaptions} onChange={(v) => updateTheme("fontCaptions", v)} />
-              <FontSelect label="Overlay Text" value={themeDraft.fontOverlay} onChange={(v) => updateTheme("fontOverlay", v)} />
+              <FontRoleControl
+                label="Headings"
+                font={themeDraft.fontHeadings}
+                weight={themeDraft.weightHeadings}
+                tracking={themeDraft.trackingHeadings}
+                onFont={(v) => updateTheme("fontHeadings", v)}
+                onWeight={(v) => updateTheme("weightHeadings", v)}
+                onTracking={(v) => updateTheme("trackingHeadings", v)}
+              />
+              <FontRoleControl
+                label="Body"
+                font={themeDraft.fontBody}
+                weight={themeDraft.weightBody}
+                tracking={themeDraft.trackingBody}
+                onFont={(v) => updateTheme("fontBody", v)}
+                onWeight={(v) => updateTheme("weightBody", v)}
+                onTracking={(v) => updateTheme("trackingBody", v)}
+              />
+              <FontRoleControl
+                label="Nav Menu"
+                font={themeDraft.fontNavMenu}
+                weight={themeDraft.weightNavMenu}
+                tracking={themeDraft.trackingNavMenu}
+                onFont={(v) => updateTheme("fontNavMenu", v)}
+                onWeight={(v) => updateTheme("weightNavMenu", v)}
+                onTracking={(v) => updateTheme("trackingNavMenu", v)}
+              />
+              <FontRoleControl
+                label="Footer"
+                font={themeDraft.fontFooter}
+                weight={themeDraft.weightFooter}
+                tracking={themeDraft.trackingFooter}
+                onFont={(v) => updateTheme("fontFooter", v)}
+                onWeight={(v) => updateTheme("weightFooter", v)}
+                onTracking={(v) => updateTheme("trackingFooter", v)}
+              />
+              <FontRoleControl
+                label="Captions"
+                font={themeDraft.fontCaptions}
+                weight={themeDraft.weightCaptions}
+                tracking={themeDraft.trackingCaptions}
+                onFont={(v) => updateTheme("fontCaptions", v)}
+                onWeight={(v) => updateTheme("weightCaptions", v)}
+                onTracking={(v) => updateTheme("trackingCaptions", v)}
+              />
+              <FontRoleControl
+                label="Overlay Text"
+                font={themeDraft.fontOverlay}
+                weight={themeDraft.weightOverlay}
+                tracking={themeDraft.trackingOverlay}
+                onFont={(v) => updateTheme("fontOverlay", v)}
+                onWeight={(v) => updateTheme("weightOverlay", v)}
+                onTracking={(v) => updateTheme("trackingOverlay", v)}
+              />
               <div>
                 <label className="mb-1 block text-sm font-medium text-neutral-700">
                   Body Font Size — {themeDraft.bodyFontSize}px
@@ -353,7 +401,7 @@ export default function ThemesPage() {
         </div>
 
         {/* Live Preview */}
-        <div className="lg:w-96">
+        <div className="lg:w-[48rem]">
           <label className="mb-2 block text-sm font-medium text-neutral-700">Preview</label>
           <div className="sticky top-8">
             <ThemePreview
@@ -370,19 +418,37 @@ export default function ThemesPage() {
 
 /* ─── Helper Components ─── */
 
-function FontSelect({
+function FontRoleControl({
   label,
-  value,
-  onChange,
+  font,
+  weight,
+  tracking,
+  onFont,
+  onWeight,
+  onTracking,
 }: {
   label: string;
-  value: string;
-  onChange: (v: string) => void;
+  font: string;
+  weight: number;
+  tracking: number;
+  onFont: (v: string) => void;
+  onWeight: (v: number) => void;
+  onTracking: (v: number) => void;
 }) {
+  const range = getFontWeightRange(font);
+
+  function handleFontChange(name: string) {
+    onFont(name);
+    // Clamp weight into the new font's supported range
+    const newRange = getFontWeightRange(name);
+    if (weight < newRange.min) onWeight(newRange.min);
+    else if (weight > newRange.max) onWeight(newRange.max);
+  }
+
   return (
-    <div>
+    <div className="rounded border border-neutral-200 p-3">
       <label className="mb-1 block text-sm font-medium text-neutral-700">{label}</label>
-      <select value={value} onChange={(e) => onChange(e.target.value)} className="input-base">
+      <select value={font} onChange={(e) => handleFontChange(e.target.value)} className="input-base">
         <optgroup label="Serif">
           {SERIF_FONTS.map((f) => (
             <option key={f.name} value={f.name}>
@@ -405,7 +471,41 @@ function FontSelect({
           ))}
         </optgroup>
       </select>
-      <p className="mt-1 text-xs text-neutral-400" style={{ fontFamily: `"${value}", serif` }}>
+      <div className="mt-3 grid grid-cols-2 gap-4">
+        <div>
+          <label className="mb-1 block text-xs font-medium text-neutral-500">
+            Weight — {weight}
+          </label>
+          <input
+            type="range"
+            min={range.min}
+            max={range.max}
+            step={50}
+            value={weight}
+            onChange={(e) => onWeight(Number(e.target.value))}
+            className="w-full"
+            disabled={range.min === range.max}
+          />
+        </div>
+        <div>
+          <label className="mb-1 block text-xs font-medium text-neutral-500">
+            Tracking — {tracking.toFixed(3)}em
+          </label>
+          <input
+            type="range"
+            min={-0.1}
+            max={0.3}
+            step={0.005}
+            value={tracking}
+            onChange={(e) => onTracking(Number(e.target.value))}
+            className="w-full"
+          />
+        </div>
+      </div>
+      <p
+        className="mt-2 text-sm text-neutral-500"
+        style={{ fontFamily: `"${font}", serif`, fontWeight: weight, letterSpacing: `${tracking}em` }}
+      >
         The quick brown fox jumps over the lazy dog
       </p>
     </div>
