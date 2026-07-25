@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { formSubmissions, siteSettings } from "@/lib/db/schema";
-import { eq, desc } from "drizzle-orm";
+import { eq, desc, and, gte, count } from "drizzle-orm";
 import { sendFormNotification } from "@/lib/resend";
 
 export async function GET(req: NextRequest) {
@@ -69,6 +69,28 @@ export async function POST(req: NextRequest) {
       req.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ??
       req.headers.get("x-real-ip") ??
       null;
+
+    // Rate limit: max submissions per IP per window, counted against stored
+    // submissions so it holds across serverless instances.
+    if (ip) {
+      const RATE_LIMIT = 5;
+      const RATE_WINDOW_MS = 60 * 60 * 1000; // 1 hour
+      const [{ recent }] = await db
+        .select({ recent: count() })
+        .from(formSubmissions)
+        .where(
+          and(
+            eq(formSubmissions.ipAddress, ip),
+            gte(formSubmissions.submittedAt, new Date(Date.now() - RATE_WINDOW_MS))
+          )
+        );
+      if (recent >= RATE_LIMIT) {
+        return NextResponse.json(
+          { error: "Too many submissions. Please try again later." },
+          { status: 429 }
+        );
+      }
+    }
 
     const [row] = await db
       .insert(formSubmissions)
