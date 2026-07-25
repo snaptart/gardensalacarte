@@ -92,11 +92,15 @@ export default async function StoryPage({ params }: Props) {
   if (typography?.fontBody) fontsToLoad.push(typography.fontBody);
   const googleFontsUrl = buildGoogleFontsUrl(fontsToLoad);
 
-  const headingStyle = typography?.fontHeadings
-    ? { fontFamily: getFontFallback(typography.fontHeadings) }
-    : { fontFamily: "var(--theme-font-headings)" };
+  const headingStyle: React.CSSProperties = {
+    fontFamily: typography?.fontHeadings
+      ? getFontFallback(typography.fontHeadings)
+      : "var(--theme-font-headings)",
+    fontWeight: "var(--theme-weight-headings)" as React.CSSProperties["fontWeight"],
+    letterSpacing: "var(--theme-tracking-headings)",
+  };
 
-  const bodyStyle = typography?.fontBody
+  const bodyStyle: React.CSSProperties = typography?.fontBody
     ? { fontFamily: getFontFallback(typography.fontBody) }
     : {};
 
@@ -110,7 +114,7 @@ export default async function StoryPage({ params }: Props) {
         )}
         {story.showTitle && (
           <h1
-            className="mb-8 text-center text-4xl font-semibold tracking-tight"
+            className="mb-8 text-center text-4xl"
             style={headingStyle}
           >
             {story.title}

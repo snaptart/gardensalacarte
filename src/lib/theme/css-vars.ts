@@ -15,6 +15,18 @@ export function buildThemeCssVars(theme: ThemeSettings): string {
   --theme-font-footer: ${getFontFallback(theme.fontFooter)};
   --theme-font-captions: ${getFontFallback(theme.fontCaptions)};
   --theme-font-overlay: ${getFontFallback(theme.fontOverlay)};
+  --theme-weight-headings: ${theme.weightHeadings};
+  --theme-tracking-headings: ${theme.trackingHeadings}em;
+  --theme-weight-body: ${theme.weightBody};
+  --theme-tracking-body: ${theme.trackingBody}em;
+  --theme-weight-nav-menu: ${theme.weightNavMenu};
+  --theme-tracking-nav-menu: ${theme.trackingNavMenu}em;
+  --theme-weight-footer: ${theme.weightFooter};
+  --theme-tracking-footer: ${theme.trackingFooter}em;
+  --theme-weight-captions: ${theme.weightCaptions};
+  --theme-tracking-captions: ${theme.trackingCaptions}em;
+  --theme-weight-overlay: ${theme.weightOverlay};
+  --theme-tracking-overlay: ${theme.trackingOverlay}em;
   --theme-body-font-size: ${theme.bodyFontSize}px;
   --theme-logo-position: ${theme.logoPosition};
   --theme-logo-size: ${theme.logoSize}px;

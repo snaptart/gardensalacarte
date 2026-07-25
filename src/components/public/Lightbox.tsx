@@ -144,7 +144,7 @@ export default function Lightbox({ photos, selectedIndex, onClose, settings = DE
     if (!hasCaption) return null;
     return (
       <>
-        {fields.includes("title") && p.title && <p className="text-base" style={{ fontFamily: "var(--theme-font-captions)", color: "var(--theme-color-lightbox-text)" }}>{parseLinks(p.title)}</p>}
+        {fields.includes("title") && p.title && <p className="text-base" style={{ fontFamily: "var(--theme-font-captions)", fontWeight: "var(--theme-weight-captions)" as React.CSSProperties["fontWeight"], letterSpacing: "var(--theme-tracking-captions)", color: "var(--theme-color-lightbox-text)" }}>{parseLinks(p.title)}</p>}
         {fields.includes("description") && p.description && <p className="text-sm" style={{ color: "var(--theme-color-lightbox-text)", opacity: 0.8 }}>{parseLinks(p.description)}</p>}
         {fields.includes("location") && p.location && <p className="text-sm" style={{ color: "var(--theme-color-lightbox-text)", opacity: 0.6 }}>{parseLinks(p.location)}</p>}
         {fields.includes("camera") && p.cameraSettings && (

@@ -33,6 +33,8 @@ export async function Footer() {
         backgroundColor: "var(--theme-color-footer-bg)",
         fontFamily: "var(--theme-font-footer)",
         fontSize: "var(--theme-footer-font-size)",
+        fontWeight: "var(--theme-weight-footer)" as React.CSSProperties["fontWeight"],
+        letterSpacing: "var(--theme-tracking-footer)",
         color: "var(--theme-color-footer-text)",
       }}
     >

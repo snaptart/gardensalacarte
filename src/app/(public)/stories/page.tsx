@@ -23,8 +23,12 @@ export default async function StoriesIndexPage() {
   return (
     <div className="mx-auto max-w-3xl px-4 py-12">
       <h1
-        className="mb-10 text-center text-4xl font-semibold tracking-tight"
-        style={{ fontFamily: "var(--theme-font-headings)" }}
+        className="mb-10 text-center text-4xl"
+        style={{
+          fontFamily: "var(--theme-font-headings)",
+          fontWeight: "var(--theme-weight-headings)" as React.CSSProperties["fontWeight"],
+          letterSpacing: "var(--theme-tracking-headings)",
+        }}
       >
         Stories
       </h1>
@@ -41,8 +45,12 @@ export default async function StoriesIndexPage() {
               <div className="flex items-start justify-between gap-4">
                 <div>
                   <h2
-                    className="text-xl font-semibold"
-                    style={{ fontFamily: "var(--theme-font-headings)" }}
+                    className="text-xl"
+                    style={{
+                      fontFamily: "var(--theme-font-headings)",
+                      fontWeight: "var(--theme-weight-headings)" as React.CSSProperties["fontWeight"],
+                      letterSpacing: "var(--theme-tracking-headings)",
+                    }}
                   >
                     {story.title}
                   </h2>
