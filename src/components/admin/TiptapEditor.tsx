@@ -12,17 +12,16 @@ import FontFamily from "@tiptap/extension-font-family";
 import { FontSize } from "@/lib/tiptap/font-size";
 import { Indent } from "@/lib/tiptap/indent";
 import type { JSONContent } from "@tiptap/react";
+import { CURATED_FONTS, buildGoogleFontsUrl } from "@/lib/theme/fonts";
 
-const FONT_FAMILIES = [
-  { label: "Default", value: "" },
-  { label: "EB Garamond", value: "EB Garamond" },
-  { label: "Inter", value: "Inter" },
-  { label: "Georgia", value: "Georgia" },
-  { label: "Times New Roman", value: "Times New Roman" },
-  { label: "Arial", value: "Arial" },
-  { label: "Verdana", value: "Verdana" },
-  { label: "Courier New", value: "Courier New" },
-];
+const SERIF_FONTS = CURATED_FONTS.filter((f) => f.category === "serif");
+const SANS_FONTS = CURATED_FONTS.filter((f) => f.category === "sans-serif");
+const DISPLAY_FONTS = CURATED_FONTS.filter((f) => f.category === "display");
+const SYSTEM_FONTS = ["Georgia", "Times New Roman", "Arial", "Verdana", "Courier New"];
+
+// Font-face declarations are lazy — browsers only fetch files for families
+// actually rendered, so loading the whole curated list here is cheap.
+const EDITOR_FONTS_URL = buildGoogleFontsUrl(CURATED_FONTS.map((f) => f.name));
 
 const FONT_SIZES = [
   { label: "Default", value: "" },
@@ -81,11 +80,35 @@ function MenuBar({ editor }: { editor: Editor | null }) {
         }}
         className="rounded border border-neutral-300 bg-white px-1.5 py-1 text-sm text-neutral-700"
       >
-        {FONT_FAMILIES.map((f) => (
-          <option key={f.value} value={f.value}>
-            {f.label}
-          </option>
-        ))}
+        <option value="">Default</option>
+        <optgroup label="Serif">
+          {SERIF_FONTS.map((f) => (
+            <option key={f.name} value={f.name}>
+              {f.name}
+            </option>
+          ))}
+        </optgroup>
+        <optgroup label="Sans-Serif">
+          {SANS_FONTS.map((f) => (
+            <option key={f.name} value={f.name}>
+              {f.name}
+            </option>
+          ))}
+        </optgroup>
+        <optgroup label="Display">
+          {DISPLAY_FONTS.map((f) => (
+            <option key={f.name} value={f.name}>
+              {f.name}
+            </option>
+          ))}
+        </optgroup>
+        <optgroup label="System">
+          {SYSTEM_FONTS.map((name) => (
+            <option key={name} value={name}>
+              {name}
+            </option>
+          ))}
+        </optgroup>
       </select>
 
       <select
@@ -240,6 +263,7 @@ export default function TiptapEditor({ content, onChange }: TiptapEditorProps) {
 
   return (
     <div className="rounded border border-neutral-300 overflow-hidden">
+      {EDITOR_FONTS_URL && <link rel="stylesheet" href={EDITOR_FONTS_URL} />}
       <MenuBar editor={editor} />
       <EditorContent
         editor={editor}
