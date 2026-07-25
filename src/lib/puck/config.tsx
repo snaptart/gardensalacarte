@@ -1779,7 +1779,7 @@ export const puckConfig: Config<Components, RootProps> = {
         formName: { type: "text", label: "Form Name (identifier)" },
         submitLabel: { type: "text", label: "Submit Button Text" },
         successMessage: { type: "textarea", label: "Success Message" },
-        recipientEmail: { type: "text", label: "Notification Email (for future use)" },
+        recipientEmail: { type: "text", label: "Notification Email (defaults to site contact email)" },
       },
       defaultProps: {
         formName: "contact",

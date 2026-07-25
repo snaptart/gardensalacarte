@@ -9,7 +9,7 @@ A custom photo CMS: galleries, pages, short stories, a Puck page builder, and a 
 - **Database**: Vercel Postgres (Neon) via Drizzle ORM
 - **Auth**: NextAuth.js v5 (beta) — single admin, credentials provider
 - **Image Storage**: Vercel Blob (@vercel/blob)
-- **Email**: Resend (planned)
+- **Email**: Resend — form submission notifications (per-site env: `RESEND_API_KEY`, `RESEND_FROM_EMAIL`)
 - **Drag-and-drop**: @dnd-kit/core + @dnd-kit/sortable
 - **Rich Text**: Tiptap (planned)
 - **Lightbox**: Custom built-in lightbox (GalleryGrid component)
@@ -72,7 +72,7 @@ src/
     │   ├── index.ts                        # Lazy DB connection via Proxy
     │   └── seed.ts                         # Seeds admin user + default site settings
     ├── (image uploads use @vercel/blob directly in API routes)
-    └── resend.ts                           # (planned)
+    └── resend.ts                           # Resend client + form notification emails (needs RESEND_API_KEY + RESEND_FROM_EMAIL)
 ```
 
 ### Database Schema (src/lib/db/schema.ts)
@@ -110,8 +110,15 @@ src/
 - [x] Phase 3: Gallery + photo management (Vercel Blob upload, admin CRUD, public gallery with masonry grid + lightbox)
 - [ ] Phase 4: Page management (Tiptap rich text)
 - [ ] Phase 5: Short stories (password-protected)
-- [ ] Phase 6: Contact form (Resend)
+- [x] Phase 6: Contact form (Puck Form block + Resend email notifications)
 - [ ] Phase 7: Polish + SEO
+
+## Email Setup (per site)
+Form submission notifications are sent via Resend. Each downstream site configures its own account:
+1. Create a Resend account, add the site's domain, and add the DNS records Resend lists (they live on a `send.` subdomain / DKIM selectors — only ADD records; never edit existing MX or root SPF records, which may serve the site's regular mailboxes).
+2. Create a **sending-only** API key scoped to the domain.
+3. In the site's Vercel project set `RESEND_API_KEY` and `RESEND_FROM_EMAIL` (e.g. `Site Name <noreply@example.com>`; address must be on the verified domain but need not be a real mailbox).
+Recipient per form = the Form block's "Notification Email", falling back to the site's Contact Email setting. If env vars are unset, sends are skipped silently and submissions are still stored in the DB (Admin → Submissions).
 
 ## Notes
 - Next.js 16 renamed `middleware.ts` to `proxy.ts`
