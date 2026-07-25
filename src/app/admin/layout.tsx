@@ -2,6 +2,7 @@ import { auth } from "@/lib/auth";
 import { redirect } from "next/navigation";
 import { headers } from "next/headers";
 import { AdminSidebar } from "@/components/admin/Sidebar";
+import { AdminSessionProvider } from "@/components/admin/SessionProvider";
 
 export default async function AdminLayout({
   children,
@@ -22,9 +23,11 @@ export default async function AdminLayout({
   }
 
   return (
-    <div className="flex min-h-screen font-sans">
-      <AdminSidebar />
-      <main className="flex-1 bg-neutral-50 p-8">{children}</main>
-    </div>
+    <AdminSessionProvider>
+      <div className="flex min-h-screen font-sans">
+        <AdminSidebar />
+        <main className="flex-1 bg-neutral-50 p-8">{children}</main>
+      </div>
+    </AdminSessionProvider>
   );
 }
