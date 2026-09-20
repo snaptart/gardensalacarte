@@ -1,11 +1,85 @@
 # Peregrinatio — project notes
 
-State of the app as of 2026-09-13, for picking up work in a new session.
+State of the app as of 2026-09-13 (with later dated entries), for picking up work in a
+new session. **Read "Moving into snaptart.com" below first — that work is half done.**
 
-> **Git:** the work below is committed on branch `photo-journal` (not merged to `master`).
-> There is no remote. Real trip photos and `src/data/photos.generated.ts` are gitignored
-> on purpose (GPS/time metadata); only the five placeholders are tracked, and the
-> generated file is rebuilt before `start` / `web` / `typecheck`.
+> **Git:** this app now lives inside the **snaptart.com** repository at `apps/trip-map`,
+> committed on branch `redesign/field-map` (commit "Bring the France/Italy trip app into the
+> repo as apps/trip-map", 2026-09-19). Its old home,
+> `G:\Media\Web\2026 France and Italy trip map\trip-map`, is an archive: do not edit it.
+> That archive holds the app's own git history (branch `photo-journal`); the history did not
+> come across. Real trip photos, `assets/photo-cache/` and `src/data/photos.generated.ts`
+> are gitignored on purpose (GPS/time metadata); only the five placeholders are tracked.
+
+## Moving into snaptart.com — where we are
+
+**The goal.** Serve this app at **snaptart.com/2026-france-and-italy**, taking its
+photographs from the snaptart database and Vercel Blob instead of files bundled into the app.
+The app itself stays exactly as it is — same Expo/React Native stack, same look, maintained
+separately. It is an island inside the site: Next hands out its exported files and does not
+otherwise know about it, so there is no shared navbar, footer or SEO, and `next build` never
+builds it.
+
+**Why not port it into Next?** Considered and declined by the user (2026-09-19). Porting
+~2,400 lines of React Native to React would integrate it properly but is several sessions'
+work; the user is happy to maintain this app separately.
+
+**Decisions made with the user (2026-09-19):**
+- Public path: `/2026-france-and-italy` (hyphens, no spaces).
+- One published gallery per station, slugs `cucuron-2026`, `eze-2026`, `noli-2026`,
+  `marseille-2026`, `lyon-2026`.
+- **Keep all EXIF** in the full-size uploads (no stripping), understanding that anyone can
+  download an original from the page and read its GPS and timestamps. The site's 800px
+  thumbnails carry no metadata (sharp drops it). Before publishing, the user means to check
+  whether any of the 137 photos were taken at a home address.
+- Photo sizes at first: the site's existing `thumbnailUrl` (800px) for grid tiles *and* the
+  journal plate, full-size `url` in the lightbox. A smaller (~400px) size can be added to the
+  site's upload route later if the grid feels heavy (90 tiles × ~150KB ≈ 13MB).
+
+**Phase 1 — done (2026-09-19).** The app was copied to `apps/trip-map` (no `node_modules`,
+`.git`, `.expo`, `dist`, photo-cache), its dependencies installed there, `apps` excluded from
+the site's `tsconfig.json` (there is no ESLint config file in that repo), and a section added
+to the site's root `CLAUDE.md`. Verified: this app's `npm run typecheck` passes in the new
+location and the site's `npm run build` succeeds with the folder present. Nothing about how
+the app runs has changed: **photographs still come from local files.**
+
+**Next step — the user is to confirm** both still run from the new location: `npm run dev` at
+the repo root (site) and `npm run web` in `apps/trip-map` (this app, localhost:8081).
+
+**Phase 2 — photographs onto the site (not started).**
+- *User:* create the five galleries in the admin, publish them, upload each station's photos,
+  drag them into the order wanted (this replaces `npm run arrange`), and spot-check that
+  title/description came through — the site's upload route already reads IPTC/EXIF with
+  `exifr`, the same fields this app reads today.
+- *Code:* add a CORS header to `GET /api/photos` in the site so this app can fetch from it
+  while running on localhost:8081. Not needed in production (same origin).
+
+**Phase 3 — this app reads the gallery (not started).**
+- `GET /api/photos?gallerySlug=…` is public for published galleries and returns rows already
+  ordered by `gallery_photos.position`, with `title`, `description`, `takenAt`, `width`,
+  `height`, full-size `url` and 800px `thumbnailUrl`.
+- Give each station in `src/data/places.ts` its gallery slug; replace
+  `src/data/photos.generated.ts` with a fetch at start-up held in a provider. Note
+  `places.ts` currently reads photos synchronously at import time, so that becomes state, and
+  the existing "station has no photographs" path doubles as the loading state.
+- `Photo.tsx` already takes an `ImageSourcePropType`, so remote `{ uri }` needs no change; the
+  `isNear` windowing and the grid stay as they are.
+- Then delete what is dead: `scripts/build-photos.mjs`, `scripts/watch-photos.mjs`,
+  `scripts/photo-library.mjs`, `scripts/arrange-photos.mjs`, the `photos`/`arrange` npm
+  scripts and their `pre*` hooks, `metro.config.js`'s watcher, `assets/photo-cache/`, the
+  `sharp` dev dependency, and `assets/photos` itself once nothing needs it.
+
+**Phase 4 — publish (not started).**
+- Set `experiments.baseUrl` to `/2026-france-and-italy` in `app.json` (Expo SDK 57 supports
+  this for sub-path hosting).
+- `npx expo export -p web` (the notes' memory flag may be needed), then copy `dist` into the
+  site's `public/2026-france-and-italy/`. Add a rewrite in the site's `next.config.ts` so the
+  bare path serves that `index.html`. Add a script so rebuilding is one command, and don't
+  commit `dist` inside `apps/trip-map`.
+- Then: user pushes, Vercel deploys, and optionally adds a menu item pointing at the path.
+
+**Why not bundle the photos into a static export instead?** 222MB of originals plus copies
+would blow Vercel's 100MB Hobby upload limit, and the photos are deliberately not in git.
 
 ## What it is
 
