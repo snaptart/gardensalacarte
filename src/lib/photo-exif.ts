@@ -67,18 +67,49 @@ async function readDimensions(buffer: Buffer): Promise<{ width: number; height: 
   return swapped ? { width: h, height: w } : { width: w, height: h };
 }
 
+// takenAt is stored as UTC-of-wall-clock: the clock time the camera wrote, re-encoded
+// as UTC so it reads back identically wherever the server runs. EXIF's date tags carry
+// no timezone, and exifr revives them using the *server's* zone — on a machine in
+// America/Chicago "14:11:48" became 19:11:48Z, five hours off in the admin UI (and not
+// off at all on Vercel, where TZ=UTC). So we take the wall-clock fields and ignore any
+// offset: whether that clock was right is a metadata question, not a storage one.
 function pickTakenAt(raw: Record<string, unknown> | undefined): Date | null {
   if (!raw) return null;
   const candidates = ["DateTimeOriginal", "CreateDate", "DateCreated", "DateTime"];
   for (const key of candidates) {
     const v = raw[key];
-    if (v instanceof Date && !Number.isNaN(v.getTime())) return v;
+    if (v instanceof Date && !Number.isNaN(v.getTime())) {
+      // Local getters recover the components exifr parsed out of the tag.
+      return utcOfWallClock(
+        v.getFullYear(), v.getMonth() + 1, v.getDate(),
+        v.getHours(), v.getMinutes(), v.getSeconds(),
+      );
+    }
     if (typeof v === "string") {
-      const parsed = new Date(v);
-      if (!Number.isNaN(parsed.getTime())) return parsed;
+      // "2026:08:20 14:11:48", "2026-08-20T14:11:48.970-05:00", or date-only.
+      // Any trailing offset is deliberately left unparsed.
+      const m = v.match(
+        /^(\d{4})[-:](\d{2})[-:](\d{2})(?:[T ](\d{2}):(\d{2})(?::(\d{2}))?)?/,
+      );
+      if (!m) continue;
+      const parsed = utcOfWallClock(
+        Number(m[1]), Number(m[2]), Number(m[3]),
+        Number(m[4] ?? 0), Number(m[5] ?? 0), Number(m[6] ?? 0),
+      );
+      if (parsed) return parsed;
     }
   }
   return null;
+}
+
+function utcOfWallClock(
+  year: number, month: number, day: number,
+  hour: number, minute: number, second: number,
+): Date | null {
+  if (month < 1 || month > 12 || day < 1 || day > 31) return null;
+  if (hour > 23 || minute > 59 || second > 59) return null;
+  const dt = new Date(Date.UTC(year, month - 1, day, hour, minute, second));
+  return Number.isNaN(dt.getTime()) ? null : dt;
 }
 
 function pickNumber(raw: Record<string, unknown> | undefined, key: string): number | null {

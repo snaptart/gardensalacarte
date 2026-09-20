@@ -31,6 +31,8 @@ import {
   AlertCircle,
   Search,
   GripVertical,
+  ArrowDownUp,
+  ChevronRight,
 } from "lucide-react";
 import { SortableGridItem } from "@/components/admin/SortableGridItem";
 import FocalPointPicker from "@/components/admin/FocalPointPicker";
@@ -83,6 +85,46 @@ type SortKey =
   | "title"
   | "filename";
 
+const KEYWORDS_OPEN_KEY = "snaptart:admin:photos:keywordsOpen";
+
+const SORT_LABELS: Record<SortKey, string> = {
+  position: "Custom order",
+  newest: "Newest first",
+  oldest: "Oldest first",
+  title: "Title A–Z",
+  filename: "Filename A–Z",
+};
+
+// Pure sort used both for the admin view and for writing the order back to
+// gallery_photos.position, so what you see is exactly what gets saved.
+function sortPhotos(list: Photo[], key: SortKey): Photo[] {
+  if (key === "position") return list;
+  const sorted = [...list];
+  switch (key) {
+    case "newest":
+      sorted.sort(
+        (a, b) =>
+          new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime(),
+      );
+      break;
+    case "oldest":
+      sorted.sort(
+        (a, b) =>
+          new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime(),
+      );
+      break;
+    case "title":
+      sorted.sort((a, b) =>
+        (a.title ?? a.filename ?? "").localeCompare(b.title ?? b.filename ?? ""),
+      );
+      break;
+    case "filename":
+      sorted.sort((a, b) => (a.filename ?? "").localeCompare(b.filename ?? ""));
+      break;
+  }
+  return sorted;
+}
+
 export default function PhotosPage() {
   const searchParams = useSearchParams();
   const galleryIdParam = searchParams.get("galleryId");
@@ -106,7 +148,31 @@ export default function PhotosPage() {
   const [activeTag, setActiveTag] = useState<string | null>(null);
   const [search, setSearch] = useState("");
   const [sortKey, setSortKey] = useState<SortKey>("position");
+  const [applyingSort, setApplyingSort] = useState(false);
+  const [keywordsOpen, setKeywordsOpen] = useState(false);
   const { message, showSuccess, showError, alertClass } = useMessage();
+
+  // Collapsed by default, but remember the last choice per browser. Read after
+  // mount so the server-rendered markup and the first client render agree.
+  useEffect(() => {
+    try {
+      if (localStorage.getItem(KEYWORDS_OPEN_KEY) === "1") setKeywordsOpen(true);
+    } catch {
+      // private mode / blocked storage — stay collapsed
+    }
+  }, []);
+
+  const toggleKeywords = useCallback(() => {
+    setKeywordsOpen((prev) => {
+      const next = !prev;
+      try {
+        localStorage.setItem(KEYWORDS_OPEN_KEY, next ? "1" : "0");
+      } catch {
+        // not worth surfacing; the toggle still works for this session
+      }
+      return next;
+    });
+  }, []);
 
   const sensors = useSensors(
     // 6px activation distance so clicks don't trigger drag
@@ -194,6 +260,44 @@ export default function PhotosPage() {
       }),
     });
     if (!res.ok) showError("Failed to save order.");
+  }
+
+  // Writes the current sort back to gallery_photos.position for every photo in
+  // the gallery — not just the filtered/searched subset on screen — then drops
+  // back to Custom order so drag-reordering works from the new baseline.
+  async function handleApplySort() {
+    if (sortKey === "position" || photos.length === 0 || !selectedGallery)
+      return;
+    if (
+      !confirm(
+        `Reorder all ${photos.length} ${siteConfig.labels.photos.toLowerCase()} in this ${siteConfig.labels.gallery.toLowerCase()} by ${SORT_LABELS[sortKey]}? This replaces the current custom order.`,
+      )
+    )
+      return;
+
+    setApplyingSort(true);
+    const reordered = sortPhotos(photos, sortKey);
+    try {
+      const res = await fetch("/api/photos", {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          galleryId: selectedGallery,
+          items: reordered.map((p, i) => ({ id: p.id, position: i })),
+        }),
+      });
+      if (!res.ok) {
+        showError("Failed to save order.");
+        return;
+      }
+      setPhotos(await res.json());
+      setSortKey("position");
+      showSuccess(`Order saved — ${SORT_LABELS[sortKey]}.`);
+    } catch {
+      showError("Failed to save order.");
+    } finally {
+      setApplyingSort(false);
+    }
   }
 
   async function handleUpload(e: React.ChangeEvent<HTMLInputElement>) {
@@ -380,38 +484,7 @@ export default function PhotosPage() {
       );
     }
 
-    if (sortKey !== "position") {
-      const sorted = [...list];
-      switch (sortKey) {
-        case "newest":
-          sorted.sort(
-            (a, b) =>
-              new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime(),
-          );
-          break;
-        case "oldest":
-          sorted.sort(
-            (a, b) =>
-              new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime(),
-          );
-          break;
-        case "title":
-          sorted.sort((a, b) =>
-            (a.title ?? a.filename ?? "").localeCompare(
-              b.title ?? b.filename ?? "",
-            ),
-          );
-          break;
-        case "filename":
-          sorted.sort((a, b) =>
-            (a.filename ?? "").localeCompare(b.filename ?? ""),
-          );
-          break;
-      }
-      list = sorted;
-    }
-
-    return list;
+    return sortPhotos(list, sortKey);
   }, [photos, filter, activeTag, search, sortKey]);
 
   const needsTitleCount = photos.filter(
@@ -584,51 +657,94 @@ export default function PhotosPage() {
                 className="w-auto text-[12px] h-[34px]"
                 aria-label="Sort"
               >
-                <option value="position">Custom order</option>
-                <option value="newest">Newest first</option>
-                <option value="oldest">Oldest first</option>
-                <option value="title">Title A–Z</option>
-                <option value="filename">Filename A–Z</option>
+                {(Object.keys(SORT_LABELS) as SortKey[]).map((key) => (
+                  <option key={key} value={key}>
+                    {SORT_LABELS[key]}
+                  </option>
+                ))}
               </Select>
+              {sortKey !== "position" && (
+                <Button
+                  kind="ghost"
+                  size="sm"
+                  icon={<ArrowDownUp className="h-3.5 w-3.5" />}
+                  onClick={handleApplySort}
+                  disabled={applyingSort}
+                  className="h-[34px]"
+                  title={`Save ${SORT_LABELS[sortKey]} as this ${siteConfig.labels.gallery.toLowerCase()}'s order`}
+                >
+                  {applyingSort ? "Saving..." : "Apply this order"}
+                </Button>
+              )}
             </div>
           )}
         </div>
 
         {photos.length > 0 && (
-          <div className="flex flex-wrap items-center gap-1.5">
-            <FilterChip
-              active={filter === "all"}
-              onClick={() => setFilter("all")}
-              label={`All · ${photos.length}`}
-            />
-            {needsTitleCount > 0 && (
+          <div className="flex flex-col gap-1.5">
+            <div className="flex flex-wrap items-center gap-1.5">
               <FilterChip
-                active={filter === "needs-title"}
-                onClick={() => setFilter("needs-title")}
-                label={`No title · ${needsTitleCount}`}
+                active={filter === "all"}
+                onClick={() => setFilter("all")}
+                label={`All · ${photos.length}`}
               />
-            )}
-            {needsLocationCount > 0 && (
-              <FilterChip
-                active={filter === "needs-location"}
-                onClick={() => setFilter("needs-location")}
-                label={`No location · ${needsLocationCount}`}
-              />
-            )}
-            {uniqueTags.length > 0 && (
-              <>
-                <div className="mx-1 h-4 w-px bg-admin-border" />
+              {needsTitleCount > 0 && (
+                <FilterChip
+                  active={filter === "needs-title"}
+                  onClick={() => setFilter("needs-title")}
+                  label={`No title · ${needsTitleCount}`}
+                />
+              )}
+              {needsLocationCount > 0 && (
+                <FilterChip
+                  active={filter === "needs-location"}
+                  onClick={() => setFilter("needs-location")}
+                  label={`No location · ${needsLocationCount}`}
+                />
+              )}
+              {uniqueTags.length > 0 && (
+                <>
+                  <div className="mx-1 h-4 w-px bg-admin-border" />
+                  <button
+                    type="button"
+                    onClick={toggleKeywords}
+                    aria-expanded={keywordsOpen}
+                    aria-controls="keyword-filters"
+                    className="inline-flex items-center gap-1 rounded-full border border-admin-border bg-admin-surface-2 px-3 py-1 text-[12px] text-admin-ink-soft transition-colors hover:text-admin-ink"
+                  >
+                    <ChevronRight
+                      className={cn(
+                        "h-3 w-3 transition-transform",
+                        keywordsOpen && "rotate-90",
+                      )}
+                    />
+                    Keywords · {uniqueTags.length}
+                  </button>
+                  {/* Never hide an active keyword filter behind the collapse. */}
+                  {!keywordsOpen && activeTag && (
+                    <FilterChip
+                      active
+                      onClick={() => setActiveTag(null)}
+                      label={`#${activeTag}`}
+                    />
+                  )}
+                </>
+              )}
+            </div>
+            {keywordsOpen && uniqueTags.length > 0 && (
+              <div
+                id="keyword-filters"
+                className="flex flex-wrap items-center gap-1.5"
+              >
                 {uniqueTags.map((t) => (
                   <FilterChip
                     key={t}
                     active={activeTag === t}
-                    onClick={() =>
-                      setActiveTag(activeTag === t ? null : t)
-                    }
+                    onClick={() => setActiveTag(activeTag === t ? null : t)}
                     label={`#${t}`}
                   />
                 ))}
-              </>
+              </div>
             )}
           </div>
         )}
