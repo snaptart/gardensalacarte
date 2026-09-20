@@ -60,6 +60,7 @@ export async function POST(req: Request) {
       latitude: metadata.latitude,
       longitude: metadata.longitude,
       location: metadata.location,
+      title: metadata.title,
       description: metadata.description,
       tags: metadata.tags,
       cameraSettings: metadata.cameraSettings,

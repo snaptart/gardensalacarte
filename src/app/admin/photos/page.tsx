@@ -238,6 +238,7 @@ export default function PhotosPage() {
           latitude: uploaded_.latitude,
           longitude: uploaded_.longitude,
           location: uploaded_.location,
+          title: uploaded_.title,
           description: uploaded_.description,
           tags: uploaded_.tags,
           cameraSettings: uploaded_.cameraSettings,

@@ -52,6 +52,9 @@ async function backfillExif() {
       if (FORCE || !photo.location) {
         if (meta.location) patch.location = meta.location;
       }
+      if (FORCE || !photo.title) {
+        if (meta.title) patch.title = meta.title;
+      }
       if (FORCE || !photo.description) {
         if (meta.description) patch.description = meta.description;
       }

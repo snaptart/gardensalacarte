@@ -25,6 +25,7 @@ export type ExtractedPhotoMetadata = {
   latitude: number | null;
   longitude: number | null;
   location: string | null;
+  title: string | null;
   description: string | null;
   tags: string[] | null;
   cameraSettings: CameraSettings | null;
@@ -49,6 +50,7 @@ export async function extractPhotoMetadata(buffer: Buffer): Promise<ExtractedPho
     latitude: pickNumber(raw, "latitude"),
     longitude: pickNumber(raw, "longitude"),
     location: pickLocation(raw),
+    title: pickTitle(raw),
     description: pickDescription(raw),
     tags: pickTags(raw),
     cameraSettings: pickCameraSettings(raw),
@@ -96,6 +98,22 @@ function pickLocation(raw: Record<string, unknown> | undefined): string | null {
     }
   }
   return parts.length ? parts.join(", ") : null;
+}
+
+function pickTitle(raw: Record<string, unknown> | undefined): string | null {
+  if (!raw) return null;
+  // XMP dc:title arrives as `title` — sometimes a string, sometimes { lang, value }.
+  // IPTC stores the title in ObjectName (a.k.a. "Title"); Windows writes XPTitle, and
+  // Headline is a secondary candidate.
+  const candidates = [raw.title, raw.ObjectName, raw.Title, raw.XPTitle, raw.Headline];
+  for (const c of candidates) {
+    if (typeof c === "string" && c.trim()) return c.trim();
+    if (c && typeof c === "object" && "value" in c) {
+      const v = (c as { value?: unknown }).value;
+      if (typeof v === "string" && v.trim()) return v.trim();
+    }
+  }
+  return null;
 }
 
 function pickDescription(raw: Record<string, unknown> | undefined): string | null {
