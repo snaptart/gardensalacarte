@@ -32,6 +32,7 @@
     "android": "expo start --android",
     "ios": "expo start --ios",
     "web": "expo start --web",
+    "build:site": "node scripts/build-site.mjs",
     "build:geometry": "node scripts/build-geometry.mjs",
     "build:divisions": "node scripts/build-divisions.mjs",
     "build:rivers": "node scripts/build-rivers.mjs",

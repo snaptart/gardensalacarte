@@ -124,9 +124,12 @@ with the site's code, dependencies or build: it has its own `package.json`, `nod
 `tsconfig.json`, and is excluded from this project's tsconfig. See `apps/trip-map/CLAUDE.md` and
 `PROJECT_NOTES.md` for it.
 
-- Build it by hand (`npx expo export -p web` in that folder); `next build` never touches it.
+- Build it by hand: **`npm run build:site`** in that folder exports it and copies the result to
+  `public/2026-france-and-italy/`, which is committed. `next build` never touches it, so a change
+  to the app does nothing on the deployed site until that command is run and its output committed.
 - Its exported output is served as static files from `public/2026-france-and-italy/`, so the page
-  is an island: no shared navbar, footer or SEO.
+  is an island: no shared navbar, footer or SEO. `next.config.ts` rewrites the bare path to that
+  folder's `index.html`; `app.json`'s `experiments.baseUrl` gives its assets the same prefix.
 - It reads its photographs from this site's galleries (`GET /api/photos?gallerySlug=…`, one
   published gallery per station — `cucuron-2026`, `eze-2026`, `noli-2026`, `marseille-2026`,
   `lyon-2026`) rather than from files bundled into the app, so the images come from Vercel Blob

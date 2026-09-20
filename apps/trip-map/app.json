@@ -28,6 +28,9 @@
     },
     "plugins": [
       "expo-font"
-    ]
+    ],
+    "experiments": {
+      "baseUrl": "/2026-france-and-italy"
+    }
   }
 }

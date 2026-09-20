@@ -87,14 +87,33 @@ the repo root (site) and `npm run web` in `apps/trip-map` (this app, localhost:8
   which are gitignored and not Claude's to delete. Nothing in the app reads it any more, so
   it can go once the user is satisfied the uploads are complete and backed up.
 
-**Phase 4 — publish (not started).**
-- Set `experiments.baseUrl` to `/2026-france-and-italy` in `app.json` (Expo SDK 57 supports
-  this for sub-path hosting).
-- `npx expo export -p web` (the notes' memory flag may be needed), then copy `dist` into the
-  site's `public/2026-france-and-italy/`. Add a rewrite in the site's `next.config.ts` so the
-  bare path serves that `index.html`. Add a script so rebuilding is one command, and don't
-  commit `dist` inside `apps/trip-map`.
-- Then: user pushes, Vercel deploys, and optionally adds a menu item pointing at the path.
+**Phase 4 — publish (done 2026-09-20, not yet deployed).**
+- `app.json` sets `experiments.baseUrl` to `/2026-france-and-italy` (leading slash, no
+  trailing one — the documented form for SDK 57), so every script, font and icon in the
+  export is linked with that prefix.
+- **`npm run build:site`** (`scripts/build-site.mjs`) is the one command: it exports the web
+  build with the bigger heap and copies `dist` into the site's `public/2026-france-and-italy/`,
+  refusing to touch the target if the export produced no `index.html` or if something that is
+  not a previous export is sitting there. `dist/` itself stays gitignored; the copy under
+  `public/` is committed, because `next build` never builds this app.
+- The site's `next.config.ts` rewrites the bare `/2026-france-and-italy` to that folder's
+  `index.html`. Nothing else is needed: deeper paths are real files, and a trailing slash is
+  redirected to the bare path by Next before rewrites ever run.
+- Verified against `npm run build && npm start` at 1440×900 and 390×844, driving headless
+  Edge: every asset 200 under the prefix, the API called same-origin as plain `/api/photos`
+  (the production bundle has no localhost in it — `__DEV__` is compiled out), all 8 fonts
+  loaded, Cucuron opens to "1 OF 89", no console errors, nothing over 400.
+- **Left for the user:** push, let Vercel deploy, and optionally add a menu item pointing at
+  the path. Note the site's live photo pages are broken until `redesign/field-map` reaches
+  `dev` — the junction-table migration is already applied to the shared database while the
+  deployed code still expects the old `photos.gallery_id` column.
+
+**Rebuilding after a change to this app:** `npm run build:site`, then commit what changed
+under `public/2026-france-and-italy/`. Forgetting this is the obvious trap — the app will run
+perfectly on :8081 and the deployed page will still be the old export.
+
+**`EXPO_PUBLIC_SNAPTART_API` is inlined at export time**, not read at runtime, so it cannot
+be used to repoint a build that has already been made. That is only a development lever.
 
 **Why not bundle the photos into a static export instead?** 222MB of originals plus copies
 would blow Vercel's 100MB Hobby upload limit, and the photos are deliberately not in git.
@@ -116,6 +135,7 @@ One codebase: **Expo SDK 57 / React Native 0.86**, running on iOS, Android and w
 | Web | `npm run web` → http://localhost:8081 |
 | Phone | `npm start`, scan the QR code with Expo Go (same Wi-Fi) |
 | Typecheck | `npm run typecheck` |
+| Build for the site | `npm run build:site` → `public/2026-france-and-italy/` (commit the result) |
 
 **The photographs come from the site**, so the site's dev server must be running too
 (`npm run dev` at the repo root). On a phone, point the app at the machine rather than at the
