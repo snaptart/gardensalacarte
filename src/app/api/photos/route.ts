@@ -10,8 +10,16 @@ import {
   addPhotoToGallery,
   selectGalleryIdsForPhoto,
 } from "@/lib/db/photo-queries";
+import { corsPreflight, withCors } from "@/lib/cors";
+
+// Readable cross-origin so the trip journal can fetch its photographs — see @/lib/cors.
+export const OPTIONS = corsPreflight;
 
 export async function GET(req: Request) {
+  return withCors(await handleGet(req));
+}
+
+async function handleGet(req: Request) {
   try {
     const session = await auth();
     const { searchParams } = new URL(req.url);
