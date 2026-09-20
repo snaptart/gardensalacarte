@@ -1,7 +1,4 @@
 // Itinerary and chart annotations — authoritative data from the design handoff.
-import type { ImageSourcePropType } from 'react-native';
-
-import { photosFor, thumbnailFor, type Photograph } from './photos';
 
 export type Anchor = 'e' | 'w' | 's';
 
@@ -19,14 +16,11 @@ export type Place = {
   capLead: string;
   cap: string;
   /**
-   * Folder under assets/photos holding this station's photographs (read by
-   * scripts/photo-library.mjs; defaults to the id). Plain ASCII names are safest.
+   * Slug of the published gallery on snaptart.com holding this station's photographs. The
+   * slug is derived from the gallery's title in the admin, so "Cucuron 2026" gives
+   * "cucuron-2026". The gallery must be published or it reads as empty.
    */
-  folder?: string;
-  /** Photographs for this station, in the order set with `npm run arrange`. */
-  photos: Photograph[];
-  /** The photograph ticked as the thumbnail on the arrange page. */
-  thumbnail?: ImageSourcePropType;
+  gallery: string;
 };
 
 export const PLACES: Place[] = [
@@ -36,8 +30,7 @@ export const PLACES: Place[] = [
     sub: 'A hill village of the Luberon',
     capLead: 'The bassin and the plane trees.',
     cap: 'We began inland, among olive groves and dry stone — mornings at the market, afternoons at the pool in the shade of the cypress sentries.',
-    folder: 'Cucuron',
-    photos: photosFor('cucuron'), thumbnail: thumbnailFor('cucuron'),
+    gallery: 'cucuron-2026',
   },
   {
     id: 'eze', name: 'Èze-sur-Mer', country: 'France', lat: 43.7226, lon: 7.362,
@@ -45,8 +38,7 @@ export const PLACES: Place[] = [
     sub: "Beneath the eagle's nest, on the Riviera shore",
     capLead: 'Sea level, pressed against an azure playground of the rich.',
     cap: 'In the shadows the eyrie of the old village; we emerged for a swim before supper.',
-    folder: 'Eze-sur-Mer',
-    photos: photosFor('eze'), thumbnail: thumbnailFor('eze'),
+    gallery: 'eze-2026',
   },
   {
     id: 'noli', name: 'Noli', country: 'Italia', lat: 44.2065, lon: 8.4165,
@@ -54,8 +46,7 @@ export const PLACES: Place[] = [
     sub: 'A small medieval republic by the water',
     capLead: 'Towers and pebbles.',
     cap: 'Crossing into Liguria: watchtowers over the roofs, a pebbled beach, and the sea going through every colour of teal after sunrise.',
-    folder: 'Noli',
-    photos: photosFor('noli'), thumbnail: thumbnailFor('noli'),
+    gallery: 'noli-2026',
   },
   {
     id: 'marseille', name: 'Marseille', country: 'France', lat: 43.2965, lon: 5.3698,
@@ -63,8 +54,7 @@ export const PLACES: Place[] = [
     sub: 'The oldest port of the kingdom',
     capLead: 'Back west, to the Vieux-Port.',
     cap: "Bouillabaisse, the Chateau d'If, and Notre-Dame de la Garde keeping watch over the whole white sprawl.",
-    folder: 'Marseille',
-    photos: photosFor('marseille'), thumbnail: thumbnailFor('marseille'),
+    gallery: 'marseille-2026',
   },
   {
     id: 'lyon', name: 'Lyon', country: 'France', lat: 45.764, lon: 4.8357,
@@ -72,8 +62,7 @@ export const PLACES: Place[] = [
     sub: 'Where the Rhône weds the Saône',
     capLead: "Journey's end, at the confluence.",
     cap: 'Bouchons and old stone; we climbed Fourvière at dusk while the city lit itself below like a spilled brazier.',
-    folder: 'Lyon',
-    photos: photosFor('lyon'), thumbnail: thumbnailFor('lyon'),
+    gallery: 'lyon-2026',
   },
 ];
 

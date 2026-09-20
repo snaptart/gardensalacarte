@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { Animated, Easing, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 
+import { useStationThumbnail } from '../data/photos';
 import type { Place } from '../data/places';
 import { C, F, em, gradient } from '../theme';
 import { Header } from './Header';
@@ -63,6 +64,7 @@ export function Sidebar({ places, active, onOpen, onClose, width }: {
 
 function StationRow({ place, on, onPress }: { place: Place; on: boolean; onPress: () => void }) {
   const [hover, setHover] = useState(false);
+  const thumbnail = useStationThumbnail(place.id);
   return (
     <Pressable
       onPress={onPress}
@@ -74,7 +76,7 @@ function StationRow({ place, on, onPress }: { place: Place; on: boolean; onPress
       style={[s.row, hover && !on && s.rowHover, on && s.rowOn]}
     >
       <View style={s.thumb}>
-        <Photo source={place.thumbnail} sepia={0} />
+        <Photo source={thumbnail} sepia={0} />
       </View>
       <View style={{ flex: 1, minWidth: 0 }}>
         <Text style={s.rowDay}>{place.day.toUpperCase()}</Text>

@@ -5,6 +5,7 @@ import { Platform, StyleSheet, View, useWindowDimensions } from 'react-native';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { SafeAreaProvider, useSafeAreaInsets } from 'react-native-safe-area-context';
 
+import { PhotosProvider } from './src/data/photos';
 import { PLACES } from './src/data/places';
 import { TripMap } from './src/map/TripMap';
 import { C, FONT_ASSETS } from './src/theme';
@@ -25,9 +26,11 @@ export default function App() {
       <SafeAreaProvider>
         <StatusBar style="dark" />
         {fontsLoaded && (
-          <LightboxProvider>
-            <Journal />
-          </LightboxProvider>
+          <PhotosProvider>
+            <LightboxProvider>
+              <Journal />
+            </LightboxProvider>
+          </PhotosProvider>
         )}
       </SafeAreaProvider>
     </GestureHandlerRootView>

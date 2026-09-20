@@ -127,9 +127,13 @@ with the site's code, dependencies or build: it has its own `package.json`, `nod
 - Build it by hand (`npx expo export -p web` in that folder); `next build` never touches it.
 - Its exported output is served as static files from `public/2026-france-and-italy/`, so the page
   is an island: no shared navbar, footer or SEO.
-- It is being changed to read its photographs from this site's galleries
-  (`GET /api/photos?gallerySlug=…`, one published gallery per station) instead of files bundled
-  into the app; images then come from Vercel Blob like the rest of the site.
+- It reads its photographs from this site's galleries (`GET /api/photos?gallerySlug=…`, one
+  published gallery per station — `cucuron-2026`, `eze-2026`, `noli-2026`, `marseille-2026`,
+  `lyon-2026`) rather than from files bundled into the app, so the images come from Vercel Blob
+  like the rest of the site. Only `cucuron-2026` exists so far.
+- Because of that it needs `npm run dev` running here to show anything in development, and
+  `GET /api/photos` and `GET /api/galleries` send CORS read headers (`src/lib/cors.ts`) so it
+  can fetch them from its own dev server on :8081.
 
 ## Notes
 - Next.js 16 renamed `middleware.ts` to `proxy.ts`

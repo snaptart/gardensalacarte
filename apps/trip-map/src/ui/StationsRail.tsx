@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { Animated, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 
+import { useStationThumbnail } from '../data/photos';
 import type { Place } from '../data/places';
 import { C, F, em, gradient } from '../theme';
 import { Photo } from './Photo';
@@ -25,6 +26,7 @@ export function StationsRail({ places, active, onOpen, bottomInset }: {
 
 function Chip({ place, on, onPress }: { place: Place; on: boolean; onPress: () => void }) {
   const [hover, setHover] = useState(false);
+  const thumbnail = useStationThumbnail(place.id);
   const lift = useRef(new Animated.Value(0)).current;
 
   useEffect(() => {
@@ -49,7 +51,7 @@ function Chip({ place, on, onPress }: { place: Place; on: boolean; onPress: () =
         ]}
       >
         <View style={s.thumb}>
-          <Photo source={place.thumbnail} sepia={0} />
+          <Photo source={thumbnail} sepia={0} />
         </View>
         <Text style={s.name} numberOfLines={1}>{place.name}</Text>
         <Text style={s.stay}>{place.stay}</Text>

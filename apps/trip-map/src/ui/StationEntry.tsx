@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { Animated, Pressable, StyleSheet, Text, View } from 'react-native';
 
+import { usePhotos } from '../data/photos';
 import type { Place } from '../data/places';
 import { C, F, em, gradient } from '../theme';
 import { PhotoGallery } from './PhotoGallery';
@@ -16,14 +17,15 @@ export function StationEntry({ places, index, onOpen, onClose, roomy }: {
 }) {
   const p = places[index];
   const last = index === places.length - 1;
+  const photos = usePhotos(p.id);
 
   // The photograph on the plate, so its own title can sit above the station's caption.
   const [photoIndex, setPhotoIndex] = useState(0);
   useEffect(() => setPhotoIndex(0), [index]);
-  const photoTitle = p.photos[photoIndex]?.title;
+  const photoTitle = photos[photoIndex]?.title;
   // Keep the line in place for the whole station, so pictures without a title don't
   // shorten the card either.
-  const anyTitle = p.photos.some((ph) => !!ph.title);
+  const anyTitle = photos.some((ph) => !!ph.title);
 
   return (
     <>
@@ -44,7 +46,7 @@ export function StationEntry({ places, index, onOpen, onClose, roomy }: {
       </Text>
 
       <View style={s.plate}>
-        <PhotoGallery photos={p.photos} name={p.name} stationId={p.id} onIndexChange={setPhotoIndex} />
+        <PhotoGallery photos={photos} name={p.name} stationId={p.id} onIndexChange={setPhotoIndex} />
         {anyTitle && <PhotoTitle title={photoTitle} roomy={roomy} />}
       </View>
 

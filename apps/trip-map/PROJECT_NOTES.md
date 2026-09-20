@@ -46,28 +46,46 @@ the app runs has changed: **photographs still come from local files.**
 **Next step — the user is to confirm** both still run from the new location: `npm run dev` at
 the repo root (site) and `npm run web` in `apps/trip-map` (this app, localhost:8081).
 
-**Phase 2 — photographs onto the site (not started).**
-- *User:* create the five galleries in the admin, publish them, upload each station's photos,
-  drag them into the order wanted (this replaces `npm run arrange`), and spot-check that
-  title/description came through — the site's upload route already reads IPTC/EXIF with
-  `exifr`, the same fields this app reads today.
-- *Code:* add a CORS header to `GET /api/photos` in the site so this app can fetch from it
-  while running on localhost:8081. Not needed in production (same origin).
+**Phase 2 — photographs onto the site (done for Cucuron, 2026-09-20).**
+- *Site code:* `GET /api/photos` and `GET /api/galleries` now send
+  `Access-Control-Allow-Origin: *` (`src/lib/cors.ts` in the site), so this app can read them
+  from localhost:8081 or a phone on the LAN. Reads only; mutations stay same-origin. `*` is
+  deliberate — the browser then refuses to send cookies, so an admin session can never be
+  borrowed cross-origin.
+- *Site code:* the upload route now also reads the **title** (XMP `dc:title` / IPTC
+  `ObjectName` / `XPTitle` / `Headline`) alongside the caption, so the words this app shows
+  survive the move. `npm run db:backfill-exif` fills it in for photos already uploaded.
+- *User:* **Cucuron 2026** (`cucuron-2026`) is created, published and holds 89 photographs in
+  the wanted order, with titles and captions carried over from the files. The other four
+  galleries are **not made yet** — those stations simply show no photographs until they are.
+- Gallery slugs are derived from the title and cannot be edited, so the titles must be
+  `Cucuron 2026`, `Eze 2026` (plain E — `Èze` would give `ze-2026`), `Noli 2026`,
+  `Marseille 2026`, `Lyon 2026`.
 
-**Phase 3 — this app reads the gallery (not started).**
-- `GET /api/photos?gallerySlug=…` is public for published galleries and returns rows already
-  ordered by `gallery_photos.position`, with `title`, `description`, `takenAt`, `width`,
-  `height`, full-size `url` and 800px `thumbnailUrl`.
-- Give each station in `src/data/places.ts` its gallery slug; replace
-  `src/data/photos.generated.ts` with a fetch at start-up held in a provider. Note
-  `places.ts` currently reads photos synchronously at import time, so that becomes state, and
-  the existing "station has no photographs" path doubles as the loading state.
-- `Photo.tsx` already takes an `ImageSourcePropType`, so remote `{ uri }` needs no change; the
-  `isNear` windowing and the grid stay as they are.
-- Then delete what is dead: `scripts/build-photos.mjs`, `scripts/watch-photos.mjs`,
-  `scripts/photo-library.mjs`, `scripts/arrange-photos.mjs`, the `photos`/`arrange` npm
-  scripts and their `pre*` hooks, `metro.config.js`'s watcher, `assets/photo-cache/`, the
-  `sharp` dev dependency, and `assets/photos` itself once nothing needs it.
+**Phase 3 — this app reads the gallery (done 2026-09-20).**
+- `src/data/api.ts` holds the base URL: same origin in production on the web, localhost:3000
+  in development, `EXPO_PUBLIC_SNAPTART_API` to override (needed on a phone, where localhost
+  means the phone — the site's `npm run dev` already binds 0.0.0.0).
+- `src/data/photos.tsx` replaces the generated file: `PhotosProvider` fetches every station's
+  gallery once at start-up (`Promise.allSettled`, so one missing gallery doesn't sink the
+  rest) plus `/api/galleries` for the cover images, and `usePhotos(stationId)` /
+  `useStationThumbnail(stationId)` hand them out. A station with nothing shows the same
+  "no photographs" state as before, which doubles as the loading state.
+- The `Photograph` shape kept its `src` / `display` / `thumb` names, so `PhotoGallery`,
+  `Lightbox` and `Photo` did not change at all — only where the images come from.
+  `display` and `thumb` are both the site's 800px `thumbnailUrl`; `src` is the full-size file.
+- The gallery's **cover image**, chosen in the admin, is the station's thumbnail in the
+  sidebar and phone rail, falling back to the first photograph — the same "thumbnail picked
+  apart from the first photo" the arrange page used to offer.
+- `places.ts` no longer imports photos at all; each station carries a `gallery` slug instead
+  of `folder` / `photos` / `thumbnail`.
+- Deleted as dead: `scripts/build-photos.mjs`, `watch-photos.mjs`, `photo-library.mjs`,
+  `arrange-photos.mjs` (+ its HTML), `src/data/photos.ts`, `src/data/photos.generated.ts`,
+  the `photos`/`arrange` npm scripts and every `pre*` hook, `metro.config.js`'s watcher,
+  `assets/photo-cache/`, and the `sharp` and `exifr` dev dependencies.
+- **`assets/photos/` was deliberately left alone** — it holds the original trip photographs,
+  which are gitignored and not Claude's to delete. Nothing in the app reads it any more, so
+  it can go once the user is satisfied the uploads are complete and backed up.
 
 **Phase 4 — publish (not started).**
 - Set `experiments.baseUrl` to `/2026-france-and-italy` in `app.json` (Expo SDK 57 supports
@@ -97,9 +115,11 @@ One codebase: **Expo SDK 57 / React Native 0.86**, running on iOS, Android and w
 |---|---|
 | Web | `npm run web` → http://localhost:8081 |
 | Phone | `npm start`, scan the QR code with Expo Go (same Wi-Fi) |
-| Photo matching only | `npm run photos` (prints a report) |
-| Order photos / pick thumbnails | `npm run arrange` → http://127.0.0.1:8090 |
 | Typecheck | `npm run typecheck` |
+
+**The photographs come from the site**, so the site's dev server must be running too
+(`npm run dev` at the repo root). On a phone, point the app at the machine rather than at the
+phone's own localhost: `EXPO_PUBLIC_SNAPTART_API=http://192.168.x.x:3000 npm start`.
 
 The dev server hot-reloads; after changes, hard-refresh the browser (Ctrl+Shift+R) rather
 than restarting. A static web export needs more memory:
@@ -112,8 +132,10 @@ App.tsx                     layout switch (full / wide), web keyboard, LightboxP
 src/theme.ts                colours, per-weight font names, gradient() helper
 src/data/places.ts          the itinerary (authoritative), LEG_BOWS, all map label lists (seas,
                             landmarks, rivers, divisions, Europe), fit boxes — hand-tuned by the user
-src/data/photos.ts          photosFor(stationId), thumbnailFor(stationId)
-src/data/photos.generated.ts  GENERATED by scripts/build-photos.mjs — do not edit
+src/data/api.ts             where snaptart.com's API is (same origin in production, localhost:3000
+                            in dev, EXPO_PUBLIC_SNAPTART_API to override on a phone)
+src/data/photos.tsx         PhotosProvider: fetches every station's gallery once at start-up;
+                            usePhotos(stationId), useStationThumbnail(stationId)
 src/data/land.json          Natural Earth 50m, European countries only, generated by build-geometry
 src/data/divisions.json     internal région/département + regione/provincia borders (build-divisions)
 src/data/rivers.json        Rhône (Geneva → sea, both delta arms) and Saône centrelines (build-rivers)
@@ -133,17 +155,6 @@ src/ui/StationEntry.tsx     the journal page, shared by sheet and sidebar
 src/ui/PhotoGallery.tsx     photo plate: paging, arrows, diamond markers, opens lightbox
 src/ui/Lightbox.tsx         full-screen true-colour viewer with zoom/pan
 src/ui/Photo.tsx            image with optional sepia; fit cover/contain
-scripts/photo-library.mjs   shared: station folders (+ loose files by EXIF GPS) → ordered by
-                            assets/photos/arrangement.json → smaller copies (syncCache) →
-                            photos.generated.ts
-assets/photo-cache/         GENERATED, gitignored: thumb/ (480px short side) and display/ (1080px)
-                            JPEG copies of every photo + manifest.json (size:mtime per photo)
-scripts/build-photos.mjs    runs the library and prints the report (`npm run photos`)
-scripts/watch-photos.mjs    started by metro.config.js (so also under plain `npx expo start`): fs.watch
-                            on assets/photos (recursive) + places.ts, debounced rebuild; the
-                            generated file is only rewritten when its content changes
-scripts/arrange-photos.mjs  local node:http server (no deps) for arrange-photos.html: drag to
-                            order, tick thumbnail, Save writes arrangement.json + regenerates
 scripts/build-geometry.mjs  TopoJSON → src/data/land.json: country list, clip window, winding fix
                             (source not in repo: world-atlas@2.0.2/countries-50m.json on jsDelivr)
 scripts/build-divisions.mjs GeoJSON → src/data/divisions.json: topojson mesh of borders *between*
@@ -151,7 +162,9 @@ scripts/build-divisions.mjs GeoJSON → src/data/divisions.json: topojson mesh o
 scripts/build-rivers.mjs    Natural Earth 10m rivers → src/data/rivers.json (joins the two Saône
                             reaches; the lower one is misspelt "Sane" in the source)
 scripts/build-paper-texture.mjs  generates assets/textures/paper-grain.png
-assets/photos/              drop trip photos here (see README.md in that folder)
+assets/photos/              the original trip photographs. NOTHING READS THIS ANY MORE — the app
+                            takes its pictures from the site's galleries. Kept only as the user's
+                            own copy; gitignored.
 ```
 
 ## Features
@@ -189,40 +202,33 @@ assets/photos/              drop trip photos here (see README.md in that folder)
     request on 2026-09-13)
 - **Journal page** — station title, photo plate, caption, lat/long/sojourn/leg, Previous/Next.
   Web keys: ← → change station, Esc closes.
-- **Photos** — one folder per station under `assets/photos/` (`folder` in places.ts, defaults
-  to the id; currently Cucuron, Eze-sur-Mer, Noli, Marseille, Lyon). Everything in a folder
-  belongs to that station regardless of distance. Loose top-level files still fall back to
-  EXIF GPS (≤ 75 km, `--max-km`) or a station name in the file name. `<id>.jpg` placeholders
-  show only when a station has nothing else. HEIC is reported for conversion.
-- **Order and thumbnail** — `npm run arrange` opens a local page (embedded EXIF thumbnails as
-  tiles): drag to reorder, Alt+←/→, double-click for full size, radio for thumbnail, Save.
-  Stored in `assets/photos/arrangement.json` (gitignored with the photos) as
-  `{ stationId: { order: [paths], thumbnail } }`; unlisted photos follow, oldest first (dated
-  before undated). The thumbnail is chosen **independently of the first photo** (user's
-  decision, 2026-09-13) and used by the sidebar list and phone rail via `place.thumbnail`;
-  the gallery still starts at `photos[0]`.
-- **Titles and captions** — read from each file at build time (`meta()` in photo-library.mjs):
-  IPTC Object Name → title, Image Description → caption, with Title/XPTitle and Caption/
-  description as fallbacks. They ride along in photos.generated.ts as
-  `{ src, title?, caption? }` (`Photograph` in data/photos.ts). The lightbox shows the title
-  under the station line and the caption along the bottom, clamped to two lines and expanded by
-  a tap (collapses again on the next photograph, hidden while zoomed); the journal plate shows
-  the title in small capitals above the station caption. Nothing is shown for a photograph
-  without them (all decided with the user, 2026-09-15). The arrange page lists titles too.
-- **Image sizes** (2026-09-19) — originals average 1.6 MB. `writeGenerated` first runs
-  `syncCache` (sharp, dev dependency): copies for new/changed photos (manifest stamp
-  size:mtime, so a same-name re-export counts), prunes copies of removed photos, EXIF-rotates
-  and strips metadata. First run ~15 s for 137 photos, then <1 s. Each photo in the generated
-  file is `{ src, display, thumb, title?, caption? }`; a photo whose copies failed falls back to
-  the original. Used: `thumb` (~66 KB) for grid tiles, sidebar and phone chips; `display`
-  (~310 KB) for the plate; `src` only in the lightbox, over its `display` as an instant stand-in.
-  The plate and lightbox load images only for the current page ±1 (`isNear` in Photo.tsx,
-  counting around the ends); the grid is a FlatList (`key={cols}` because numColumns can't
-  change live, `getItemLayout` per row, `windowSize` 5). Checked in headless Edge at 1440×900
-  and 390×844: Cucuron opens with 3 display copies instead of 90 originals.
-  The lightbox still loads originals (current ±1). Photos are ~2000px now; the user may re-export
-  at up to **3000px long edge** (their stated cap, 2026-09-19), which is fine as is. Only for
-  larger originals add a third, lightbox-sized copy (~3000px) so phones don't run out of memory.
+- **Photos** (rewritten 2026-09-20) — each station names a published gallery on snaptart.com
+  (`gallery` in places.ts). `PhotosProvider` fetches all five at start-up and the pictures
+  come from Vercel Blob like the rest of the site. A gallery that does not exist, is not
+  published or is empty leaves that station with no photographs, which is also what is shown
+  while the fetch is in flight. Nothing is bundled into the app any more.
+- **Order and thumbnail** — the order is the one set by dragging in the site's admin
+  (`gallery_photos.position`, which the API returns rows in). The station's thumbnail in the
+  sidebar list and phone rail is the gallery's **cover image**, chosen in the admin apart from
+  the first photograph (preserving the user's 2026-09-13 decision), falling back to the first
+  photograph when no cover is set; the plate still starts at `photos[0]`.
+- **Titles and captions** — written into each file and read by the site's upload route
+  (`src/lib/photo-exif.ts`): XMP `dc:title` / IPTC `ObjectName` / `XPTitle` / `Headline` →
+  title, `Caption` / `ImageDescription` → caption. They arrive as the `title` and
+  `description` columns and become `title` / `caption` on `Photograph`. The lightbox shows the
+  title under the station line and the caption along the bottom, clamped to two lines and
+  expanded by a tap (collapses again on the next photograph, hidden while zoomed); the journal
+  plate shows the title in small capitals above the station caption. Nothing is shown for a
+  photograph without them (decided with the user, 2026-09-15).
+- **Image sizes** (2026-09-20) — the site makes one 800px copy per photograph on upload, so
+  `thumb` and `display` are both that copy (77–258 KB for Cucuron) and `src` is the full-size
+  file (2.7–3.8 MB at the user's 3000px cap). The plate and lightbox load only the current
+  page ±1 (`isNear` in Photo.tsx, counting around the ends); the grid is a FlatList
+  (`key={cols}` because numColumns can't change live, `getItemLayout` per row, `windowSize` 5).
+  Checked in headless Edge at 1440×900: opening Cucuron fetches 4 images, not 89.
+  If the grid ever feels heavy, add a ~400px size to the site's upload route and point `thumb`
+  at it — only `toPhotograph` in photos.tsx moves. A middle size for the lightbox is the other
+  candidate, since it currently jumps straight to the full-size file on a phone.
 - **Gallery** — journal plate pages through a station's photos (swipe, ‹ › arrows, diamond
   markers; a counter past 8 photos). Tap the photo or the ⤢ button to open the lightbox.
 - **Lightbox** — near-black warm backdrop, true colour. Pinch / double-tap / double-click /
@@ -293,12 +299,10 @@ assets/photos/              drop trip photos here (see README.md in that folder)
 
 ## Gotchas learned the hard way
 
-- **The photo watcher outlives changes to its own scripts.** It is started from metro.config.js,
-  so a dev server left running holds the `photo-library.mjs` it imported at startup: after the
-  library was changed to emit `{ src, title, caption }`, the old server kept rewriting
-  photos.generated.ts in the bare-`require()` format on every photo change, and the app showed
-  empty frames with no titles (2026-09-15). `watch-photos.mjs` now re-imports the library with a
-  cache-busting query on each rebuild; still restart the server after changing these scripts.
+- **The photographs need the site running.** They are fetched from snaptart.com's API, so in
+  development `npm run dev` must be up at the repo root or every station is empty. The stations
+  stay empty rather than erroring, so this looks like "no photos yet" rather than a failure —
+  check the console for the `[photos]` warning.
 
 - **react-native-web gives Views `z-index: 0`**, so any positioned wrapper forms its own
   stacking context. A child's high z-index is trapped inside it — give the wrapper the
@@ -368,9 +372,11 @@ assets/photos/              drop trip photos here (see README.md in that folder)
 
 - `props.pointerEvents is deprecated` warning in the console: move `pointerEvents` into
   `style` on the Views that use it.
-- Placeholder photos (`cucuron.jpg` etc., "replace me") are still in `assets/photos/`
-  alongside one real photo (`20260816_185811.jpg`, Cucuron). Delete placeholders once real
-  photos are added.
+- `assets/photos/` (originals and the old placeholders) is no longer read by anything. It can
+  be deleted once the user is satisfied every station's photographs are uploaded and backed
+  up; the five tracked placeholders go with it.
+- **Four galleries still to make**: `eze-2026`, `noli-2026`, `marseille-2026`, `lyon-2026`.
+  Those stations show no photographs until they exist and are published.
 - The user's very first `npm run web` error was never identified (it later ran fine).
 - In the lightbox, clicking on a letterbox band zooms about that point in the frame, not
   the photo.
