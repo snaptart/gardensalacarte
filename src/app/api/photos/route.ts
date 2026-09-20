@@ -11,7 +11,31 @@ import {
   selectGalleryIdsForPhoto,
 } from "@/lib/db/photo-queries";
 
+// Reads are open to any origin so the trip journal at /2026-france-and-italy can fetch its
+// photographs while running from its own dev server (localhost:8081, or a LAN address when
+// it is opened on a phone). In production it is served from this same origin and needs none
+// of this. `*` also means the browser refuses to send cookies, so a signed-in admin's session
+// can never be borrowed cross-origin: another origin only ever sees published galleries.
+const CORS_HEADERS = { "Access-Control-Allow-Origin": "*" };
+
+export async function OPTIONS() {
+  return new Response(null, {
+    status: 204,
+    headers: {
+      ...CORS_HEADERS,
+      "Access-Control-Allow-Methods": "GET, OPTIONS",
+      "Access-Control-Max-Age": "86400",
+    },
+  });
+}
+
 export async function GET(req: Request) {
+  const res = await handleGet(req);
+  for (const [name, value] of Object.entries(CORS_HEADERS)) res.headers.set(name, value);
+  return res;
+}
+
+async function handleGet(req: Request) {
   try {
     const session = await auth();
     const { searchParams } = new URL(req.url);
