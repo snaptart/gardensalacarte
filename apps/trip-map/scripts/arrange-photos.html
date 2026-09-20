@@ -1,0 +1,293 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Arrange photographs</title>
+<style>
+  :root {
+    --paper: #efe3c8; --card: #f7eed9; --ink: #3a2a18; --faint: rgba(58,42,24,.55);
+    --rule: rgba(58,42,24,.25); --wine: #7a2a2a; --gold: #b0842f;
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--paper); color: var(--ink); font: 15px/1.4 'EB Garamond', Georgia, serif; }
+  header {
+    position: sticky; top: 0; z-index: 5; display: flex; flex-wrap: wrap; gap: 12px; align-items: center;
+    padding: 12px 24px; background: rgba(239,227,200,.96); border-bottom: 1px solid var(--rule);
+  }
+  h1 { margin: 0; font: 600 18px/1.2 Cinzel, Georgia, serif; letter-spacing: .08em; }
+  .hint { color: var(--faint); font-size: 14px; flex: 1; min-width: 240px; }
+  button {
+    font: inherit; color: var(--ink); background: var(--card); border: 1px solid var(--rule);
+    padding: 6px 14px; border-radius: 3px; cursor: pointer;
+  }
+  button:hover:not(:disabled) { border-color: var(--ink); }
+  button.primary { background: var(--wine); color: #fff4e0; border-color: var(--wine); }
+  button:disabled { opacity: .45; cursor: default; }
+  #status { font-size: 14px; color: var(--faint); min-width: 90px; }
+  #status.dirty { color: var(--wine); }
+  main { padding: 8px 24px 64px; max-width: 1400px; margin: 0 auto; }
+  section { margin-top: 24px; }
+  .station-head { display: flex; flex-wrap: wrap; align-items: baseline; gap: 6px 14px; border-bottom: 1px solid var(--rule); padding-bottom: 6px; }
+  h2 { margin: 0; font: 600 16px/1.2 Cinzel, Georgia, serif; letter-spacing: .06em; }
+  .meta { color: var(--faint); font-size: 14px; flex: 1; }
+  .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(170px, 1fr)); gap: 12px; margin-top: 12px; }
+  .empty { color: var(--faint); font-style: italic; margin: 12px 0 0; }
+  .tile {
+    position: relative; margin: 0; background: var(--card); border: 1px solid var(--rule); border-radius: 3px;
+    padding: 6px; cursor: grab; user-select: none;
+  }
+  .tile:focus-visible { outline: 2px solid var(--gold); outline-offset: 2px; }
+  .tile.dragging { opacity: .35; }
+  .tile.is-thumb { border-color: var(--gold); box-shadow: 0 0 0 2px var(--gold); }
+  .frame { position: relative; aspect-ratio: 4 / 3; background: #d8c39b; overflow: hidden; }
+  .frame img { width: 100%; height: 100%; object-fit: cover; display: block; pointer-events: none; }
+  .num {
+    position: absolute; top: 4px; left: 4px; min-width: 22px; padding: 0 5px; text-align: center;
+    background: rgba(58,42,24,.8); color: #fff4e0; font-size: 12px; border-radius: 2px;
+  }
+  .badge {
+    position: absolute; top: 4px; right: 4px; padding: 0 6px; font-size: 12px; border-radius: 2px;
+    background: var(--gold); color: #2a1d0e; display: none;
+  }
+  .tile.is-thumb .badge { display: block; }
+  .name { font-size: 13px; margin-top: 5px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .ptitle { font-size: 12px; font-style: italic; color: var(--ink); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .when { font-size: 12px; color: var(--faint); }
+  .pick { display: flex; align-items: center; gap: 5px; font-size: 13px; margin-top: 3px; cursor: pointer; }
+  .notes { margin-top: 32px; padding: 12px 16px; border: 1px dashed var(--rule); font-size: 14px; }
+  .notes ul { margin: 4px 0 8px; padding-left: 20px; }
+  #viewer {
+    position: fixed; inset: 0; z-index: 10; background: rgba(20,14,8,.92); display: flex;
+    align-items: center; justify-content: center; padding: 24px; cursor: zoom-out;
+  }
+  [hidden] { display: none !important; }
+  #viewer img { max-width: 100%; max-height: 100%; object-fit: contain; }
+</style>
+</head>
+<body>
+<header>
+  <h1>Arrange photographs</h1>
+  <span class="hint">Drag photographs into order. Tick <b>Thumbnail</b> for the picture shown in the station list.
+    Double-click to view full size. With a photograph selected, Alt + ← → moves it.</span>
+  <span id="status"></span>
+  <button id="rescan" title="Look for photographs added or removed since the page opened">Rescan folders</button>
+  <button id="save" class="primary" disabled>Save</button>
+</header>
+<main id="stations"><p class="empty">Reading photographs…</p></main>
+<div id="viewer" hidden><img alt=""></div>
+
+<script>
+const $ = (sel, root = document) => root.querySelector(sel);
+const main = $('#stations');
+const saveBtn = $('#save');
+const status = $('#status');
+let dirty = false;
+
+const setDirty = (on) => {
+  dirty = on;
+  saveBtn.disabled = !on;
+  status.textContent = on ? 'Unsaved changes' : status.textContent;
+  status.className = on ? 'dirty' : '';
+};
+
+const q = (path) => encodeURIComponent(path);
+const fmt = (iso) => iso ? new Date(iso).toLocaleString(undefined, { dateStyle: 'medium', timeStyle: 'short' }) : 'no date';
+
+function render(data) {
+  main.textContent = '';
+  for (const st of data.stations) {
+    const sec = document.createElement('section');
+    sec.dataset.id = st.id;
+    sec.innerHTML = `
+      <div class="station-head">
+        <h2></h2>
+        <span class="meta"></span>
+        <button class="by-date" type="button">Sort by date taken</button>
+      </div>
+      <div class="grid"></div>`;
+    $('h2', sec).textContent = st.name;
+    $('.meta', sec).textContent =
+      `assets/photos/${st.folder} · ${st.photos.length} photograph${st.photos.length === 1 ? '' : 's'}${st.arranged ? '' : ' · not yet arranged (date order)'}`;
+    const grid = $('.grid', sec);
+    if (!st.photos.length) {
+      grid.outerHTML = `<p class="empty">No photographs yet. Add them to assets/photos/${st.folder}, then Rescan folders.</p>`;
+      $('.by-date', sec).hidden = true;
+    }
+    for (const p of st.photos) grid.append(tile(st, p));
+    main.append(sec);
+    if (st.photos.length) wire(sec);
+  }
+
+  const notes = [];
+  if (data.unplaced.length) notes.push(['Not placed (move these into a station folder)', data.unplaced.map((u) => `${u.path}: ${u.why}`)]);
+  if (data.strayFolders.length) notes.push(['Folders not linked to a station (set folder in src/data/places.ts)', data.strayFolders]);
+  if (data.convert.length) notes.push(['Need converting to JPEG', data.convert]);
+  if (notes.length) {
+    const box = document.createElement('div');
+    box.className = 'notes';
+    for (const [title, items] of notes) {
+      const h = document.createElement('b');
+      h.textContent = title;
+      const ul = document.createElement('ul');
+      for (const t of items) ul.append(Object.assign(document.createElement('li'), { textContent: t }));
+      box.append(h, ul);
+    }
+    main.append(box);
+  }
+}
+
+function tile(st, p) {
+  const el = document.createElement('figure');
+  el.className = 'tile';
+  el.draggable = true;
+  el.tabIndex = 0;
+  el.dataset.path = p.path;
+  el.dataset.taken = p.taken ?? '';
+  el.innerHTML = `
+    <div class="frame"><img loading="lazy" alt="" draggable="false"><span class="num"></span><span class="badge">★ Thumbnail</span></div>
+    <div class="name"></div>
+    <div class="ptitle"></div>
+    <div class="when"></div>
+    <label class="pick"><input type="radio"> Thumbnail</label>`;
+  $('img', el).src = `/thumb?path=${q(p.path)}`;
+  $('.name', el).textContent = p.path.split('/').pop();
+  $('.name', el).title = `${p.path} (${p.how})`;
+  $('.ptitle', el).textContent = p.title ?? '';
+  $('.ptitle', el).title = [p.title, p.caption].filter(Boolean).join(' — ');
+  $('.when', el).textContent = p.how === 'placeholder' ? 'placeholder' : fmt(p.taken);
+  const radio = $('input', el);
+  radio.name = `thumb-${st.id}`;
+  radio.value = p.path;
+  radio.checked = p.path === st.thumbnail;
+  el.classList.toggle('is-thumb', radio.checked);
+  return el;
+}
+
+function renumber(grid) {
+  [...grid.children].forEach((t, i) => { $('.num', t).textContent = i + 1; });
+}
+
+function wire(sec) {
+  const grid = $('.grid', sec);
+  renumber(grid);
+  let dragging = null;
+
+  grid.addEventListener('dragstart', (e) => {
+    dragging = e.target.closest('.tile');
+    if (!dragging) return;
+    dragging.classList.add('dragging');
+    e.dataTransfer.effectAllowed = 'move';
+    e.dataTransfer.setData('text/plain', dragging.dataset.path);
+  });
+  grid.addEventListener('dragover', (e) => {
+    if (!dragging) return; // a drag from another station's row
+    e.preventDefault();
+    const over = e.target.closest('.tile');
+    if (!over || over === dragging) return;
+    const r = over.getBoundingClientRect();
+    const after = e.clientX > r.left + r.width / 2;
+    const ref = after ? over.nextSibling : over;
+    if (ref !== dragging && ref !== dragging.nextSibling) {
+      grid.insertBefore(dragging, ref);
+      renumber(grid);
+      setDirty(true);
+    }
+  });
+  grid.addEventListener('drop', (e) => e.preventDefault());
+  grid.addEventListener('dragend', () => {
+    dragging?.classList.remove('dragging');
+    dragging = null;
+  });
+
+  grid.addEventListener('change', (e) => {
+    if (e.target.type !== 'radio') return;
+    for (const t of grid.children) t.classList.toggle('is-thumb', $('input', t).checked);
+    setDirty(true);
+  });
+
+  grid.addEventListener('keydown', (e) => {
+    const t = e.target.closest('.tile');
+    if (!t || !e.altKey || !['ArrowLeft', 'ArrowRight'].includes(e.key)) return;
+    e.preventDefault();
+    if (e.key === 'ArrowLeft' && t.previousElementSibling) grid.insertBefore(t, t.previousElementSibling);
+    else if (e.key === 'ArrowRight' && t.nextElementSibling) grid.insertBefore(t.nextElementSibling, t);
+    else return;
+    t.focus();
+    renumber(grid);
+    setDirty(true);
+  });
+
+  grid.addEventListener('dblclick', (e) => {
+    const t = e.target.closest('.tile');
+    if (!t || e.target.closest('.pick')) return;
+    const v = $('#viewer');
+    $('img', v).src = `/photo?path=${q(t.dataset.path)}`;
+    v.hidden = false;
+  });
+
+  $('.by-date', sec).addEventListener('click', () => {
+    const tiles = [...grid.children].sort((a, b) => {
+      const ta = a.dataset.taken; const tb = b.dataset.taken;
+      if (ta && tb) return new Date(ta) - new Date(tb) || a.dataset.path.localeCompare(b.dataset.path);
+      if (ta || tb) return ta ? -1 : 1;
+      return a.dataset.path.localeCompare(b.dataset.path);
+    });
+    grid.append(...tiles);
+    renumber(grid);
+    setDirty(true);
+  });
+}
+
+$('#viewer').addEventListener('click', (e) => { e.currentTarget.hidden = true; });
+document.addEventListener('keydown', (e) => { if (e.key === 'Escape') $('#viewer').hidden = true; });
+
+async function load(url, options) {
+  const res = await fetch(url, options);
+  const data = await res.json();
+  if (!res.ok) throw new Error(data.error || res.statusText);
+  render(data);
+  return data;
+}
+
+saveBtn.addEventListener('click', async () => {
+  const body = {};
+  for (const sec of main.querySelectorAll('section')) {
+    const tiles = [...sec.querySelectorAll('.tile')];
+    if (!tiles.length) continue;
+    body[sec.dataset.id] = {
+      order: tiles.map((t) => t.dataset.path),
+      thumbnail: sec.querySelector('input[type=radio]:checked')?.value,
+    };
+  }
+  saveBtn.disabled = true;
+  status.textContent = 'Saving…';
+  try {
+    await load('/api/save', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
+    setDirty(false);
+    status.textContent = `Saved ${new Date().toLocaleTimeString()}. The app reloads with the new order.`;
+  } catch (err) {
+    saveBtn.disabled = false;
+    status.textContent = `Save failed: ${err.message}. Is npm run arrange still running?`;
+    status.className = 'dirty';
+  }
+});
+
+$('#rescan').addEventListener('click', async () => {
+  if (dirty && !confirm('Rescanning discards unsaved changes. Continue?')) return;
+  status.textContent = 'Rescanning…';
+  try {
+    await load('/api/photos');
+    setDirty(false);
+    status.textContent = 'Folders rescanned.';
+  } catch (err) {
+    status.textContent = `Rescan failed: ${err.message}`;
+  }
+});
+
+window.addEventListener('beforeunload', (e) => { if (dirty) e.preventDefault(); });
+
+load('/api/photos').catch((err) => { main.innerHTML = ''; main.append(Object.assign(document.createElement('p'), { className: 'empty', textContent: `Could not read photographs: ${err.message}` })); });
+</script>
+</body>
+</html>

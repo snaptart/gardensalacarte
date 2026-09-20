@@ -37,6 +37,7 @@
   ],
   "exclude": [
     "node_modules",
-    "_design_handoff"
+    "_design_handoff",
+    "apps"
   ]
 }

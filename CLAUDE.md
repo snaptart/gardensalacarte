@@ -117,6 +117,20 @@ Tables defined with Drizzle ORM:
 - [ ] Phase 6: Contact form (Resend)
 - [ ] Phase 7: Polish + SEO
 
+## apps/trip-map — a separate app inside this repo
+A 2026 France/Italy trip journal (medieval-style map + photo journal), built with **Expo SDK 57 /
+React Native + react-native-web** — a different stack from this Next.js site. It shares nothing
+with the site's code, dependencies or build: it has its own `package.json`, `node_modules` and
+`tsconfig.json`, and is excluded from this project's tsconfig. See `apps/trip-map/CLAUDE.md` and
+`PROJECT_NOTES.md` for it.
+
+- Build it by hand (`npx expo export -p web` in that folder); `next build` never touches it.
+- Its exported output is served as static files from `public/2026-france-and-italy/`, so the page
+  is an island: no shared navbar, footer or SEO.
+- It is being changed to read its photographs from this site's galleries
+  (`GET /api/photos?gallerySlug=…`, one published gallery per station) instead of files bundled
+  into the app; images then come from Vercel Blob like the rest of the site.
+
 ## Notes
 - Next.js 16 renamed `middleware.ts` to `proxy.ts`
 - Fonts: EB Garamond (serif, headings/public) + Inter (sans, admin/body)
