@@ -20,6 +20,11 @@ type Group = PanelGroup<Props> & { shown: string[] };
 
 const OPEN_KEY = "puck-panel-groups";
 
+// Fields inside a group sit closer together than Puck's own one-field-per-row
+// spacing, with no rule between them. (Puck's field wrappers are the direct
+// children; its own rule adds the border and margin this takes off.)
+const GROUP_BODY = "[&>*]:mt-0! [&>*]:border-t-0! [&>*]:px-4! [&>*]:pt-1.5! [&>*]:pb-2!";
+
 function readOpenState(): Record<string, boolean> {
   try {
     return JSON.parse(localStorage.getItem(OPEN_KEY) ?? "{}") as Record<string, boolean>;
@@ -109,7 +114,7 @@ export function PanelFields({ children }: { children: ReactNode; isLoading: bool
         const fields = g.shown.map((name) => byName.get(name));
         if (bare || !g.title) {
           return (
-            <div key={g.title ?? "fields"} className="puck-panel-group-body py-1">
+            <div key={g.title ?? "fields"} className={`py-1 ${GROUP_BODY}`}>
               {fields}
             </div>
           );
@@ -139,7 +144,7 @@ export function PanelFields({ children }: { children: ReactNode; isLoading: bool
                 <span className="ml-auto min-w-0 truncate pl-3 text-[12px] text-admin-ink-faint">{summary}</span>
               )}
             </button>
-            {open && <div className="puck-panel-group-body pb-2">{fields}</div>}
+            {open && <div className={`pb-2 ${GROUP_BODY}`}>{fields}</div>}
           </section>
         );
       })}

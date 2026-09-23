@@ -165,7 +165,7 @@ export function TextStyleControl({
         </Knob>
 
         {withColor && (
-          <Knob label="Colour" adjusted={current.color !== undefined} onReset={() => set("color", undefined)} wide>
+          <Knob label="Color" adjusted={current.color !== undefined} onReset={() => set("color", undefined)} wide>
             <ColorControl
               value={current.color ?? ""}
               onChange={(v) => set("color", v || undefined)}

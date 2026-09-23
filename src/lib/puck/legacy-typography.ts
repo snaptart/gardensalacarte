@@ -67,6 +67,29 @@ export function migrateLinkList<T extends object>(props: T): T {
   return { ...clearKeys(props, LINKLIST_LEGACY), labelStyle, descriptionStyle };
 }
 
+// Forms had one fixed look before their fields and submit button could be
+// styled. A saved Form gets that look written in, so it keeps it until someone
+// changes it; new Forms start from the theme (the block's defaultProps).
+const FORM_LEGACY_LOOK = {
+  fieldTextStyle: { style: "body" },
+  placeholderColor: "",
+  fieldLook: "box",
+  fieldBorderColor: "#d4d4d4",
+  fieldBackground: "#ffffff",
+  fieldRadius: 4,
+  submitTextStyle: { style: "body", size: 14, lineHeight: 1.43 },
+  submitBgColor: "#171717",
+  submitTextColor: "#ffffff",
+  submitHoverBgColor: "#404040",
+  submitRadius: 4,
+} as const;
+
+export function migrateForm<T extends object>(props: T): T {
+  const p = props as Legacy;
+  if (p.fieldLook !== undefined) return props;
+  return { ...props, ...FORM_LEGACY_LOOK };
+}
+
 const GINDEX_LEGACY = [
   "titleFontRole", "titleSize", "titleColor", "titleWeight", "titleTransform",
   "listTitleFontRole", "listTitleSize", "listTitleWeight", "listTitleColor", "listTitleTransform", "listTitleTracking", "listTitleItalic",
