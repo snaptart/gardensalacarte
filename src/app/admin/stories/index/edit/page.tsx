@@ -5,7 +5,7 @@ import { Puck } from "@puckeditor/core";
 import type { Data } from "@puckeditor/core";
 import { puckConfig } from "@/lib/puck/config";
 import PuckThemeStyles from "@/components/admin/PuckThemeStyles";
-import { draggableOutlinePlugin } from "@/components/puck/DraggableOutline";
+import { puckOverrides } from "@/components/puck/overrides";
 import { STORIES_INDEX_DEFAULTS } from "@/components/public/stories/StoriesIndex";
 import "@puckeditor/core/puck.css";
 
@@ -74,7 +74,7 @@ export default function StoriesIndexEditorPage() {
         onPublish={handleSave}
         headerTitle="Stories — Contents page"
         headerPath="/stories"
-        overrides={draggableOutlinePlugin().overrides}
+        overrides={puckOverrides}
       />
       {saving && (
         <div className="fixed bottom-4 right-4 z-50 rounded bg-neutral-900 px-4 py-2 text-sm text-white shadow-lg">
