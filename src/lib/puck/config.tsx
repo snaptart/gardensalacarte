@@ -11,7 +11,7 @@ import GalleryPhotoMultiPicker from "@/components/admin/GalleryPhotoMultiPicker"
 import NextLink from "next/link";
 import { parseLinks } from "@/lib/parseLinks";
 import siteConfig from "@/lib/site.config";
-import { ColorControl, SegmentedControl, SliderControl, SpacingControl, TextStyleControl } from "@/components/admin/controls";
+import { ColorControl, ListControl, ListItemField, PhotoControl, PhotoListControl, SegmentedControl, SliderControl, SpacingControl, TextStyleControl } from "@/components/admin/controls";
 import { textStyleCss, type TextStyleValue } from "@/lib/theme/text-style-value";
 import { migrateButton, migrateForm, migrateGalleriesIndex, migrateImageBlock, migrateLinkList } from "@/lib/puck/legacy-typography";
 import { cssColor, withAlpha } from "@/lib/theme/color";
@@ -31,6 +31,24 @@ import type {
   MapStyle,
 } from "@/components/public/fieldmap/types";
 import { FormWrapperRender } from "@/components/puck/form/FormWrapper";
+import {
+  DetailsRender,
+  PageIntroRender,
+  SectionHeaderRender,
+  type DetailItem,
+  type DetailsProps,
+  type IntroStat,
+  type PageIntroProps,
+  type SectionHeaderProps,
+} from "@/components/puck/blocks/sections";
+import {
+  PLATE_ASPECT_OPTIONS,
+  PhotoPlateRender,
+  SelectedWorkRender,
+  type PhotoPlateProps,
+  type SelectedWorkProps,
+} from "@/components/puck/blocks/photos";
+import type { LibraryPhoto } from "@/lib/puck/photo-ref";
 import type { FormWrapperProps } from "@/components/puck/form/FormWrapper";
 import {
   TextFieldRender,
@@ -109,6 +127,27 @@ type ColumnsProps = {
   columns: "2" | "3";
   distribution: string;
   gap: string;
+  /** How columns of different heights line up. */
+  align: "start" | "center" | "end" | "stretch";
+};
+
+type RowsProps = {
+  gap: number;
+  align: "stretch" | "start" | "center" | "end";
+};
+
+const COLUMN_ALIGN: Record<ColumnsProps["align"], string> = {
+  start: "items-start",
+  center: "items-center",
+  end: "items-end",
+  stretch: "items-stretch",
+};
+
+const ROWS_ALIGN: Record<RowsProps["align"], string> = {
+  stretch: "items-stretch",
+  start: "items-start",
+  center: "items-center",
+  end: "items-end",
 };
 
 export type GlobalLightboxSettings = LightboxSettings;
@@ -333,6 +372,7 @@ export type Components = {
   Spacer: SpacerProps;
   Container: ContainerProps;
   Columns: ColumnsProps;
+  Rows: RowsProps;
   GalleryEmbed: GalleryEmbedProps;
   StoriesIndexBlock: StoriesIndexBlockProps;
   FieldMap: FieldMapBlockProps;
@@ -347,6 +387,11 @@ export type Components = {
   RadioGroup: RadioGroupProps;
   CheckboxGroup: CheckboxGroupProps;
   Checkbox: CheckboxProps;
+  PageIntro: PageIntroProps;
+  SectionHeader: SectionHeaderProps;
+  Details: DetailsProps;
+  PhotoPlate: PhotoPlateProps;
+  SelectedWork: SelectedWorkProps;
 };
 
 // ----- Puck config -----
@@ -354,9 +399,10 @@ export type Components = {
 export const puckConfig: Config<Components> = {
   categories: {
     content: { components: ["RichText", "ImageBlock", "Button", "LinkList", "GalleryEmbed", "GalleriesIndex", "Carousel", "FieldMap"] },
-    layout: { components: ["Columns", "Spacer", "Container"] },
+    layout: { components: ["Columns", "Rows", "Spacer", "Container"] },
     hero: { components: ["Hero", "HeroSlideshow"] },
     stories: { title: "Stories", components: ["StoriesIndexBlock"] },
+    sections: { title: "Page sections", components: ["PageIntro", "SectionHeader", "Details", "PhotoPlate", "SelectedWork"] },
     forms: { components: ["Form", "TextField", "TextArea", "SelectField", "RadioGroup", "CheckboxGroup", "Checkbox"] },
   },
   components: {
@@ -1644,6 +1690,37 @@ export const puckConfig: Config<Components> = {
       ),
     },
 
+    Rows: {
+      label: "Rows",
+      fields: {
+        gap: {
+          type: "custom",
+          label: "Space between rows",
+          render: ({ value, onChange }) => <SpacingControl value={value} onChange={onChange} />,
+        },
+        align: {
+          type: "radio",
+          label: "Line up",
+          options: [
+            { label: "Full width", value: "stretch" },
+            { label: "Left", value: "start" },
+            { label: "Center", value: "center" },
+            { label: "Right", value: "end" },
+          ],
+        },
+      },
+      defaultProps: { gap: 24, align: "stretch" },
+      // Blocks stacked with a set gap between them — the vertical partner to
+      // Columns. A block's own space above/below still adds to the gap.
+      render: ({ gap, align }) => (
+        <DropZone
+          zone="rows"
+          className={`flex flex-col ${ROWS_ALIGN[align ?? "stretch"]}`}
+          style={{ gap: gap ?? 24 }}
+        />
+      ),
+    },
+
     Columns: {
       label: "Columns",
       fields: {
@@ -1667,6 +1744,16 @@ export const puckConfig: Config<Components> = {
             { label: "Small", value: "gap-4" },
             { label: "Medium", value: "gap-8" },
             { label: "Large", value: "gap-12" },
+          ],
+        },
+        align: {
+          type: "radio",
+          label: "Line up",
+          options: [
+            { label: "Top", value: "start" },
+            { label: "Middle", value: "center" },
+            { label: "Bottom", value: "end" },
+            { label: "Stretch", value: "stretch" },
           ],
         },
       },
@@ -1693,8 +1780,8 @@ export const puckConfig: Config<Components> = {
           },
         };
       },
-      defaultProps: { columns: "2", distribution: "equal", gap: "gap-8" },
-      render: ({ columns, distribution, gap }) => {
+      defaultProps: { columns: "2", distribution: "equal", gap: "gap-8", align: "stretch" },
+      render: ({ columns, distribution, gap, align }) => {
         const colCount = columns === "3" ? 3 : 2;
 
         // Filter distribution options based on column count
@@ -1721,14 +1808,19 @@ export const puckConfig: Config<Components> = {
         const templateKey = `${colCount}-${dist}`;
         const gridTemplate = gridTemplates[templateKey] || (colCount === 3 ? "1fr 1fr 1fr" : "1fr 1fr");
 
+        // Side by side once the block itself is 640px wide, stacked below that.
+        // Measuring the block rather than the screen keeps the columns in the
+        // editor whatever its preview width, and on the site within any container.
         return (
-          <div
-            className={`puck-columns grid ${gap}`}
-            style={{ "--col-template": gridTemplate } as React.CSSProperties}
-          >
-            {Array.from({ length: colCount }).map((_, i) => (
-              <DropZone key={i} zone={`column-${i}`} />
-            ))}
+          <div className="@container">
+            <div
+              className={`puck-columns grid grid-cols-1 @min-[40rem]:grid-cols-[var(--col-template)] ${gap} ${COLUMN_ALIGN[align ?? "stretch"]}`}
+              style={{ "--col-template": gridTemplate } as React.CSSProperties}
+            >
+              {Array.from({ length: colCount }).map((_, i) => (
+                <DropZone key={i} zone={`column-${i}`} className="min-w-0" />
+              ))}
+            </div>
           </div>
         );
       },
@@ -2421,6 +2513,463 @@ export const puckConfig: Config<Components> = {
               />
             </div>
           </>
+        );
+      },
+    },
+
+    // ----- Page sections (design canvas) -----
+
+    PageIntro: {
+      label: "Page Intro",
+      fields: {
+        eyebrow: { type: "text", label: "Eyebrow" },
+        title: { type: "textarea", label: "Title" },
+        text: { type: "textarea", label: "Text (a blank line starts a new paragraph)" },
+        linkLabel: { type: "text", label: "Link text" },
+        link: {
+          type: "custom",
+          label: "Goes to",
+          render: ({ value, onChange }) => <LinkPicker value={value ?? ""} onChange={onChange} />,
+        },
+        stats: {
+          type: "custom",
+          render: ({ value, onChange }) => (
+            <ListControl<IntroStat>
+              value={value}
+              onChange={onChange}
+              addLabel="Add stat"
+              newItem={() => ({ id: crypto.randomUUID(), label: "", value: "" })}
+              summary={(s) => [s.label, s.value].filter(Boolean).join(" · ")}
+              renderItem={(s, update) => (
+                <>
+                  <ListItemField label="Label" value={s.label} onChange={(v) => update({ label: v })} placeholder="Photographs" />
+                  <ListItemField label="Value" value={s.value} onChange={(v) => update({ value: v })} placeholder="04" />
+                </>
+              )}
+            />
+          ),
+        },
+        eyebrowStyle: {
+          type: "custom",
+          label: "Text style",
+          render: ({ value, onChange }) => <TextStyleControl value={value} onChange={onChange} fallback="label" />,
+        },
+        titleStyle: {
+          type: "custom",
+          label: "Text style",
+          render: ({ value, onChange }) => <TextStyleControl value={value} onChange={onChange} fallback="display" />,
+        },
+        titleTag: {
+          type: "radio",
+          label: "Heading level",
+          options: [
+            { label: "Page title (H1)", value: "h1" },
+            { label: "Section (H2)", value: "h2" },
+          ],
+        },
+        textStyle: {
+          type: "custom",
+          label: "Text style",
+          render: ({ value, onChange }) => <TextStyleControl value={value} onChange={onChange} fallback="lead" />,
+        },
+        linkStyle: {
+          type: "custom",
+          label: "Text style",
+          render: ({ value, onChange }) => <TextStyleControl value={value} onChange={onChange} fallback="label" withColor={false} />,
+        },
+        statLabelStyle: {
+          type: "custom",
+          label: "Label text style",
+          render: ({ value, onChange }) => <TextStyleControl value={value} onChange={onChange} fallback="meta" />,
+        },
+        statValueStyle: {
+          type: "custom",
+          label: "Value text style",
+          render: ({ value, onChange }) => <TextStyleControl value={value} onChange={onChange} fallback="collectionTitle" />,
+        },
+        alignment: {
+          type: "radio",
+          label: "Alignment",
+          options: [
+            { label: "Left", value: "left" },
+            { label: "Center", value: "center" },
+          ],
+        },
+        textMaxWidth: {
+          type: "custom",
+          label: "Text width (0 = full)",
+          render: ({ value, onChange }) => <SliderField value={value ?? 0} onChange={onChange} min={0} max={1248} step={4} unit="px" />,
+        },
+        ruleBelow: {
+          type: "radio",
+          label: "Rule below",
+          options: [
+            { label: "Yes", value: true },
+            { label: "No", value: false },
+          ],
+        },
+        ruleGap: {
+          type: "custom",
+          label: "Space above the rule",
+          render: ({ value, onChange }) => <SpacingControl value={value} onChange={onChange} />,
+        },
+        marginTop: {
+          type: "custom",
+          label: "Space above",
+          render: ({ value, onChange }) => <SpacingControl value={value} onChange={onChange} />,
+        },
+        marginBottom: {
+          type: "custom",
+          label: "Space below",
+          render: ({ value, onChange }) => <SpacingControl value={value} onChange={onChange} />,
+        },
+      },
+      defaultProps: {
+        eyebrow: "Collections",
+        title: "Bodies of work.",
+        text: "",
+        linkLabel: "",
+        link: "",
+        stats: [],
+        eyebrowStyle: { style: "label" },
+        titleStyle: { style: "display" },
+        titleTag: "h1",
+        textStyle: { style: "lead" },
+        linkStyle: { style: "label" },
+        statLabelStyle: { style: "meta" },
+        statValueStyle: { style: "collectionTitle", size: 26 },
+        alignment: "left",
+        textMaxWidth: 720,
+        ruleBelow: true,
+        ruleGap: 64,
+        marginTop: 0,
+        marginBottom: 72,
+      },
+      render: ({ puck: _puck, ...props }) => <PageIntroRender {...props} />,
+    },
+
+    SectionHeader: {
+      label: "Section Header",
+      fields: {
+        title: { type: "text", label: "Title" },
+        linkLabel: { type: "text", label: "Link text" },
+        link: {
+          type: "custom",
+          label: "Goes to",
+          render: ({ value, onChange }) => <LinkPicker value={value ?? ""} onChange={onChange} />,
+        },
+        titleStyle: {
+          type: "custom",
+          label: "Text style",
+          render: ({ value, onChange }) => <TextStyleControl value={value} onChange={onChange} fallback="label" />,
+        },
+        titleTag: {
+          type: "radio",
+          label: "Heading level",
+          options: [
+            { label: "H2", value: "h2" },
+            { label: "H3", value: "h3" },
+          ],
+        },
+        linkStyle: {
+          type: "custom",
+          label: "Text style",
+          render: ({ value, onChange }) => <TextStyleControl value={value} onChange={onChange} fallback="meta" />,
+        },
+        ruleBelow: {
+          type: "radio",
+          label: "Rule below",
+          options: [
+            { label: "Yes", value: true },
+            { label: "No", value: false },
+          ],
+        },
+        marginTop: {
+          type: "custom",
+          label: "Space above",
+          render: ({ value, onChange }) => <SpacingControl value={value} onChange={onChange} />,
+        },
+        marginBottom: {
+          type: "custom",
+          label: "Space below",
+          render: ({ value, onChange }) => <SpacingControl value={value} onChange={onChange} />,
+        },
+      },
+      defaultProps: {
+        title: "Selected work",
+        linkLabel: "",
+        link: "",
+        titleStyle: { style: "label" },
+        titleTag: "h2",
+        linkStyle: { style: "meta" },
+        ruleBelow: true,
+        marginTop: 48,
+        marginBottom: 48,
+      },
+      render: ({ puck: _puck, ...props }) => <SectionHeaderRender {...props} />,
+    },
+
+    Details: {
+      label: "Details",
+      fields: {
+        items: {
+          type: "custom",
+          render: ({ value, onChange }) => (
+            <ListControl<DetailItem>
+              value={value}
+              onChange={onChange}
+              addLabel="Add detail"
+              newItem={() => ({ id: crypto.randomUUID(), term: "", description: "", link: "" })}
+              summary={(d) => [d.term, d.description].filter(Boolean).join(" · ")}
+              renderItem={(d, update) => (
+                <>
+                  <ListItemField label="Term" value={d.term} onChange={(v) => update({ term: v })} placeholder="Email" />
+                  <ListItemField label="Description" value={d.description} onChange={(v) => update({ description: v })} multiline />
+                  <div className="flex flex-col gap-1">
+                    <span className="text-[12px] font-medium text-admin-ink">Link (optional)</span>
+                    <LinkPicker value={d.link} onChange={(v) => update({ link: v })} />
+                  </div>
+                </>
+              )}
+            />
+          ),
+        },
+        layout: {
+          type: "radio",
+          label: "Layout",
+          options: [
+            { label: "Rows", value: "rows" },
+            { label: "Columns", value: "columns" },
+            { label: "In a line", value: "inline" },
+          ],
+        },
+        columns: {
+          type: "select",
+          label: "Columns",
+          options: [
+            { label: "2", value: "2" },
+            { label: "3", value: "3" },
+            { label: "4", value: "4" },
+          ],
+        },
+        dividers: {
+          type: "radio",
+          label: "Rules between rows",
+          options: [
+            { label: "Yes", value: true },
+            { label: "No", value: false },
+          ],
+        },
+        termStyle: {
+          type: "custom",
+          label: "Text style",
+          render: ({ value, onChange }) => <TextStyleControl value={value} onChange={onChange} fallback="meta" />,
+        },
+        descriptionStyle: {
+          type: "custom",
+          label: "Text style",
+          render: ({ value, onChange }) => <TextStyleControl value={value} onChange={onChange} fallback="collectionTitle" />,
+        },
+        marginTop: {
+          type: "custom",
+          label: "Space above",
+          render: ({ value, onChange }) => <SpacingControl value={value} onChange={onChange} />,
+        },
+        marginBottom: {
+          type: "custom",
+          label: "Space below",
+          render: ({ value, onChange }) => <SpacingControl value={value} onChange={onChange} />,
+        },
+      },
+      defaultProps: {
+        items: [],
+        layout: "rows",
+        columns: "3",
+        dividers: true,
+        termStyle: { style: "meta" },
+        descriptionStyle: { style: "collectionTitle", size: 22 },
+        marginTop: 0,
+        marginBottom: 48,
+      },
+      render: ({ puck, ...props }) => <DetailsRender {...props} editing={!!puck?.isEditing} />,
+    },
+
+    PhotoPlate: {
+      label: "Photo Plate",
+      fields: {
+        photo: {
+          type: "custom",
+          render: ({ value, onChange }) => <PhotoControl value={value} onChange={onChange} />,
+        },
+        title: { type: "text", label: "Title (blank = the photo's title)" },
+        meta: { type: "text", label: "Details (blank = the photo's location)" },
+        onClick: {
+          type: "radio",
+          label: "Clicking the photo",
+          options: [
+            { label: "Enlarges it", value: "lightbox" },
+            { label: "Follows a link", value: "link" },
+            { label: "Nothing", value: "none" },
+          ],
+        },
+        link: {
+          type: "custom",
+          label: "Goes to",
+          render: ({ value, onChange }) => <LinkPicker value={value ?? ""} onChange={onChange} />,
+        },
+        aspectRatio: {
+          type: "select",
+          label: "Crop",
+          options: PLATE_ASPECT_OPTIONS,
+        },
+        showCaption: {
+          type: "radio",
+          label: "Display",
+          options: [
+            { label: "Show", value: true },
+            { label: "Hide", value: false },
+          ],
+        },
+        captionRule: {
+          type: "radio",
+          label: "Rule above the caption",
+          options: [
+            { label: "Yes", value: true },
+            { label: "No", value: false },
+          ],
+        },
+        titleStyle: {
+          type: "custom",
+          label: "Title text style",
+          render: ({ value, onChange }) => <TextStyleControl value={value} onChange={onChange} fallback="photoTitle" />,
+        },
+        metaStyle: {
+          type: "custom",
+          label: "Details text style",
+          render: ({ value, onChange }) => <TextStyleControl value={value} onChange={onChange} fallback="meta" />,
+        },
+        marginTop: {
+          type: "custom",
+          label: "Space above",
+          render: ({ value, onChange }) => <SpacingControl value={value} onChange={onChange} />,
+        },
+        marginBottom: {
+          type: "custom",
+          label: "Space below",
+          render: ({ value, onChange }) => <SpacingControl value={value} onChange={onChange} />,
+        },
+      },
+      defaultProps: {
+        photo: null,
+        title: "",
+        meta: "",
+        onClick: "lightbox",
+        link: "",
+        aspectRatio: "natural",
+        showCaption: true,
+        captionRule: true,
+        titleStyle: { style: "photoTitle" },
+        metaStyle: { style: "meta" },
+        marginTop: 0,
+        marginBottom: 72,
+      },
+      render: ({ puck, ...props }) => {
+        const metadata = puck?.metadata as Record<string, unknown> | undefined;
+        return (
+          <PhotoPlateRender
+            {...props}
+            editing={!!puck?.isEditing}
+            library={metadata?.photosById as Record<string, LibraryPhoto> | undefined}
+            lightbox={metadata?.globalLightbox as GlobalLightboxSettings | undefined}
+          />
+        );
+      },
+    },
+
+    SelectedWork: {
+      label: "Selected Work",
+      fields: {
+        photos: {
+          type: "custom",
+          render: ({ value, onChange }) => <PhotoListControl value={value} onChange={onChange} />,
+        },
+        onClick: {
+          type: "radio",
+          label: "Clicking a photo",
+          options: [
+            { label: "Enlarges it", value: "lightbox" },
+            { label: "Nothing", value: "none" },
+          ],
+        },
+        showTitles: {
+          type: "radio",
+          label: "Titles",
+          options: [
+            { label: "Show", value: true },
+            { label: "Hide", value: false },
+          ],
+        },
+        titleStyle: {
+          type: "custom",
+          label: "Text style",
+          render: ({ value, onChange }) => <TextStyleControl value={value} onChange={onChange} fallback="photoTitle" />,
+        },
+        aspectRatio: {
+          type: "select",
+          label: "Crop",
+          options: GALLERY_ASPECT_OPTIONS,
+        },
+        columns: {
+          type: "select",
+          label: "Columns",
+          options: [
+            { label: "2", value: "2" },
+            { label: "3", value: "3" },
+            { label: "4", value: "4" },
+          ],
+        },
+        columnGap: {
+          type: "custom",
+          label: "Gap between columns",
+          render: ({ value, onChange }) => <SliderField value={value ?? 24} onChange={onChange} min={0} max={64} step={1} unit="px" />,
+        },
+        rowGap: {
+          type: "custom",
+          label: "Gap between rows",
+          render: ({ value, onChange }) => <SliderField value={value ?? 56} onChange={onChange} min={0} max={120} step={2} unit="px" />,
+        },
+        marginTop: {
+          type: "custom",
+          label: "Space above",
+          render: ({ value, onChange }) => <SpacingControl value={value} onChange={onChange} />,
+        },
+        marginBottom: {
+          type: "custom",
+          label: "Space below",
+          render: ({ value, onChange }) => <SpacingControl value={value} onChange={onChange} />,
+        },
+      },
+      defaultProps: {
+        photos: [],
+        onClick: "lightbox",
+        showTitles: true,
+        titleStyle: { style: "photoTitle", size: 17 },
+        aspectRatio: "4:5",
+        columns: "3",
+        columnGap: 24,
+        rowGap: 56,
+        marginTop: 0,
+        marginBottom: 96,
+      },
+      render: ({ puck, ...props }) => {
+        const metadata = puck?.metadata as Record<string, unknown> | undefined;
+        return (
+          <SelectedWorkRender
+            {...props}
+            editing={!!puck?.isEditing}
+            library={metadata?.photosById as Record<string, LibraryPhoto> | undefined}
+            lightbox={metadata?.globalLightbox as GlobalLightboxSettings | undefined}
+          />
         );
       },
     },

@@ -1,0 +1,251 @@
+import type { CSSProperties, ReactNode } from "react";
+import { textStyleCss, type TextStyleValue } from "@/lib/theme/text-style-value";
+
+/**
+ * Page sections from the design canvas, built from theme text styles:
+ *   Page Intro      — eyebrow, title, lead, a link, and stats alongside
+ *   Section Header  — a small label over a rule, with an optional link
+ *   Details         — term / description pairs as rows, columns or a line
+ */
+
+const RULE = "1px solid var(--theme-color-rule, #e0dcd3)";
+
+type Spacing = { marginTop: number; marginBottom: number };
+const spacing = (p: Spacing): CSSProperties => ({ marginTop: p.marginTop ?? 0, marginBottom: p.marginBottom ?? 0 });
+
+/** Paragraphs from a plain textarea: a blank line starts a new one. */
+function paragraphs(text: string): string[] {
+  return text
+    .split(/\n\s*\n/)
+    .map((p) => p.trim())
+    .filter(Boolean);
+}
+
+function isExternal(href: string) {
+  return /^https?:\/\//.test(href);
+}
+
+/** The design's text link: accent colour over a thin accent rule. */
+function AccentLink({ href, style, children }: { href: string; style: CSSProperties; children: ReactNode }) {
+  return (
+    <a
+      href={href}
+      target={isExternal(href) ? "_blank" : undefined}
+      rel={isExternal(href) ? "noopener noreferrer" : undefined}
+      className="transition-opacity hover:opacity-75"
+      style={{
+        ...style,
+        color: "var(--theme-color-accent)",
+        textDecoration: "none",
+        borderBottom: "1px solid currentColor",
+        paddingBottom: 3,
+      }}
+    >
+      {children}
+    </a>
+  );
+}
+
+// ----- Page Intro -----
+
+export type IntroStat = { id: string; label: string; value: string };
+
+export type PageIntroProps = Spacing & {
+  eyebrow: string;
+  eyebrowStyle: TextStyleValue;
+  title: string;
+  titleStyle: TextStyleValue;
+  /** h1 for the page's own title; h2 when the intro sits further down. */
+  titleTag: "h1" | "h2";
+  text: string;
+  textStyle: TextStyleValue;
+  linkLabel: string;
+  link: string;
+  linkStyle: TextStyleValue;
+  stats: IntroStat[];
+  statLabelStyle: TextStyleValue;
+  statValueStyle: TextStyleValue;
+  alignment: "left" | "center";
+  textMaxWidth: number;
+  ruleBelow: boolean;
+  /** Space between the intro and its rule. */
+  ruleGap: number;
+};
+
+export function PageIntroRender(p: PageIntroProps) {
+  const Title = p.titleTag === "h2" ? "h2" : "h1";
+  const centered = p.alignment === "center";
+  const stats = (p.stats ?? []).filter((s) => s.label || s.value);
+
+  return (
+    <section
+      className={
+        centered
+          ? "flex flex-col items-center gap-10 text-center"
+          : "flex flex-col gap-10 md:flex-row md:items-end md:justify-between"
+      }
+      style={{
+        ...spacing(p),
+        paddingBottom: p.ruleBelow ? p.ruleGap : 0,
+        borderBottom: p.ruleBelow ? RULE : undefined,
+      }}
+    >
+      <div style={{ maxWidth: p.textMaxWidth > 0 ? p.textMaxWidth : undefined }}>
+        {p.eyebrow && (
+          <p style={{ ...textStyleCss(p.eyebrowStyle, "label"), margin: "0 0 20px" }}>{p.eyebrow}</p>
+        )}
+        {p.title && <Title style={{ ...textStyleCss(p.titleStyle, "display"), margin: 0 }}>{p.title}</Title>}
+        {paragraphs(p.text ?? "").map((para, i) => (
+          <p key={i} style={{ ...textStyleCss(p.textStyle, "lead"), margin: `${i === 0 ? 24 : 16}px 0 0`, whiteSpace: "pre-line" }}>
+            {para}
+          </p>
+        ))}
+        {p.linkLabel && p.link && (
+          <p style={{ margin: "28px 0 0" }}>
+            <AccentLink href={p.link} style={textStyleCss(p.linkStyle, "label", { withColor: false })}>
+              {p.linkLabel}
+            </AccentLink>
+          </p>
+        )}
+      </div>
+
+      {stats.length > 0 && (
+        <dl className={centered ? "flex flex-wrap justify-center gap-x-14 gap-y-6" : "flex flex-wrap gap-x-14 gap-y-6"} style={{ margin: 0 }}>
+          {stats.map((s) => (
+            <div key={s.id}>
+              <dt style={textStyleCss(p.statLabelStyle, "meta")}>{s.label}</dt>
+              <dd style={{ ...textStyleCss(p.statValueStyle, "collectionTitle"), margin: "8px 0 0" }}>{s.value}</dd>
+            </div>
+          ))}
+        </dl>
+      )}
+    </section>
+  );
+}
+
+// ----- Section Header -----
+
+export type SectionHeaderProps = Spacing & {
+  title: string;
+  titleStyle: TextStyleValue;
+  titleTag: "h2" | "h3";
+  linkLabel: string;
+  link: string;
+  linkStyle: TextStyleValue;
+  ruleBelow: boolean;
+};
+
+export function SectionHeaderRender(p: SectionHeaderProps) {
+  const Title = p.titleTag === "h3" ? "h3" : "h2";
+  return (
+    <div
+      className="flex items-baseline justify-between gap-6"
+      style={{
+        ...spacing(p),
+        paddingBottom: p.ruleBelow ? 20 : 0,
+        borderBottom: p.ruleBelow ? RULE : undefined,
+      }}
+    >
+      <Title style={{ ...textStyleCss(p.titleStyle, "label"), margin: 0 }}>{p.title}</Title>
+      {p.linkLabel && p.link && (
+        <a
+          href={p.link}
+          target={isExternal(p.link) ? "_blank" : undefined}
+          rel={isExternal(p.link) ? "noopener noreferrer" : undefined}
+          className="shrink-0 transition-opacity hover:opacity-70"
+          style={{ ...textStyleCss(p.linkStyle, "meta"), textDecoration: "none" }}
+        >
+          {p.linkLabel}
+        </a>
+      )}
+    </div>
+  );
+}
+
+// ----- Details -----
+
+export type DetailItem = { id: string; term: string; description: string; link: string };
+
+export type DetailsProps = Spacing & {
+  items: DetailItem[];
+  /** rows: stacked with rules (Contact) · columns: side by side (About) · inline: one line (stats) */
+  layout: "rows" | "columns" | "inline";
+  columns: "2" | "3" | "4";
+  termStyle: TextStyleValue;
+  descriptionStyle: TextStyleValue;
+  dividers: boolean;
+};
+
+const GRID_COLUMNS: Record<DetailsProps["columns"], string> = {
+  "2": "md:grid-cols-2",
+  "3": "md:grid-cols-3",
+  "4": "md:grid-cols-4",
+};
+
+export function DetailsRender({ editing, ...p }: DetailsProps & { editing?: boolean }) {
+  const items = (p.items ?? []).filter((it) => it.term || it.description);
+  const termCss = textStyleCss(p.termStyle, "meta");
+  const descriptionCss = textStyleCss(p.descriptionStyle, "collectionTitle");
+
+  const description = (it: DetailItem) =>
+    it.link ? (
+      <a
+        href={it.link}
+        target={isExternal(it.link) ? "_blank" : undefined}
+        rel={isExternal(it.link) ? "noopener noreferrer" : undefined}
+        className="transition-opacity hover:opacity-75"
+        style={{ color: "var(--theme-color-accent)", textDecoration: "none" }}
+      >
+        {it.description}
+      </a>
+    ) : (
+      it.description
+    );
+
+  if (items.length === 0) {
+    // A placeholder in the editor; nothing on the site.
+    if (!editing) return null;
+    return (
+      <div style={spacing(p)} className="rounded border border-dashed border-neutral-300 p-6 text-center text-sm text-neutral-500">
+        Add a detail.
+      </div>
+    );
+  }
+
+  if (p.layout === "columns") {
+    return (
+      <dl className={`grid grid-cols-1 gap-x-6 gap-y-10 ${GRID_COLUMNS[p.columns] ?? "md:grid-cols-3"}`} style={{ ...spacing(p) }}>
+        {items.map((it) => (
+          <div key={it.id}>
+            <dt style={termCss}>{it.term}</dt>
+            <dd style={{ ...descriptionCss, margin: "14px 0 0", whiteSpace: "pre-line" }}>{description(it)}</dd>
+          </div>
+        ))}
+      </dl>
+    );
+  }
+
+  if (p.layout === "inline") {
+    return (
+      <dl className="flex flex-wrap gap-x-14 gap-y-6" style={spacing(p)}>
+        {items.map((it) => (
+          <div key={it.id}>
+            <dt style={termCss}>{it.term}</dt>
+            <dd style={{ ...descriptionCss, margin: "8px 0 0" }}>{description(it)}</dd>
+          </div>
+        ))}
+      </dl>
+    );
+  }
+
+  return (
+    <dl style={{ ...spacing(p), borderTop: p.dividers ? RULE : undefined }}>
+      {items.map((it) => (
+        <div key={it.id} style={{ padding: "18px 0", borderBottom: p.dividers ? RULE : undefined }}>
+          <dt style={termCss}>{it.term}</dt>
+          <dd style={{ ...descriptionCss, margin: "8px 0 0", whiteSpace: "pre-line" }}>{description(it)}</dd>
+        </div>
+      ))}
+    </dl>
+  );
+}

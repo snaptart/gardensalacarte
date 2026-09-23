@@ -68,16 +68,6 @@ body {
   min-height: 0;
 }
 
-/* Puck Columns: single column on mobile, custom widths at md+ */
-.puck-columns {
-  grid-template-columns: 1fr;
-}
-@media (min-width: 768px) {
-  .puck-columns {
-    grid-template-columns: var(--col-template);
-  }
-}
-
 /* Tiptap: ensure empty paragraphs (line breaks) render with height */
 .ProseMirror p.is-editor-empty:first-child::before {
   content: attr(data-placeholder);
