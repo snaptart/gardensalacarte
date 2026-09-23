@@ -2,18 +2,9 @@
 
 import type { Config } from "@puckeditor/core";
 import { DropZone, usePuck } from "@puckeditor/core";
-import { generateHTML } from "@tiptap/html";
-import StarterKit from "@tiptap/starter-kit";
-import Image from "@tiptap/extension-image";
-import Link from "@tiptap/extension-link";
-import TextAlign from "@tiptap/extension-text-align";
-import Underline from "@tiptap/extension-underline";
-import { TextStyle } from "@tiptap/extension-text-style";
-import Color from "@tiptap/extension-color";
-import FontFamily from "@tiptap/extension-font-family";
-import { FontSize } from "@/lib/tiptap/font-size";
-import { Indent } from "@/lib/tiptap/indent";
 import type { JSONContent } from "@tiptap/react";
+import { renderRichText } from "@/lib/tiptap/render-html";
+import { richTextCss } from "@/lib/tiptap/rich-text-css";
 import TiptapEditor from "@/components/admin/TiptapEditor";
 import ImagePicker from "@/components/admin/ImagePicker";
 import GalleryPhotoMultiPicker from "@/components/admin/GalleryPhotoMultiPicker";
@@ -58,33 +49,8 @@ import type {
   CheckboxProps,
 } from "@/components/puck/form/fields";
 
-// Tiptap extensions for HTML generation
-const tiptapExtensions = [
-  StarterKit,
-  Underline,
-  TextStyle,
-  Color,
-  FontFamily,
-  FontSize,
-  Image,
-  Link,
-  TextAlign.configure({ types: ["heading", "paragraph"] }),
-  Indent,
-];
-
-function tiptapToHtml(content: JSONContent | null): string {
-  if (!content) return "";
-  try {
-    const html = generateHTML(
-      content as Parameters<typeof generateHTML>[0],
-      tiptapExtensions
-    );
-    // Preserve empty paragraphs as visible line breaks
-    return html.replace(/<p([^>]*)><\/p>/g, "<p$1><br></p>");
-  } catch {
-    return "";
-  }
-}
+// Paragraphs, headings and any text style picked in the toolbar, from the theme.
+const RICH_TEXT_CSS = richTextCss(".richtext-render");
 
 // ----- Component prop types -----
 
@@ -413,33 +379,11 @@ export const puckConfig: Config<Components> = {
         content: { type: "doc", content: [{ type: "paragraph" }] },
       },
       render: ({ content }) => {
-        const html = tiptapToHtml(content);
+        const html = renderRichText(content);
         if (!html) return <p className="text-neutral-400 italic">Start typing...</p>;
         return (
           <>
-            <style>{`
-              .richtext-render {
-                font-family: var(--theme-font-body-family);
-                font-weight: var(--theme-font-body-weight);
-                font-style: var(--theme-font-body-style);
-                text-transform: var(--theme-font-body-transform);
-              }
-              .richtext-render p { margin: 0.125em 0; line-height: 1.5; font-size: var(--theme-font-body-size, 1.125rem); }
-              .richtext-render h1, .richtext-render h2, .richtext-render h3 {
-                font-family: var(--theme-font-headings-family);
-                font-weight: var(--theme-font-headings-weight);
-                font-style: var(--theme-font-headings-style);
-                text-transform: var(--theme-font-headings-transform);
-                margin: 0.75em 0 0.25em;
-              }
-              .richtext-render h1 { font-size: 2em; }
-              .richtext-render h2 { font-size: 1.5em; }
-              .richtext-render h3 { font-size: 1.25em; }
-              .richtext-render blockquote { border-left: 3px solid var(--theme-color-rule, #d4d4d4); padding-left: 1em; margin: 0.5em 0; font-style: italic; }
-              .richtext-render ul, .richtext-render ol { padding-left: 1.5em; margin: 0.25em 0; }
-              .richtext-render a { text-decoration: underline; }
-              .richtext-render hr { border-top: 1px solid var(--theme-color-rule, #d4d4d4); margin: 1em 0; }
-            `}</style>
+            <style>{RICH_TEXT_CSS}</style>
             <div
               className="richtext-render mx-auto max-w-none"
               dangerouslySetInnerHTML={{ __html: html }}
