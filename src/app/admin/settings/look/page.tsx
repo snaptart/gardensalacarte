@@ -13,6 +13,7 @@ import {
   SectionLabel,
 } from "@/components/admin/ui";
 import { SettingGroup } from "@/components/admin/settings/SettingGroup";
+import { ColorControl } from "@/components/admin/controls";
 import ThemePreview from "@/components/admin/ThemePreview";
 import LightboxPreview from "@/components/admin/LightboxPreview";
 
@@ -559,14 +560,14 @@ export default function LookAndFeelPage() {
         </Button>
       </div>
 
-      <p className="mt-4 text-[12px] text-admin-ink-soft">
+      <div className="mt-4 text-[12px] text-admin-ink-soft">
         <SectionLabel className="inline">Typography</SectionLabel> — fonts live
         in the{" "}
         <a href="/admin/settings/typography" className="text-admin-accent hover:underline">
           Typography
         </a>{" "}
         section and save to the same preset.
-      </p>
+      </div>
       </div>
 
       <aside className="xl:sticky xl:top-8 xl:self-start xl:max-h-[calc(100vh-4rem)] xl:overflow-y-auto space-y-5">
@@ -627,38 +628,16 @@ function ColorField({
   onChange: (v: string) => void;
   allowTransparent?: boolean;
 }) {
-  const isTransparent = value === "transparent";
+  // These *are* the theme colours, so no theme swatches here.
   return (
     <Field label={label} inline>
-      <div className="flex items-center gap-2">
-        <input
-          type="color"
-          value={isTransparent ? "#ffffff" : value}
-          onChange={(e) => onChange(e.target.value)}
-          disabled={isTransparent}
-          className="h-9 w-10 cursor-pointer rounded-md border border-admin-border-strong disabled:cursor-not-allowed disabled:opacity-50"
-        />
-        <Input
-          type="text"
+      <div className="max-w-xs">
+        <ColorControl
           value={value}
-          onChange={(e) => onChange(e.target.value)}
-          disabled={isTransparent}
-          className="w-32"
-          maxLength={11}
+          onChange={onChange}
+          tokens={false}
+          allowTransparent={allowTransparent}
         />
-        {allowTransparent && (
-          <label className="flex items-center gap-1.5 text-[13px] text-admin-ink cursor-pointer">
-            <input
-              type="checkbox"
-              checked={isTransparent}
-              onChange={(e) =>
-                onChange(e.target.checked ? "transparent" : "#ffffff")
-              }
-              className="accent-admin-accent"
-            />
-            Transparent
-          </label>
-        )}
       </div>
     </Field>
   );

@@ -34,6 +34,7 @@ import {
   DEFAULT_HANDWRITING_FONT,
   DEFAULT_STAMP_FONT,
 } from "@/components/public/slideFonts";
+import { ColorControl } from "@/components/admin/controls";
 
 interface Gallery {
   id: string;
@@ -63,10 +64,6 @@ interface PickerPhoto {
 }
 
 const MAX_PREVIEW = 4;
-
-function isValidHex(v: string): boolean {
-  return /^#[0-9a-fA-F]{6}$/.test(v);
-}
 
 export default function GalleriesPage() {
   const [galleries, setGalleries] = useState<Gallery[]>([]);
@@ -295,42 +292,15 @@ export default function GalleriesPage() {
                   rows={2}
                 />
               </Field>
-              <Field label="Accent color" htmlFor="g-accent" hint="Used on hover and the drawer underline. Click the swatch to pick.">
-                <div className="flex items-center gap-2">
-                  <label className="relative inline-block h-9 w-9 cursor-pointer rounded overflow-hidden border border-admin-border-strong shrink-0">
-                    <input
-                      type="color"
-                      value={isValidHex(accentColor) ? accentColor : "#b8824a"}
-                      onChange={(e) => setAccentColor(e.target.value)}
-                      className="absolute inset-0 h-full w-full opacity-0 cursor-pointer"
-                      aria-label="Pick accent color"
-                    />
-                    <span
-                      className="absolute inset-0 block"
-                      style={{
-                        background: isValidHex(accentColor) ? accentColor : "transparent",
-                        backgroundImage: !isValidHex(accentColor)
-                          ? "repeating-conic-gradient(#e4e1db 0% 25%, #fff 0% 50%) 50% / 8px 8px"
-                          : undefined,
-                      }}
-                    />
-                  </label>
-                  <Input
-                    id="g-accent"
+              <Field label="Accent color" hint="Used on hover and the drawer underline.">
+                <div className="max-w-xs">
+                  <ColorControl
                     value={accentColor}
-                    onChange={(e) => setAccentColor(e.target.value)}
+                    onChange={setAccentColor}
+                    tokens={false}
+                    emptyLabel="#b8824a (default)"
                     placeholder="#b8824a"
-                    pattern="^#[0-9a-fA-F]{6}$"
                   />
-                  {accentColor && (
-                    <button
-                      type="button"
-                      onClick={() => setAccentColor("")}
-                      className="text-[11px] font-mono uppercase tracking-[1.5px] text-admin-ink-soft hover:text-admin-danger"
-                    >
-                      Clear
-                    </button>
-                  )}
                 </div>
               </Field>
               <Field label="Field Map position" htmlFor="g-latitude" hint="Decimal degrees. Pins the gallery to the world map.">

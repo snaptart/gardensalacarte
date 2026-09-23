@@ -20,6 +20,8 @@ import GalleryPhotoMultiPicker from "@/components/admin/GalleryPhotoMultiPicker"
 import NextLink from "next/link";
 import { parseLinks } from "@/lib/parseLinks";
 import siteConfig from "@/lib/site.config";
+import { ColorControl, SegmentedControl, SliderControl, SpacingControl } from "@/components/admin/controls";
+import { cssColor, withAlpha } from "@/lib/theme/color";
 import {
   GALLERY_ASPECT_CSS,
   GALLERY_ASPECT_OPTIONS,
@@ -704,10 +706,10 @@ export const puckConfig: Config<Components> = {
           top: `${captionY}%`,
           transform: "translate(-50%, -50%)",
           fontSize: `${captionFontSize}px`,
-          color: captionColor,
+          color: cssColor(captionColor),
           fontWeight: captionBold ? "bold" : "normal",
           fontStyle: captionItalic ? "italic" : "normal",
-          backgroundColor: captionBgOpacity > 0 ? hexToRgba(captionBgColor, captionBgOpacity / 100) : "transparent",
+          backgroundColor: captionBgOpacity > 0 ? withAlpha(captionBgColor, captionBgOpacity / 100) : "transparent",
           padding: captionBgOpacity > 0 ? "4px 10px" : undefined,
           borderRadius: captionBgOpacity > 0 ? "4px" : undefined,
           whiteSpace: "nowrap",
@@ -1090,14 +1092,14 @@ export const puckConfig: Config<Components> = {
           type: "custom",
           label: "Margin Top (px)",
           render: ({ value, onChange }) => (
-            <SliderField value={value} onChange={onChange} min={0} max={120} step={2} unit="px" label="Margin Top" />
+            <SpacingControl value={value} onChange={onChange} />
           ),
         },
         marginBottom: {
           type: "custom",
           label: "Margin Bottom (px)",
           render: ({ value, onChange }) => (
-            <SliderField value={value} onChange={onChange} min={0} max={120} step={2} unit="px" label="Margin Bottom" />
+            <SpacingControl value={value} onChange={onChange} />
           ),
         },
         transitionMs: {
@@ -1476,14 +1478,14 @@ export const puckConfig: Config<Components> = {
           type: "custom",
           label: "Margin Top (px)",
           render: ({ value, onChange }) => (
-            <SliderField value={value} onChange={onChange} min={0} max={120} step={2} unit="px" label="Margin Top" />
+            <SpacingControl value={value} onChange={onChange} />
           ),
         },
         marginBottom: {
           type: "custom",
           label: "Margin Bottom (px)",
           render: ({ value, onChange }) => (
-            <SliderField value={value} onChange={onChange} min={0} max={120} step={2} unit="px" label="Margin Bottom" />
+            <SpacingControl value={value} onChange={onChange} />
           ),
         },
         transitionMs: {
@@ -1678,14 +1680,14 @@ export const puckConfig: Config<Components> = {
           type: "custom",
           label: "Margin Top (px)",
           render: ({ value, onChange }) => (
-            <SliderField value={value} onChange={onChange} min={0} max={120} step={2} unit="px" label="Margin Top" />
+            <SpacingControl value={value} onChange={onChange} />
           ),
         },
         marginBottom: {
           type: "custom",
           label: "Margin Bottom (px)",
           render: ({ value, onChange }) => (
-            <SliderField value={value} onChange={onChange} min={0} max={120} step={2} unit="px" label="Margin Bottom" />
+            <SpacingControl value={value} onChange={onChange} />
           ),
         },
         fontRoleKey: {
@@ -1895,9 +1897,9 @@ export const puckConfig: Config<Components> = {
         },
         lineColor: {
           type: "custom",
-          label: "Rule Color (blank = theme hairline)",
+          label: "Rule Color",
           render: ({ value, onChange }) => (
-            <ColorField value={value} onChange={onChange} />
+            <ColorField value={value} onChange={onChange} emptyLabel="Theme hairline" />
           ),
         },
       },
@@ -1925,7 +1927,7 @@ export const puckConfig: Config<Components> = {
             <div
               style={{
                 width: `${lineLength ?? 100}%`,
-                borderTop: `${lineWidth ?? 1}px solid ${lineColor || "var(--theme-color-rule, #e5e5e5)"}`,
+                borderTop: `${lineWidth ?? 1}px solid ${cssColor(lineColor, "var(--theme-color-rule, #e5e5e5)")}`,
               }}
             />
           )}
@@ -2678,7 +2680,7 @@ export const puckConfig: Config<Components> = {
               rel="stylesheet"
               href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Inter:wght@300;400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap"
             />
-            <div className="relative w-full" style={{ ...fillStyle, backgroundColor }}>
+            <div className="relative w-full" style={{ ...fillStyle, backgroundColor: cssColor(backgroundColor) }}>
               <FieldMap
                 regions={injected.regions}
                 yearBounds={injected.yearBounds}
@@ -2686,7 +2688,7 @@ export const puckConfig: Config<Components> = {
                 mapStyle={mapStyle}
                 siteTitle={injected.siteTitle}
                 showBrand={showBrand}
-                backgroundColor={backgroundColor}
+                backgroundColor={cssColor(backgroundColor)}
               />
             </div>
           </>
@@ -2892,7 +2894,7 @@ function GalleryPicker({ value, onChange }: { value: string; onChange: (val: str
     <select
       value={value}
       onChange={(e) => onChange(e.target.value)}
-      className="w-full rounded border border-neutral-300 px-3 py-2 text-sm"
+      className={PICKER_INPUT}
     >
       <option value="">-- Select a gallery --</option>
       {galleries.map((g) => (
@@ -2904,26 +2906,10 @@ function GalleryPicker({ value, onChange }: { value: string; onChange: (val: str
 
 // ----- Slider field -----
 
-function SliderField({ value, onChange, min, max, step, unit, label }: { value: number; onChange: (v: number) => void; min: number; max: number; step: number; unit: string; label?: string }) {
-  return (
-    <div className="flex flex-col gap-1">
-      {label && (
-        <span className="text-xs font-medium text-neutral-500">{label}</span>
-      )}
-      <div className="flex items-center gap-3">
-        <input
-          type="range"
-          min={min}
-          max={max}
-          step={step}
-          value={value}
-          onChange={(e) => onChange(Number(e.target.value))}
-          className="flex-1"
-        />
-        <span className="text-sm text-neutral-600 w-14 text-right tabular-nums">{value}{unit}</span>
-      </div>
-    </div>
-  );
+// The field's label comes from the panel (components/puck/fieldTypes), so the
+// `label` these used to draw themselves is ignored.
+function SliderField({ value, onChange, min, max, step, unit }: { value: number; onChange: (v: number) => void; min: number; max: number; step: number; unit: string; label?: string }) {
+  return <SliderControl value={value} onChange={onChange} min={min} max={max} step={step} unit={unit} />;
 }
 
 // ----- Color field -----
@@ -2932,44 +2918,25 @@ function ColorField({
   value,
   onChange,
   allowTransparent,
+  emptyLabel,
 }: {
   value: string;
   onChange: (v: string) => void;
   allowTransparent?: boolean;
+  emptyLabel?: string;
 }) {
-  const isTransparent = value === "transparent";
   return (
-    <div className="flex items-center gap-3">
-      <input
-        type="color"
-        value={isTransparent ? "#ffffff" : value}
-        onChange={(e) => onChange(e.target.value)}
-        disabled={isTransparent}
-        className="h-8 w-10 cursor-pointer rounded border border-neutral-300 disabled:cursor-not-allowed disabled:opacity-50"
-      />
-      <input
-        type="text"
-        value={value}
-        onChange={(e) => onChange(e.target.value)}
-        disabled={isTransparent}
-        className="flex-1 rounded border border-neutral-300 px-2 py-1 text-sm font-mono disabled:bg-neutral-50 disabled:text-neutral-400"
-        placeholder="#000000"
-      />
-      {allowTransparent && (
-        <label className="flex items-center gap-1 text-xs text-neutral-700 cursor-pointer whitespace-nowrap">
-          <input
-            type="checkbox"
-            checked={isTransparent}
-            onChange={(e) =>
-              onChange(e.target.checked ? "transparent" : "#ffffff")
-            }
-          />
-          Transparent
-        </label>
-      )}
-    </div>
+    <ColorControl
+      value={value}
+      onChange={onChange}
+      allowTransparent={allowTransparent}
+      emptyLabel={emptyLabel}
+    />
   );
 }
+
+const PICKER_INPUT =
+  "w-full rounded-md border border-admin-border-strong bg-admin-surface px-2.5 py-1.5 text-[13px] text-admin-ink placeholder:text-admin-ink-faint focus:border-admin-accent focus:outline-none";
 
 // ----- Link picker (internal pages/galleries + external URL) -----
 
@@ -3005,27 +2972,23 @@ function LinkPicker({ value, onChange }: { value: string; onChange: (v: string) 
 
   return (
     <div className="flex flex-col gap-2">
-      <div className="flex gap-1 text-xs">
-        <button
-          type="button"
-          onClick={() => { setMode("internal"); onChange(""); }}
-          className={`px-2 py-1 rounded ${mode === "internal" ? "bg-neutral-800 text-white" : "bg-neutral-100 text-neutral-600"}`}
-        >
-          Internal
-        </button>
-        <button
-          type="button"
-          onClick={() => { setMode("external"); onChange(""); }}
-          className={`px-2 py-1 rounded ${mode === "external" ? "bg-neutral-800 text-white" : "bg-neutral-100 text-neutral-600"}`}
-        >
-          External
-        </button>
-      </div>
+      <SegmentedControl
+        options={[
+          { label: "On this site", value: "internal" },
+          { label: "Web address", value: "external" },
+        ]}
+        value={mode}
+        onChange={(m) => {
+          if (m === mode) return;
+          setMode(m as "internal" | "external");
+          onChange("");
+        }}
+      />
       {mode === "internal" ? (
         <select
           value={value}
           onChange={(e) => onChange(e.target.value)}
-          className="w-full rounded border border-neutral-300 px-3 py-2 text-sm"
+          className={PICKER_INPUT}
         >
           {options.map((opt) => (
             <option key={opt.value} value={opt.value}>{opt.label}</option>
@@ -3037,20 +3000,27 @@ function LinkPicker({ value, onChange }: { value: string; onChange: (v: string) 
           value={value}
           onChange={(e) => onChange(e.target.value)}
           placeholder="https://example.com"
-          className="w-full rounded border border-neutral-300 px-3 py-2 text-sm"
+          className={PICKER_INPUT}
         />
       )}
     </div>
   );
 }
 
-// ----- Hex to rgba helper -----
+// ----- Colour props -----
 
-function hexToRgba(hex: string, alpha: number): string {
-  const r = parseInt(hex.slice(1, 3), 16) || 0;
-  const g = parseInt(hex.slice(3, 5), 16) || 0;
-  const b = parseInt(hex.slice(5, 7), 16) || 0;
-  return `rgba(${r}, ${g}, ${b}, ${alpha})`;
+/**
+ * Turns the named colour props into CSS values: a theme colour ("token:muted")
+ * becomes its var(), hex passes through. Renderers destructure from the result
+ * so every later use of those props is already CSS.
+ */
+function withCssColors<T extends object>(props: T, keys: (keyof T & string)[]): T {
+  const out = { ...props } as Record<string, unknown>;
+  for (const key of keys) {
+    const v = out[key];
+    if (typeof v === "string") out[key] = cssColor(v);
+  }
+  return out as T;
 }
 
 // ----- Button render -----
@@ -3109,10 +3079,10 @@ function ButtonRender(props: ButtonProps) {
     shadow,
     hoverShadow,
     transitionMs,
-  } = props;
+  } = withCssColors(props, ["bgColor", "textColor", "borderColor", "hoverBgColor", "hoverTextColor", "hoverBorderColor"]);
 
   const opacity = (bgOpacity ?? 100) / 100;
-  const bg = hovered ? hoverBgColor : hexToRgba(bgColor, opacity);
+  const bg = hovered ? hoverBgColor : withAlpha(bgColor, opacity);
   const fg = hovered ? hoverTextColor : textColor;
   const bd = hovered ? hoverBorderColor : borderColor;
   const sh = BUTTON_SHADOWS[hovered ? hoverShadow : shadow] ?? "none";
@@ -3340,7 +3310,7 @@ function GalleriesIndexRender(props: GalleriesIndexProps) {
     marginTop,
     marginBottom,
     transitionMs,
-  } = props;
+  } = withCssColors(props, ["dividerColor", "listTitleColor", "titleColor", "descriptionColor", "overlayBgColor"]);
 
   const [galleries, setGalleries] = useState<GalleryRow[]>([]);
   const [hoveredId, setHoveredId] = useState<string | null>(null);
@@ -3541,7 +3511,7 @@ function GalleriesIndexRender(props: GalleriesIndexProps) {
             filter: hovered && imageHoverEffect === "darken" ? "brightness(0.7)" : "none",
           };
 
-          const overlayBg = isOverlay ? hexToRgba(overlayBgColor, overlayOpacity / 100) : undefined;
+          const overlayBg = isOverlay ? withAlpha(overlayBgColor, overlayOpacity / 100) : undefined;
 
           return (
             <a
@@ -3776,7 +3746,7 @@ function LinkListRender(props: LinkListProps) {
     marginTop,
     marginBottom,
     transitionMs,
-  } = props;
+  } = withCssColors(props, ["bgColor", "textColor", "borderColor", "descriptionColor", "hoverBgColor", "hoverTextColor", "hoverBorderColor", "dividerColor"]);
 
   const safeItems = items ?? [];
 
@@ -3843,7 +3813,7 @@ function LinkListRender(props: LinkListProps) {
         const bg = hovered
           ? hoverBgColor
           : bgOpacity > 0
-            ? hexToRgba(bgColor, bgOpacity / 100)
+            ? withAlpha(bgColor, bgOpacity / 100)
             : "transparent";
 
         const fg = hovered ? hoverTextColor : textColor;
@@ -4336,14 +4306,16 @@ function CarouselSlideEditor({ value, onChange }: { value: CarouselSlide[]; onCh
                     <label className="text-xs font-medium text-neutral-500">Subtitle</label>
                     <input type="text" value={slide.subtitle} onChange={(e) => updateSlide(slide.id, { subtitle: e.target.value })} className="mt-0.5 w-full rounded border border-neutral-200 px-2 py-1 text-sm" />
                   </div>
-                  <div className="flex gap-2">
-                    <div className="flex-1">
-                      <label className="text-xs font-medium text-neutral-500">Background</label>
-                      <input type="color" value={slide.bgColor} onChange={(e) => updateSlide(slide.id, { bgColor: e.target.value })} className="mt-0.5 h-8 w-full cursor-pointer rounded border border-neutral-200" />
+                  <div>
+                    <span className="text-xs font-medium text-neutral-500">Background</span>
+                    <div className="mt-1">
+                      <ColorControl value={slide.bgColor} onChange={(v) => updateSlide(slide.id, { bgColor: v })} />
                     </div>
-                    <div className="flex-1">
-                      <label className="text-xs font-medium text-neutral-500">Text Color</label>
-                      <input type="color" value={slide.textColor} onChange={(e) => updateSlide(slide.id, { textColor: e.target.value })} className="mt-0.5 h-8 w-full cursor-pointer rounded border border-neutral-200" />
+                  </div>
+                  <div>
+                    <span className="text-xs font-medium text-neutral-500">Text Color</span>
+                    <div className="mt-1">
+                      <ColorControl value={slide.textColor} onChange={(v) => updateSlide(slide.id, { textColor: v })} />
                     </div>
                   </div>
                 </>
@@ -4893,7 +4865,7 @@ function CarouselClient({
       return (
         <div
           className="flex flex-col items-center justify-center p-6 text-center"
-          style={{ ...slideStyle, backgroundColor: slide.bgColor, color: slide.textColor }}
+          style={{ ...slideStyle, backgroundColor: cssColor(slide.bgColor), color: cssColor(slide.textColor) }}
         >
           {slide.title && <h3 className="text-xl mb-2" style={fontRole("headings")}>{slide.title}</h3>}
           {slide.subtitle && <p className="text-sm opacity-80">{slide.subtitle}</p>}
@@ -4916,10 +4888,10 @@ function CarouselClient({
             onLoad={(e) => { (e.target as HTMLImageElement).classList.remove("opacity-0"); }}
           />
         ) : (
-          <div className="h-full w-full" style={{ backgroundColor: slide.bgColor }} />
+          <div className="h-full w-full" style={{ backgroundColor: cssColor(slide.bgColor) }} />
         )}
         <div className="absolute inset-0 bg-black/30" style={{ borderRadius: `${borderRadius}px` }} />
-        <div className="absolute inset-0 flex flex-col items-center justify-center p-4 text-center" style={{ color: slide.textColor || "#fff" }}>
+        <div className="absolute inset-0 flex flex-col items-center justify-center p-4 text-center" style={{ color: cssColor(slide.textColor, "#fff") }}>
           {slide.title && <h3 className="text-xl mb-1" style={fontRole("headings")}>{slide.title}</h3>}
           {slide.subtitle && <p className="text-sm opacity-90">{slide.subtitle}</p>}
         </div>

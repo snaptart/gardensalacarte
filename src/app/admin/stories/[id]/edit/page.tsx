@@ -6,7 +6,7 @@ import { Puck } from "@puckeditor/core";
 import type { Data } from "@puckeditor/core";
 import { puckConfig } from "@/lib/puck/config";
 import PuckThemeStyles from "@/components/admin/PuckThemeStyles";
-import { draggableOutlinePlugin } from "@/components/puck/DraggableOutline";
+import { puckOverrides } from "@/components/puck/overrides";
 import "@puckeditor/core/puck.css";
 
 const EMPTY_DATA: Data = {
@@ -99,7 +99,7 @@ export default function StoryEditorPage() {
         onPublish={handleSave}
         headerTitle={story.title}
         headerPath={`/stories/${story.slug}`}
-        overrides={draggableOutlinePlugin().overrides}
+        overrides={puckOverrides}
       />
       {saving && (
         <div className="fixed bottom-4 right-4 z-50 rounded bg-neutral-900 px-4 py-2 text-sm text-white shadow-lg">

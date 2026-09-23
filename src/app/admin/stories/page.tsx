@@ -12,6 +12,7 @@ import { Plus, X } from "lucide-react";
 import { SortableItem } from "@/components/admin/SortableItem";
 import { useSortableList } from "@/lib/hooks/useSortableList";
 import { useMessage } from "@/lib/hooks/useMessage";
+import { ColorControl } from "@/components/admin/controls";
 import {
   Button,
   Card,
@@ -685,43 +686,14 @@ function ColorField({
   onChange: (v: string) => void;
   fallback: string;
 }) {
-  const valid = isValidHex(value);
   return (
-    <div className="flex items-center gap-2">
-      <label className="relative inline-block h-9 w-9 cursor-pointer rounded overflow-hidden border border-admin-border-strong shrink-0">
-        <input
-          type="color"
-          value={valid ? value : fallback}
-          onChange={(e) => onChange(e.target.value)}
-          className="absolute inset-0 h-full w-full opacity-0 cursor-pointer"
-          aria-label="Pick color"
-        />
-        <span
-          className="absolute inset-0 block"
-          style={{
-            background: valid ? value : "transparent",
-            backgroundImage: !valid
-              ? "repeating-conic-gradient(#e4e1db 0% 25%, #fff 0% 50%) 50% / 8px 8px"
-              : undefined,
-          }}
-        />
-      </label>
-      <Input
-        value={value}
-        onChange={(e) => onChange(e.target.value)}
-        placeholder={fallback}
-        pattern="^#[0-9a-fA-F]{6}$"
-      />
-      {value && (
-        <button
-          type="button"
-          onClick={() => onChange("")}
-          className="text-[11px] font-mono uppercase tracking-[1.5px] text-admin-ink-soft hover:text-admin-danger"
-        >
-          Clear
-        </button>
-      )}
-    </div>
+    <ColorControl
+      value={value}
+      onChange={onChange}
+      tokens={false}
+      emptyLabel={`${fallback} (default)`}
+      placeholder={fallback}
+    />
   );
 }
 
