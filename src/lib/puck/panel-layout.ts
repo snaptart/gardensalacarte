@@ -494,6 +494,116 @@ export const PANEL_LAYOUTS: Layouts = {
     ],
   },
 
+  PageIntro: {
+    groups: [
+      { tab: "content", title: "Text", fields: ["eyebrow", "title", "text"], summary: (p) => p.title || "No title" },
+      { tab: "content", title: "Link", fields: ["linkLabel", "link"], summary: (p) => p.linkLabel || "None" },
+      { tab: "content", title: "Stats", fields: ["stats"], summary: (p) => `${p.stats?.length ?? 0} stats` },
+      { tab: "style", title: "Eyebrow", fields: ["eyebrowStyle"], summary: (p) => textStyleSummary(p.eyebrowStyle, "label") },
+      { tab: "style", title: "Title", fields: ["titleStyle", "titleTag"], summary: (p) => list(textStyleSummary(p.titleStyle, "display"), p.titleTag?.toUpperCase()) },
+      { tab: "style", title: "Text", fields: ["textStyle"], summary: (p) => textStyleSummary(p.textStyle, "lead") },
+      { tab: "style", title: "Link", fields: ["linkStyle"], summary: (p) => textStyleSummary(p.linkStyle, "label") },
+      {
+        tab: "style",
+        title: "Stats",
+        fields: ["statLabelStyle", "statValueStyle"],
+        summary: (p) => textStyleSummary(p.statValueStyle, "collectionTitle"),
+      },
+      {
+        tab: "layout",
+        title: "Arrangement",
+        fields: ["alignment", "textMaxWidth"],
+        summary: (p) => list(capitalise(p.alignment ?? "left"), p.textMaxWidth > 0 ? `text ${p.textMaxWidth}px` : "full width"),
+      },
+      { tab: "layout", title: "Rule", fields: ["ruleBelow", "ruleGap"], summary: (p) => (p.ruleBelow ? `Below, ${p.ruleGap}px under the text` : "None") },
+      SPACING,
+    ],
+    when: {
+      eyebrowStyle: (p) => !!p.eyebrow,
+      textStyle: (p) => !!p.text,
+      linkStyle: (p) => !!p.linkLabel,
+      statLabelStyle: (p) => (p.stats?.length ?? 0) > 0,
+      statValueStyle: (p) => (p.stats?.length ?? 0) > 0,
+      ruleGap: (p) => p.ruleBelow,
+    },
+  },
+
+  SectionHeader: {
+    groups: [
+      { tab: "content", title: "Title", fields: ["title"], summary: (p) => p.title },
+      { tab: "content", title: "Link", fields: ["linkLabel", "link"], summary: (p) => p.linkLabel || "None" },
+      { tab: "style", title: "Title", fields: ["titleStyle", "titleTag"], summary: (p) => textStyleSummary(p.titleStyle, "label") },
+      { tab: "style", title: "Link", fields: ["linkStyle"], summary: (p) => textStyleSummary(p.linkStyle, "meta") },
+      { tab: "layout", title: "Rule", fields: ["ruleBelow"], summary: (p) => (p.ruleBelow ? "Below" : "None") },
+      SPACING,
+    ],
+    when: {
+      linkStyle: (p) => !!p.linkLabel,
+    },
+  },
+
+  Details: {
+    groups: [
+      { tab: "content", title: "Details", fields: ["items"], summary: (p) => `${p.items?.length ?? 0} details` },
+      { tab: "style", title: "Terms", fields: ["termStyle"], summary: (p) => textStyleSummary(p.termStyle, "meta") },
+      { tab: "style", title: "Descriptions", fields: ["descriptionStyle"], summary: (p) => textStyleSummary(p.descriptionStyle, "collectionTitle") },
+      {
+        tab: "layout",
+        title: "Arrangement",
+        fields: ["layout", "columns", "dividers"],
+        summary: (p) =>
+          p.layout === "columns" ? `${p.columns} columns` : p.layout === "inline" ? "In a line" : list("Rows", p.dividers && "rules"),
+      },
+      SPACING,
+    ],
+    when: {
+      columns: (p) => p.layout === "columns",
+      dividers: (p) => p.layout === "rows",
+    },
+  },
+
+  PhotoPlate: {
+    groups: [
+      { tab: "content", title: "Photo", fields: ["photo"], summary: (p) => p.photo?.title || (p.photo ? "Untitled" : "None") },
+      { tab: "content", title: "Caption", fields: ["title", "meta", "showCaption"], summary: (p) => (p.showCaption ? p.title || p.photo?.title || "Photo's title" : "Hidden") },
+      { tab: "content", title: "Click", fields: ["onClick", "link"], summary: (p) => (p.onClick === "lightbox" ? "Enlarges" : p.onClick === "link" ? p.link || "Link" : "Nothing") },
+      {
+        tab: "style",
+        title: "Caption",
+        fields: ["titleStyle", "metaStyle", "captionRule"],
+        summary: (p) => list(textStyleSummary(p.titleStyle, "photoTitle"), p.captionRule && "rule"),
+      },
+      { tab: "layout", title: "Crop", fields: ["aspectRatio"], summary: (p) => p.aspectRatio },
+      SPACING,
+    ],
+    when: {
+      title: (p) => p.showCaption,
+      meta: (p) => p.showCaption,
+      link: (p) => p.onClick === "link",
+      titleStyle: (p) => p.showCaption,
+      metaStyle: (p) => p.showCaption,
+      captionRule: (p) => p.showCaption,
+    },
+  },
+
+  SelectedWork: {
+    groups: [
+      { tab: "content", title: "Photos", fields: ["photos"], summary: (p) => `${p.photos?.length ?? 0} photos` },
+      { tab: "content", title: "Behaviour", fields: ["onClick", "showTitles"], summary: (p) => list(p.onClick === "lightbox" ? "Enlarges" : "No click", p.showTitles ? "titles" : "no titles") },
+      { tab: "style", title: "Titles", fields: ["titleStyle"], summary: (p) => textStyleSummary(p.titleStyle, "photoTitle") },
+      {
+        tab: "layout",
+        title: "Grid",
+        fields: ["columns", "aspectRatio", "columnGap", "rowGap"],
+        summary: (p) => list(`${p.columns} columns`, p.aspectRatio, `gaps ${p.columnGap}/${p.rowGap}px`),
+      },
+      SPACING,
+    ],
+    when: {
+      titleStyle: (p) => p.showTitles,
+    },
+  },
+
   Form: {
     groups: [
       { tab: "content", title: "Form", fields: ["formName", "submitLabel", "successMessage", "recipientEmail"], summary: (p) => p.formName },
