@@ -2,7 +2,8 @@ import { db } from "@/lib/db";
 import { galleries, siteSettings } from "@/lib/db/schema";
 import { selectPhotosForGallery } from "@/lib/db/photo-queries";
 import { eq, and } from "drizzle-orm";
-import { notFound } from "next/navigation";
+import { notFound, redirect } from "next/navigation";
+import { builtCollectionPages } from "@/lib/collections";
 import type { Metadata } from "next";
 import { DEFAULT_LIGHTBOX_SETTINGS, type LightboxSettings } from "@/components/public/Lightbox";
 import GalleryGrid from "./GalleryGrid";
@@ -43,6 +44,11 @@ export default async function GalleryPage({ params }: Props) {
     .where(and(eq(galleries.slug, slug), eq(galleries.isPublished, true)));
 
   if (!gallery) notFound();
+
+  // A collection with a page of its own is shown there; this template is the
+  // fallback for the ones without. Old links, menu items and carousel links
+  // still point here, so send them on.
+  if ((await builtCollectionPages([slug])).has(slug)) redirect(`/${slug}`);
 
   const [galleryPhotos, [settingsRow]] = await Promise.all([
     selectPhotosForGallery(gallery.id),

@@ -32,9 +32,12 @@ import type {
 } from "@/components/public/fieldmap/types";
 import { FormWrapperRender } from "@/components/puck/form/FormWrapper";
 import {
+  BreadcrumbRender,
   DetailsRender,
   PageIntroRender,
   SectionHeaderRender,
+  type BreadcrumbProps,
+  type Crumb,
   type DetailItem,
   type DetailsProps,
   type IntroStat,
@@ -49,6 +52,7 @@ import {
   type SelectedWorkProps,
 } from "@/components/puck/blocks/photos";
 import type { LibraryPhoto } from "@/lib/puck/photo-ref";
+import { NextCollectionRender, type NextCollectionProps } from "@/components/puck/blocks/collections";
 import type { FormWrapperProps } from "@/components/puck/form/FormWrapper";
 import {
   TextFieldRender,
@@ -155,7 +159,8 @@ export type GlobalLightboxSettings = LightboxSettings;
 type GalleryEmbedProps = {
   gallerySlug: string;
   maxPhotos: number;
-  layout: "grid" | "masonry";
+  /** hang: the design's staggered two columns, the right one dropped lower. */
+  layout: "grid" | "masonry" | "hang";
   columns: "2" | "3" | "4";
   aspectRatio: GalleryAspect;
   gap: number;
@@ -163,6 +168,12 @@ type GalleryEmbedProps = {
   borderRadius: number;
   showMetadata: boolean;
   metadataFields: string[];
+  /** Hang: number each photo's caption, 01, 02… */
+  numbered: boolean;
+  /** Hang: how far the right-hand column drops. */
+  hangOffset: number;
+  /** Hang: space between photos down a column. */
+  hangGap: number;
   captionTitleStyle: TextStyleValue;
   captionMetaStyle: TextStyleValue;
   useGlobalLightbox: boolean;
@@ -254,6 +265,10 @@ type GalleriesIndexProps = {
   columns: "1" | "2" | "3" | "4" | "5" | "6";
   gap: number;
   showCount: boolean;
+  /** Follows the count on a cover: "04 photographs". */
+  countLabel: string;
+  /** A rule between a cover and its title, as on the design's collections index. */
+  titleRule: boolean;
   dividerColor: string;
   // Index List gets its own title style — a row of titles wants different
   // settings from a caption under a cover.
@@ -392,6 +407,8 @@ export type Components = {
   Details: DetailsProps;
   PhotoPlate: PhotoPlateProps;
   SelectedWork: SelectedWorkProps;
+  NextCollection: NextCollectionProps;
+  Breadcrumb: BreadcrumbProps;
 };
 
 // ----- Puck config -----
@@ -402,7 +419,7 @@ export const puckConfig: Config<Components> = {
     layout: { components: ["Columns", "Rows", "Spacer", "Container"] },
     hero: { components: ["Hero", "HeroSlideshow"] },
     stories: { title: "Stories", components: ["StoriesIndexBlock"] },
-    sections: { title: "Page sections", components: ["PageIntro", "SectionHeader", "Details", "PhotoPlate", "SelectedWork"] },
+    sections: { title: "Page sections", components: ["PageIntro", "SectionHeader", "Details", "PhotoPlate", "SelectedWork", "Breadcrumb", "NextCollection"] },
     forms: { components: ["Form", "TextField", "TextArea", "SelectField", "RadioGroup", "CheckboxGroup", "Checkbox"] },
   },
   components: {
@@ -805,6 +822,15 @@ export const puckConfig: Config<Components> = {
             { label: "No", value: false },
           ],
         },
+        countLabel: { type: "text", label: "After the count", placeholder: "photographs" },
+        titleRule: {
+          type: "radio",
+          label: "Rule above the title",
+          options: [
+            { label: "Yes", value: true },
+            { label: "No", value: false },
+          ],
+        },
         dividerColor: {
           type: "custom",
           label: "Color",
@@ -979,6 +1005,8 @@ export const puckConfig: Config<Components> = {
         columns: "3",
         gap: 16,
         showCount: true,
+        countLabel: "photographs",
+        titleRule: false,
         dividerColor: "#e5e5e5",
         listTitleStyle: { style: "collectionTitle", size: 20 },
         fullBleed: false,
@@ -2229,6 +2257,7 @@ export const puckConfig: Config<Components> = {
           options: [
             { label: "Grid", value: "grid" },
             { label: "Masonry", value: "masonry" },
+            { label: "Hang (staggered pair)", value: "hang" },
           ],
         },
         columns: {
@@ -2280,6 +2309,24 @@ export const puckConfig: Config<Components> = {
           render: ({ value, onChange }) => (
             <MetadataFieldsPicker value={value} onChange={onChange} />
           ),
+        },
+        numbered: {
+          type: "radio",
+          label: "Number the photos",
+          options: [
+            { label: "Yes", value: true },
+            { label: "No", value: false },
+          ],
+        },
+        hangOffset: {
+          type: "custom",
+          label: "Right column drops by",
+          render: ({ value, onChange }) => <SliderField value={value ?? 140} onChange={onChange} min={0} max={400} step={4} unit="px" />,
+        },
+        hangGap: {
+          type: "custom",
+          label: "Space between photos",
+          render: ({ value, onChange }) => <SliderField value={value ?? 76} onChange={onChange} min={0} max={160} step={2} unit="px" />,
         },
         captionTitleStyle: {
           type: "custom",
@@ -2357,6 +2404,9 @@ export const puckConfig: Config<Components> = {
         borderRadius: 8,
         showMetadata: false,
         metadataFields: ["title"],
+        numbered: true,
+        hangOffset: 140,
+        hangGap: 76,
         captionTitleStyle: { style: "photoTitle" },
         captionMetaStyle: { style: "meta" },
         useGlobalLightbox: true,
@@ -2366,7 +2416,7 @@ export const puckConfig: Config<Components> = {
         lightboxFadeSpeed: "medium",
         lightboxCaptionAlignment: "left",
       },
-      render: ({ gallerySlug, maxPhotos, layout, columns, aspectRatio, gap, imageMaxWidth, borderRadius, showMetadata, metadataFields, captionTitleStyle, captionMetaStyle, useGlobalLightbox, lightboxMetadataFields, lightboxCornerRadius, lightboxCaptionPosition, lightboxFadeSpeed, lightboxCaptionAlignment, puck }) => {
+      render: ({ gallerySlug, maxPhotos, layout, columns, aspectRatio, gap, imageMaxWidth, borderRadius, showMetadata, metadataFields, numbered, hangOffset, hangGap, captionTitleStyle, captionMetaStyle, useGlobalLightbox, lightboxMetadataFields, lightboxCornerRadius, lightboxCaptionPosition, lightboxFadeSpeed, lightboxCaptionAlignment, puck }) => {
         if (!gallerySlug) {
           return (
             <div className="rounded border-2 border-dashed border-neutral-300 p-8 text-center text-neutral-400">
@@ -2387,6 +2437,9 @@ export const puckConfig: Config<Components> = {
             borderRadius={borderRadius}
             showMetadata={showMetadata}
             metadataFields={metadataFields}
+            numbered={numbered ?? true}
+            hangOffset={hangOffset ?? 140}
+            hangGap={hangGap ?? 76}
             captionTitleStyle={captionTitleStyle}
             captionMetaStyle={captionMetaStyle}
             useGlobalLightbox={useGlobalLightbox}
@@ -2974,6 +3027,124 @@ export const puckConfig: Config<Components> = {
       },
     },
 
+    NextCollection: {
+      label: "Next Collection",
+      fields: {
+        gallerySlug: {
+          type: "custom",
+          label: "This page's collection",
+          render: ({ value, onChange }) => <GalleryPicker value={value ?? ""} onChange={onChange} />,
+        },
+        label: { type: "text", label: "Label" },
+        wrap: {
+          type: "radio",
+          label: "After the last collection",
+          options: [
+            { label: "Back to the first", value: true },
+            { label: "Show nothing", value: false },
+          ],
+        },
+        labelStyle: {
+          type: "custom",
+          label: "Text style",
+          render: ({ value, onChange }) => <TextStyleControl value={value} onChange={onChange} fallback="label" />,
+        },
+        titleStyle: {
+          type: "custom",
+          label: "Text style",
+          render: ({ value, onChange }) => <TextStyleControl value={value} onChange={onChange} fallback="display" />,
+        },
+        marginTop: {
+          type: "custom",
+          label: "Space above",
+          render: ({ value, onChange }) => <SpacingControl value={value} onChange={onChange} />,
+        },
+        marginBottom: {
+          type: "custom",
+          label: "Space below",
+          render: ({ value, onChange }) => <SpacingControl value={value} onChange={onChange} />,
+        },
+      },
+      defaultProps: {
+        gallerySlug: "",
+        label: "Next collection",
+        wrap: true,
+        labelStyle: { style: "label" },
+        titleStyle: { style: "display", size: 40 },
+        marginTop: 96,
+        marginBottom: 0,
+      },
+      render: ({ puck, ...props }) => <NextCollectionRender {...props} editing={!!puck?.isEditing} />,
+    },
+
+    Breadcrumb: {
+      label: "Breadcrumb",
+      fields: {
+        items: {
+          type: "custom",
+          render: ({ value, onChange }) => (
+            <ListControl<Crumb>
+              value={value}
+              onChange={onChange}
+              addLabel="Add step"
+              newItem={() => ({ id: crypto.randomUUID(), label: "", link: "" })}
+              summary={(c) => c.label}
+              renderItem={(c, update) => (
+                <>
+                  <ListItemField label="Label" value={c.label} onChange={(v) => update({ label: v })} placeholder="Collections" />
+                  <div className="flex flex-col gap-1">
+                    <span className="text-[12px] font-medium text-admin-ink">Goes to</span>
+                    <LinkPicker value={c.link} onChange={(v) => update({ link: v })} />
+                  </div>
+                </>
+              )}
+            />
+          ),
+        },
+        current: { type: "text", label: "This page (last, not a link)" },
+        separator: {
+          type: "radio",
+          label: "Between steps",
+          options: [
+            { label: "/", value: "/" },
+            { label: "›", value: "›" },
+            { label: "·", value: "·" },
+          ],
+        },
+        linkStyle: {
+          type: "custom",
+          label: "Text style",
+          render: ({ value, onChange }) => <TextStyleControl value={value} onChange={onChange} fallback="meta" />,
+        },
+        currentStyle: {
+          type: "custom",
+          label: "Text style",
+          render: ({ value, onChange }) => <TextStyleControl value={value} onChange={onChange} fallback="meta" />,
+        },
+        marginTop: {
+          type: "custom",
+          label: "Space above",
+          render: ({ value, onChange }) => <SpacingControl value={value} onChange={onChange} />,
+        },
+        marginBottom: {
+          type: "custom",
+          label: "Space below",
+          render: ({ value, onChange }) => <SpacingControl value={value} onChange={onChange} />,
+        },
+      },
+      defaultProps: {
+        items: [{ id: "collections", label: "Collections", link: "/collections" }],
+        current: "",
+        separator: "/",
+        linkStyle: { style: "meta" },
+        // The design sets where-you-are in the ink colour, the steps before it muted.
+        currentStyle: { style: "meta", color: "token:text" },
+        marginTop: 0,
+        marginBottom: 48,
+      },
+      render: ({ puck, ...props }) => <BreadcrumbRender {...props} editing={!!puck?.isEditing} />,
+    },
+
     // ----- Form components -----
 
     Form: {
@@ -3558,7 +3729,15 @@ type GalleryRow = {
   createdAt?: string;
   /** Added by GET /api/galleries — number of photographs in the gallery. */
   photoCount?: number;
+  /** Added by GET /api/galleries — the collection's built page, or its /gallery page. */
+  href?: string;
+  /** Added by GET /api/galleries — stands in for a missing cover. */
+  firstPhotoUrl?: string | null;
 };
+
+/** A collection's link, from the API when it has one (see @/lib/collections). */
+const collectionHref = (g: GalleryRow) => g.href ?? `/${siteConfig.labels.gallerySlug}/${g.slug}`;
+const twoDigits = (n: number) => (n < 10 ? `0${n}` : String(n));
 
 function GalleriesMultiSelect({ value, onChange }: { value: string[]; onChange: (v: string[]) => void }) {
   const [galleries, setGalleries] = useState<GalleryRow[]>([]);
@@ -3635,6 +3814,22 @@ function GalleriesMultiSelect({ value, onChange }: { value: string[]; onChange: 
 
 const GALLERY_AR_MAP = GALLERY_ASPECT_CSS;
 
+/** A collection with no photographs yet: the design's wall-coloured frame. */
+function CoverPlaceholder({ fill }: { fill: boolean }) {
+  return (
+    <div
+      className={`flex w-full items-center justify-center ${fill ? "h-full" : "h-48"}`}
+      style={{ background: "var(--theme-color-surface, #f2efe9)", color: "var(--theme-color-muted, #8c877d)" }}
+      aria-hidden="true"
+    >
+      <svg width="38" height="38" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round">
+        <circle cx="12" cy="12" r="9" />
+        <path d="M12 3v18M3 12h18M5.6 5.6l12.8 12.8M18.4 5.6L5.6 18.4" />
+      </svg>
+    </div>
+  );
+}
+
 function GalleriesIndexRender(props: GalleriesIndexProps) {
   const {
     sourceMode,
@@ -3645,6 +3840,8 @@ function GalleriesIndexRender(props: GalleriesIndexProps) {
     columns,
     gap,
     showCount,
+    countLabel,
+    titleRule,
     dividerColor,
     listTitleStyle,
     fullBleed,
@@ -3705,6 +3902,8 @@ function GalleriesIndexRender(props: GalleriesIndexProps) {
   const colCount = parseInt(columns, 10) || 3;
   const descriptionCss = textStyleCss(descriptionStyle, "body");
   const arValue = GALLERY_AR_MAP[aspectRatio];
+  // Blocks saved before the setting existed read "photographs".
+  const countUnit = countLabel ?? "photographs";
   const isOverlay = titlePosition !== "below";
 
   const wrapperStyle: React.CSSProperties = {
@@ -3733,7 +3932,7 @@ function GalleriesIndexRender(props: GalleriesIndexProps) {
       <div style={wrapperStyle}>
         {limited.map((g, i) => {
           const hovered = hoveredId === g.id;
-          const href = `/${siteConfig.labels.gallerySlug}/${g.slug}`;
+          const href = collectionHref(g);
           return (
             <a
               key={g.id}
@@ -3780,7 +3979,7 @@ function GalleriesIndexRender(props: GalleriesIndexProps) {
                     flexShrink: 0,
                   }}
                 >
-                  {g.photoCount < 10 ? `0${g.photoCount}` : g.photoCount}
+                  {twoDigits(g.photoCount)}
                 </span>
               )}
             </a>
@@ -3795,7 +3994,12 @@ function GalleriesIndexRender(props: GalleriesIndexProps) {
       <div style={gridStyle}>
         {limited.map((g) => {
           const hovered = hoveredId === g.id;
-          const href = `/${siteConfig.labels.gallerySlug}/${g.slug}`;
+          const href = collectionHref(g);
+          const cover = g.coverImageUrl || g.firstPhotoUrl;
+          const count =
+            showCount && typeof g.photoCount === "number"
+              ? `${twoDigits(g.photoCount)}${countUnit ? ` ${countUnit}` : ""}`
+              : null;
 
           const overlayInset =
             titlePosition === "overlay-top"
@@ -3804,7 +4008,7 @@ function GalleriesIndexRender(props: GalleriesIndexProps) {
                 ? { top: 0, left: 0, right: 0, bottom: 0, display: "flex", alignItems: "center", justifyContent: "center" }
                 : { bottom: 0, left: 0, right: 0 };
 
-          const titleEl = showTitle && (
+          const titleText = (
             <div
               style={{
                 ...textStyleCss(titleStyle, "collectionTitle"),
@@ -3814,6 +4018,16 @@ function GalleriesIndexRender(props: GalleriesIndexProps) {
               {g.title}
             </div>
           );
+          // Below the cover, the count sits at the end of the title's line.
+          const titleEl =
+            showTitle && count && !isOverlay ? (
+              <div style={{ display: "flex", alignItems: "baseline", justifyContent: "space-between", gap: 16 }}>
+                {titleText}
+                <span style={{ ...textStyleCss(undefined, "meta"), flexShrink: 0 }}>{count}</span>
+              </div>
+            ) : (
+              showTitle && titleText
+            );
 
           const descEl = showDescription && g.description && (
             <div
@@ -3859,16 +4073,14 @@ function GalleriesIndexRender(props: GalleriesIndexProps) {
               onMouseLeave={() => setHoveredId(null)}
             >
               <div style={imageWrapperStyle}>
-                {g.coverImageUrl ? (
+                {cover ? (
                   arValue ? (
-                    <img src={g.coverImageUrl} alt={g.title} style={imageStyle} loading="lazy" />
+                    <img src={cover} alt={g.title} style={imageStyle} loading="lazy" />
                   ) : (
-                    <img src={g.coverImageUrl} alt={g.title} style={{ ...imageStyle, height: "auto" }} loading="lazy" />
+                    <img src={cover} alt={g.title} style={{ ...imageStyle, height: "auto" }} loading="lazy" />
                   )
                 ) : (
-                  <div className="flex h-48 w-full items-center justify-center bg-neutral-100 text-xs text-neutral-400">
-                    No cover image
-                  </div>
+                  <CoverPlaceholder fill={!!arValue} />
                 )}
                 {isOverlay && (showTitle || showDescription) && (
                   <div
@@ -3888,7 +4100,17 @@ function GalleriesIndexRender(props: GalleriesIndexProps) {
                 )}
               </div>
               {!isOverlay && (showTitle || showDescription) && (
-                <div style={{ padding: `${textPaddingY}px ${textPaddingX}px` }}>
+                <div
+                  style={
+                    titleRule
+                      ? {
+                          marginTop: textPaddingY,
+                          padding: `${textPaddingY}px ${textPaddingX}px 0`,
+                          borderTop: "1px solid var(--theme-color-rule, #e0dcd3)",
+                        }
+                      : { padding: `${textPaddingY}px ${textPaddingX}px` }
+                  }
+                >
                   {titleEl}
                   {descEl}
                 </div>
@@ -5477,7 +5699,10 @@ const DEFAULT_LIGHTBOX: GlobalLightboxSettings = {
 interface GalleryEmbedRendererProps {
   slug: string;
   max: number;
-  layout: "grid" | "masonry";
+  layout: "grid" | "masonry" | "hang";
+  numbered: boolean;
+  hangOffset: number;
+  hangGap: number;
   columns: "2" | "3" | "4";
   aspectRatio: GalleryAspect;
   gap: number;
@@ -5501,7 +5726,7 @@ const aspectRatioValues = GALLERY_ASPECT_CSS;
 const gridColClasses = { "2": "grid-cols-1 sm:grid-cols-2", "3": "grid-cols-1 sm:grid-cols-2 md:grid-cols-3", "4": "grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4" };
 const masonryColClasses = { "2": "columns-1 sm:columns-2", "3": "columns-1 sm:columns-2 md:columns-3", "4": "columns-1 sm:columns-2 md:columns-3 lg:columns-4" };
 
-function GalleryEmbedRenderer({ slug, max, layout, columns, aspectRatio, gap, imageMaxWidth, borderRadius, showMetadata, metadataFields, captionTitleStyle, captionMetaStyle, useGlobalLightbox, lightboxMetadataFields, lightboxCornerRadius, lightboxCaptionPosition, lightboxFadeSpeed, lightboxCaptionAlignment, globalLightbox, serverPhotos }: GalleryEmbedRendererProps) {
+function GalleryEmbedRenderer({ slug, max, layout, columns, aspectRatio, gap, imageMaxWidth, borderRadius, showMetadata, metadataFields, numbered, hangOffset, hangGap, captionTitleStyle, captionMetaStyle, useGlobalLightbox, lightboxMetadataFields, lightboxCornerRadius, lightboxCaptionPosition, lightboxFadeSpeed, lightboxCaptionAlignment, globalLightbox, serverPhotos }: GalleryEmbedRendererProps) {
   const lbBase = globalLightbox ?? DEFAULT_LIGHTBOX;
   const lb: GlobalLightboxSettings = useGlobalLightbox ? lbBase : {
     metadataFields: lightboxMetadataFields ?? lbBase.metadataFields,
@@ -5549,10 +5774,10 @@ function GalleryEmbedRenderer({ slug, max, layout, columns, aspectRatio, gap, im
   const titleCss = textStyleCss(captionTitleStyle, "photoTitle");
   const metaCss = textStyleCss(captionMetaStyle, "meta");
 
-  const renderPhotoMeta = (photo: EmbedPhoto) => {
+  const renderPhotoMeta = (photo: EmbedPhoto, className = "mt-1.5 space-y-0.5") => {
     if (!showMetadata || metadataFields.length === 0) return null;
     return (
-      <div className="mt-1.5 space-y-0.5">
+      <div className={className}>
         {metadataFields.includes("title") && photo.title && (
           <p style={titleCss}>{parseLinks(photo.title)}</p>
         )}
@@ -5614,6 +5839,76 @@ function GalleryEmbedRenderer({ slug, max, layout, columns, aspectRatio, gap, im
       {renderPhotoMeta(photo)}
     </div>
   );
+
+  // Hang: photos alternate between two columns, so they still read 1, 2, 3…
+  // across; the right column starts lower. One column when the block is narrow.
+  const hangItem = (photo: EmbedPhoto, index: number) => {
+    const meta = renderPhotoMeta(photo, "min-w-0 space-y-0.5");
+    return (
+      <figure key={photo.id} style={{ margin: 0 }}>
+        <button
+          type="button"
+          onClick={() => setLightboxIndex(index)}
+          className="group block w-full cursor-zoom-in"
+          style={{ borderRadius: radius }}
+          aria-label={`Enlarge ${photo.title || "photograph"}`}
+        >
+          {arValue ? (
+            <div className="relative overflow-hidden" style={{ aspectRatio: arValue, borderRadius: radius }}>
+              <img
+                src={photo.url}
+                alt={photo.title ?? ""}
+                loading="lazy"
+                className="absolute inset-0 h-full w-full object-cover transition-opacity duration-300 group-hover:opacity-[.88]"
+                style={{ objectPosition: `${photo.focalX ?? 50}% ${photo.focalY ?? 50}%` }}
+              />
+            </div>
+          ) : (
+            <img
+              src={photo.url}
+              alt={photo.title ?? ""}
+              width={photo.width}
+              height={photo.height}
+              loading="lazy"
+              className="block h-auto w-full transition-opacity duration-300 group-hover:opacity-[.88]"
+              style={{ borderRadius: radius }}
+            />
+          )}
+        </button>
+        {(meta || numbered) && (
+          <figcaption
+            className="flex items-start justify-between gap-6"
+            style={{ marginTop: 18, paddingTop: 14, borderTop: "1px solid var(--theme-color-rule, #e0dcd3)" }}
+          >
+            {meta ?? <span />}
+            {numbered && <span style={{ ...metaCss, flexShrink: 0 }}>{index + 1 < 10 ? `0${index + 1}` : index + 1}</span>}
+          </figcaption>
+        )}
+      </figure>
+    );
+  };
+
+  if (layout === "hang") {
+    const indexed = photos.map((photo, i) => ({ photo, i }));
+    return (
+      <>
+        <div className="@container">
+          <div className="flex flex-col @min-[40rem]:hidden" style={{ gap: hangGap }}>
+            {indexed.map(({ photo, i }) => hangItem(photo, i))}
+          </div>
+          <div className="hidden items-start @min-[40rem]:flex" style={{ gap: `${gap}px` }}>
+            <div className="flex min-w-0 flex-1 flex-col" style={{ gap: hangGap }}>
+              {indexed.filter(({ i }) => i % 2 === 0).map(({ photo, i }) => hangItem(photo, i))}
+            </div>
+            <div className="flex min-w-0 flex-1 flex-col" style={{ gap: hangGap, paddingTop: hangOffset }}>
+              {indexed.filter(({ i }) => i % 2 === 1).map(({ photo, i }) => hangItem(photo, i))}
+            </div>
+          </div>
+        </div>
+        <Lightbox photos={photos} selectedIndex={lightboxIndex} onClose={() => setLightboxIndex(null)} settings={lb} />
+      </>
+    );
+  }
 
   return (
     <>
