@@ -78,6 +78,14 @@ body {
   }
 }
 
+/* Puck properties panel (PanelFields): fields inside a group sit closer
+   together than Puck's own one-field-per-row spacing, with no rule between. */
+.puck-panel-group-body > [class*="PuckFields-field"] {
+  padding: 6px 16px 8px !important;
+  margin-top: 0 !important;
+  border-top: 0 !important;
+}
+
 /* Tiptap: ensure empty paragraphs (line breaks) render with height */
 .ProseMirror p.is-editor-empty:first-child::before {
   content: attr(data-placeholder);
