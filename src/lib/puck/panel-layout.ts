@@ -158,10 +158,9 @@ export const PANEL_LAYOUTS: Layouts = {
       {
         tab: "content",
         title: "Show",
-        fields: ["showTitle", "showDescription", "showCount"],
+        fields: ["showTitle", "showDescription", "showCount", "countLabel"],
         summary: (p) =>
-          list(p.layout !== "list" && p.showTitle && "Title", p.showDescription && "Description", p.layout === "list" && p.showCount && "Count") ||
-          "Images only",
+          list(p.layout !== "list" && p.showTitle && "Title", p.showDescription && "Description", p.showCount && "Count") || "Images only",
       },
       {
         tab: "style",
@@ -200,7 +199,7 @@ export const PANEL_LAYOUTS: Layouts = {
       {
         tab: "layout",
         title: "Text placement",
-        fields: ["titlePosition", "textAlignment", "textPaddingX", "textPaddingY", "textGap"],
+        fields: ["titlePosition", "titleRule", "textAlignment", "textPaddingX", "textPaddingY", "textGap"],
         summary: (p) => (p.layout === "list" ? `Rows ${p.textPaddingY}px` : list(p.titlePosition === "below" ? "Below image" : "Overlay", p.textAlignment)),
         collapsed: true,
       },
@@ -210,7 +209,9 @@ export const PANEL_LAYOUTS: Layouts = {
     when: {
       selectedSlugs: (p) => p.sourceMode === "manual",
       showTitle: (p) => p.layout !== "list",
-      showCount: (p) => p.layout === "list",
+      // The list shows a bare number; covers can add a word after it.
+      countLabel: (p) => p.showCount && p.layout !== "list",
+      titleRule: (p) => p.layout !== "list" && p.titlePosition === "below",
       titleStyle: (p) => p.layout !== "list" && p.showTitle,
       listTitleStyle: (p) => p.layout === "list",
       descriptionStyle: (p) => p.showDescription,
@@ -441,8 +442,9 @@ export const PANEL_LAYOUTS: Layouts = {
       {
         tab: "content",
         title: "Photo info",
-        fields: ["showMetadata", "metadataFields"],
-        summary: (p) => (p.showMetadata ? (p.metadataFields ?? []).join(", ") || "Nothing picked" : "Hidden"),
+        fields: ["showMetadata", "metadataFields", "numbered"],
+        summary: (p) =>
+          list(p.showMetadata ? (p.metadataFields ?? []).join(", ") || "Nothing picked" : "Hidden", p.layout === "hang" && p.numbered && "numbered"),
       },
       {
         tab: "content",
@@ -468,14 +470,21 @@ export const PANEL_LAYOUTS: Layouts = {
       {
         tab: "layout",
         title: "Arrangement",
-        fields: ["layout", "columns", "aspectRatio", "gap", "imageMaxWidth"],
-        summary: (p) => list(capitalise(p.layout), `${p.columns} columns`, p.layout !== "masonry" && p.aspectRatio, `gap ${p.gap}px`),
+        fields: ["layout", "columns", "aspectRatio", "gap", "hangOffset", "hangGap", "imageMaxWidth"],
+        summary: (p) =>
+          list(capitalise(p.layout), p.layout !== "hang" && `${p.columns} columns`, p.layout !== "masonry" && p.aspectRatio, `gap ${p.gap}px`),
       },
     ],
     when: {
       metadataFields: (p) => p.showMetadata,
+      numbered: (p) => p.layout === "hang",
       captionTitleStyle: (p) => p.showMetadata,
-      captionMetaStyle: (p) => p.showMetadata,
+      // The Hang layout's numbers use the details style.
+      captionMetaStyle: (p) => p.showMetadata || (p.layout === "hang" && p.numbered),
+      columns: (p) => p.layout !== "hang",
+      imageMaxWidth: (p) => p.layout !== "hang",
+      hangOffset: (p) => p.layout === "hang",
+      hangGap: (p) => p.layout === "hang",
       lightboxMetadataFields: (p) => !p.useGlobalLightbox,
       lightboxCaptionPosition: (p) => !p.useGlobalLightbox,
       lightboxCaptionAlignment: (p) => !p.useGlobalLightbox,
@@ -602,6 +611,33 @@ export const PANEL_LAYOUTS: Layouts = {
     when: {
       titleStyle: (p) => p.showTitles,
     },
+  },
+
+  Breadcrumb: {
+    groups: [
+      {
+        tab: "content",
+        title: "Steps",
+        fields: ["items", "current"],
+        summary: (p) => [...(p.items ?? []).map((c) => c.label), p.current].filter(Boolean).join(` ${p.separator || "/"} `),
+      },
+      { tab: "style", title: "Steps", fields: ["linkStyle", "separator"], summary: (p) => textStyleSummary(p.linkStyle, "meta") },
+      { tab: "style", title: "This page", fields: ["currentStyle"], summary: (p) => textStyleSummary(p.currentStyle, "meta") },
+      SPACING,
+    ],
+    when: {
+      currentStyle: (p) => !!p.current,
+    },
+  },
+
+  NextCollection: {
+    groups: [
+      { tab: "content", title: "Collection", fields: ["gallerySlug", "wrap"], summary: (p) => p.gallerySlug || "Not chosen" },
+      { tab: "content", title: "Label", fields: ["label"], summary: (p) => p.label },
+      { tab: "style", title: "Label", fields: ["labelStyle"], summary: (p) => textStyleSummary(p.labelStyle, "label") },
+      { tab: "style", title: "Title", fields: ["titleStyle"], summary: (p) => textStyleSummary(p.titleStyle, "display") },
+      SPACING,
+    ],
   },
 
   Form: {

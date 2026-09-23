@@ -162,6 +162,66 @@ export function SectionHeaderRender(p: SectionHeaderProps) {
   );
 }
 
+// ----- Breadcrumb -----
+
+export type Crumb = { id: string; label: string; link: string };
+
+export type BreadcrumbProps = Spacing & {
+  /** The steps leading here, each a link. */
+  items: Crumb[];
+  /** Where the visitor is now — shown last, not a link. */
+  current: string;
+  separator: "/" | "›" | "·";
+  linkStyle: TextStyleValue;
+  currentStyle: TextStyleValue;
+};
+
+export function BreadcrumbRender({ editing, ...p }: BreadcrumbProps & { editing?: boolean }) {
+  const items = (p.items ?? []).filter((c) => c.label);
+  if (items.length === 0 && !p.current) {
+    if (!editing) return null;
+    return (
+      <div style={spacing(p)} className="rounded border border-dashed border-neutral-300 p-4 text-center text-sm text-neutral-500">
+        Add the steps leading to this page.
+      </div>
+    );
+  }
+
+  const linkCss = textStyleCss(p.linkStyle, "meta");
+  const separator = (
+    <span aria-hidden="true" style={{ ...linkCss, opacity: 0.6, padding: "0 10px" }}>
+      {p.separator || "/"}
+    </span>
+  );
+
+  return (
+    <nav aria-label="Breadcrumb" style={spacing(p)}>
+      <ol className="m-0 flex list-none flex-wrap items-baseline p-0">
+        {items.map((c, i) => (
+          <li key={c.id} className="flex items-baseline">
+            {i > 0 && separator}
+            {c.link ? (
+              <a href={c.link} className="transition-opacity hover:opacity-70" style={{ ...linkCss, textDecoration: "none" }}>
+                {c.label}
+              </a>
+            ) : (
+              <span style={linkCss}>{c.label}</span>
+            )}
+          </li>
+        ))}
+        {p.current && (
+          <li className="flex items-baseline">
+            {items.length > 0 && separator}
+            <span aria-current="page" style={textStyleCss(p.currentStyle, "meta")}>
+              {p.current}
+            </span>
+          </li>
+        )}
+      </ol>
+    </nav>
+  );
+}
+
 // ----- Details -----
 
 export type DetailItem = { id: string; term: string; description: string; link: string };
