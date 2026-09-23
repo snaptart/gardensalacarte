@@ -33,7 +33,7 @@ function useFieldDefault(name: string | undefined): unknown {
   });
 }
 
-function sameValue(a: unknown, b: unknown): boolean {
+export function sameValue(a: unknown, b: unknown): boolean {
   return a === b || JSON.stringify(a) === JSON.stringify(b);
 }
 

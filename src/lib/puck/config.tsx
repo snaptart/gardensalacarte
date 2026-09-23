@@ -359,7 +359,7 @@ type ButtonProps = {
   transitionMs: number;
 };
 
-type Components = {
+export type Components = {
   RichText: RichTextProps;
   Hero: HeroProps;
   HeroSlideshow: HeroSlideshowProps;
@@ -462,7 +462,7 @@ export const puckConfig: Config<Components> = {
         title: { type: "text", label: "Title" },
         titleStyle: {
           type: "custom",
-          label: "Title text style",
+          label: "Text style",
           render: ({ value, onChange }) => (
             <TextStyleControl value={value} onChange={onChange} fallback="display" withColor={false} />
           ),
@@ -470,7 +470,7 @@ export const puckConfig: Config<Components> = {
         subtitle: { type: "text", label: "Subtitle" },
         subtitleStyle: {
           type: "custom",
-          label: "Subtitle text style",
+          label: "Text style",
           render: ({ value, onChange }) => (
             <TextStyleControl value={value} onChange={onChange} fallback="lead" withColor={false} />
           ),
@@ -485,20 +485,20 @@ export const puckConfig: Config<Components> = {
             { label: "Full Screen", value: "100vh" },
           ],
         },
-        overlay: { type: "radio", label: "Dark Overlay", options: [
+        overlay: { type: "radio", label: "Dark overlay", options: [
           { label: "Yes", value: true },
           { label: "No", value: false },
         ]},
         focalX: {
           type: "custom",
-          label: "Focal Point — Horizontal (0=left, 50=center, 100=right)",
+          label: "Focal point (horizontal)",
           render: ({ value, onChange }) => (
             <SliderField value={value} onChange={onChange} min={0} max={100} step={1} unit="%" label="Horizontal" />
           ),
         },
         focalY: {
           type: "custom",
-          label: "Focal Point — Vertical (0=top, 50=center, 100=bottom)",
+          label: "Focal point (vertical)",
           render: ({ value, onChange }) => (
             <SliderField value={value} onChange={onChange} min={0} max={100} step={1} unit="%" label="Vertical" />
           ),
@@ -556,10 +556,10 @@ export const puckConfig: Config<Components> = {
             <ImagePicker value={value} onChange={onChange} />
           ),
         },
-        alt: { type: "text", label: "Alt Text" },
+        alt: { type: "text", label: "Alt text" },
         aspectRatio: {
           type: "select",
-          label: "Aspect Ratio",
+          label: "Aspect ratio",
           options: [
             { label: "Natural", value: "natural" },
             { label: "Square (1:1)", value: "square" },
@@ -570,64 +570,64 @@ export const puckConfig: Config<Components> = {
         },
         width: {
           type: "custom",
-          label: "Width (%)",
+          label: "Width",
           render: ({ value, onChange }) => (
             <SliderField value={value} onChange={onChange} min={10} max={100} step={1} unit="%" label="Width" />
           ),
         },
         borderRadius: {
           type: "custom",
-          label: "Corner Radius (px)",
+          label: "Corner radius",
           render: ({ value, onChange }) => (
-            <SliderField value={value} onChange={onChange} min={0} max={32} step={1} unit="px" label="Corner Radius" />
+            <SliderField value={value} onChange={onChange} min={0} max={48} step={1} unit="px" label="Corner Radius" />
           ),
         },
         caption: { type: "text", label: "Caption" },
         captionStyle: {
           type: "custom",
-          label: "Caption text style",
+          label: "Text style",
           render: ({ value, onChange }) => (
             <TextStyleControl value={value} onChange={onChange} fallback="photoTitle" />
           ),
         },
         captionX: {
           type: "custom",
-          label: "Caption Horizontal Position",
+          label: "Horizontal",
           render: ({ value, onChange }) => (
             <SliderField value={value} onChange={onChange} min={-20} max={120} step={1} unit="%" label="Horizontal Position" />
           ),
         },
         captionY: {
           type: "custom",
-          label: "Caption Vertical Position",
+          label: "Vertical",
           render: ({ value, onChange }) => (
             <SliderField value={value} onChange={onChange} min={-20} max={120} step={1} unit="%" label="Vertical Position" />
           ),
         },
         captionBgColor: {
           type: "custom",
-          label: "Caption Background Color",
+          label: "Background",
           render: ({ value, onChange }) => (
             <ColorField value={value} onChange={onChange} />
           ),
         },
         captionBgOpacity: {
           type: "custom",
-          label: "Caption Background Opacity",
+          label: "Background opacity",
           render: ({ value, onChange }) => (
             <SliderField value={value} onChange={onChange} min={0} max={100} step={5} unit="%" label="Background Opacity" />
           ),
         },
         linkUrl: {
           type: "custom",
-          label: "Link URL",
+          label: "Goes to",
           render: ({ value, onChange }) => (
             <LinkPicker value={value} onChange={onChange} />
           ),
         },
         linkTarget: {
           type: "select",
-          label: "Link Opens In",
+          label: "Opens in",
           options: [
             { label: "Same Tab", value: "_self" },
             { label: "New Tab", value: "_blank" },
@@ -635,14 +635,14 @@ export const puckConfig: Config<Components> = {
         },
         focalX: {
           type: "custom",
-          label: "Focal Point — Horizontal (0=left, 50=center, 100=right)",
+          label: "Focal point (horizontal)",
           render: ({ value, onChange }) => (
             <SliderField value={value} onChange={onChange} min={0} max={100} step={1} unit="%" label="Horizontal" />
           ),
         },
         focalY: {
           type: "custom",
-          label: "Focal Point — Vertical (0=top, 50=center, 100=bottom)",
+          label: "Focal point (vertical)",
           render: ({ value, onChange }) => (
             <SliderField value={value} onChange={onChange} min={0} max={100} step={1} unit="%" label="Vertical" />
           ),
@@ -763,14 +763,14 @@ export const puckConfig: Config<Components> = {
         },
         selectedSlugs: {
           type: "custom",
-          label: `Pick ${siteConfig.labels.gallery} (used when Source = Hand-Picked)`,
+          label: `Pick ${siteConfig.labels.gallery}`,
           render: ({ value, onChange }) => (
             <GalleriesMultiSelect value={value} onChange={onChange} />
           ),
         },
         sortOrder: {
           type: "select",
-          label: "Sort Order",
+          label: "Sort order",
           options: [
             { label: "Manual / As Picked", value: "manual" },
             { label: "Admin Position", value: "position" },
@@ -782,7 +782,7 @@ export const puckConfig: Config<Components> = {
         },
         maxItems: {
           type: "custom",
-          label: "Max Items (0 = no limit)",
+          label: "Max items (0 = all)",
           render: ({ value, onChange }) => (
             <SliderField value={value} onChange={onChange} min={0} max={48} step={1} unit="" label="Max Items" />
           ),
@@ -791,13 +791,13 @@ export const puckConfig: Config<Components> = {
           type: "select",
           label: "Layout",
           options: [
-            { label: "Cover Grid", value: "grid" },
-            { label: "Index List", value: "list" },
+            { label: "Cover grid", value: "grid" },
+            { label: "Index list", value: "list" },
           ],
         },
         columns: {
           type: "select",
-          label: "Columns (Cover Grid)",
+          label: "Columns",
           options: [
             { label: "1", value: "1" },
             { label: "2", value: "2" },
@@ -809,7 +809,7 @@ export const puckConfig: Config<Components> = {
         },
         showCount: {
           type: "radio",
-          label: "Show Photo Count (Index List)",
+          label: "Photo count",
           options: [
             { label: "Yes", value: true },
             { label: "No", value: false },
@@ -817,28 +817,28 @@ export const puckConfig: Config<Components> = {
         },
         dividerColor: {
           type: "custom",
-          label: "Divider Color (Index List)",
+          label: "Color",
           render: ({ value, onChange }) => (
             <ColorField value={value} onChange={onChange} />
           ),
         },
         listTitleStyle: {
           type: "custom",
-          label: "List title text style (Index List)",
+          label: "Text style",
           render: ({ value, onChange }) => (
             <TextStyleControl value={value} onChange={onChange} fallback="collectionTitle" />
           ),
         },
         gap: {
           type: "custom",
-          label: "Gap (px)",
+          label: "Gap",
           render: ({ value, onChange }) => (
             <SliderField value={value} onChange={onChange} min={0} max={64} step={2} unit="px" label="Gap" />
           ),
         },
         fullBleed: {
           type: "radio",
-          label: "Full Bleed",
+          label: "Full bleed",
           options: [
             { label: "Yes", value: true },
             { label: "No", value: false },
@@ -846,26 +846,26 @@ export const puckConfig: Config<Components> = {
         },
         maxWidth: {
           type: "custom",
-          label: "Max Width (% — when not full bleed)",
+          label: "Max width",
           render: ({ value, onChange }) => (
             <SliderField value={value} onChange={onChange} min={30} max={100} step={1} unit="%" label="Max Width" />
           ),
         },
         aspectRatio: {
           type: "select",
-          label: "Image Aspect Ratio",
+          label: "Aspect ratio",
           options: GALLERY_ASPECT_OPTIONS,
         },
         borderRadius: {
           type: "custom",
-          label: "Corner Radius (px)",
+          label: "Corner radius",
           render: ({ value, onChange }) => (
             <SliderField value={value} onChange={onChange} min={0} max={48} step={1} unit="px" label="Corner Radius" />
           ),
         },
         imageHoverEffect: {
           type: "select",
-          label: "Image Hover Effect",
+          label: "Image effect",
           options: [
             { label: "None", value: "none" },
             { label: "Zoom", value: "zoom" },
@@ -876,7 +876,7 @@ export const puckConfig: Config<Components> = {
         },
         showTitle: {
           type: "radio",
-          label: "Show Title",
+          label: "Title",
           options: [
             { label: "Yes", value: true },
             { label: "No", value: false },
@@ -884,7 +884,7 @@ export const puckConfig: Config<Components> = {
         },
         showDescription: {
           type: "radio",
-          label: "Show Description",
+          label: "Description",
           options: [
             { label: "Yes", value: true },
             { label: "No", value: false },
@@ -892,7 +892,7 @@ export const puckConfig: Config<Components> = {
         },
         titlePosition: {
           type: "select",
-          label: "Title Position",
+          label: "Title position",
           options: [
             { label: "Below Image", value: "below" },
             { label: "Overlay — Bottom", value: "overlay-bottom" },
@@ -902,7 +902,7 @@ export const puckConfig: Config<Components> = {
         },
         textAlignment: {
           type: "radio",
-          label: "Text Alignment",
+          label: "Alignment",
           options: [
             { label: "Left", value: "left" },
             { label: "Center", value: "center" },
@@ -911,70 +911,70 @@ export const puckConfig: Config<Components> = {
         },
         titleStyle: {
           type: "custom",
-          label: "Title text style (Cover Grid)",
+          label: "Text style",
           render: ({ value, onChange }) => (
             <TextStyleControl value={value} onChange={onChange} fallback="collectionTitle" />
           ),
         },
         descriptionStyle: {
           type: "custom",
-          label: "Description text style",
+          label: "Text style",
           render: ({ value, onChange }) => (
             <TextStyleControl value={value} onChange={onChange} fallback="body" />
           ),
         },
         textPaddingX: {
           type: "custom",
-          label: "Text Horizontal Padding (px)",
+          label: "Padding (horizontal)",
           render: ({ value, onChange }) => (
             <SliderField value={value} onChange={onChange} min={0} max={48} step={1} unit="px" label="Padding X" />
           ),
         },
         textPaddingY: {
           type: "custom",
-          label: "Text Vertical Padding (px)",
+          label: "Padding (vertical)",
           render: ({ value, onChange }) => (
             <SliderField value={value} onChange={onChange} min={0} max={48} step={1} unit="px" label="Padding Y" />
           ),
         },
         textGap: {
           type: "custom",
-          label: "Title→Description Gap (px)",
+          label: "Space above description",
           render: ({ value, onChange }) => (
             <SliderField value={value} onChange={onChange} min={0} max={32} step={1} unit="px" label="Gap" />
           ),
         },
         overlayBgColor: {
           type: "custom",
-          label: "Overlay Background Color",
+          label: "Color",
           render: ({ value, onChange }) => (
             <ColorField value={value} onChange={onChange} />
           ),
         },
         overlayOpacity: {
           type: "custom",
-          label: "Overlay Opacity",
+          label: "Opacity",
           render: ({ value, onChange }) => (
             <SliderField value={value} onChange={onChange} min={0} max={100} step={5} unit="%" label="Opacity" />
           ),
         },
         marginTop: {
           type: "custom",
-          label: "Margin Top (px)",
+          label: "Space above",
           render: ({ value, onChange }) => (
             <SpacingControl value={value} onChange={onChange} />
           ),
         },
         marginBottom: {
           type: "custom",
-          label: "Margin Bottom (px)",
+          label: "Space below",
           render: ({ value, onChange }) => (
             <SpacingControl value={value} onChange={onChange} />
           ),
         },
         transitionMs: {
           type: "custom",
-          label: "Hover Transition (ms)",
+          label: "Transition",
           render: ({ value, onChange }) => (
             <SliderField value={value} onChange={onChange} min={0} max={800} step={10} unit="ms" label="Transition" />
           ),
@@ -1037,7 +1037,7 @@ export const puckConfig: Config<Components> = {
         },
         columns: {
           type: "select",
-          label: "Columns (Card Grid)",
+          label: "Columns",
           options: [
             { label: "1", value: "1" },
             { label: "2", value: "2" },
@@ -1047,14 +1047,14 @@ export const puckConfig: Config<Components> = {
         },
         gap: {
           type: "custom",
-          label: "Gap (px)",
+          label: "Gap",
           render: ({ value, onChange }) => (
-            <SliderField value={value} onChange={onChange} min={0} max={48} step={1} unit="px" label="Gap" />
+            <SliderField value={value} onChange={onChange} min={0} max={64} step={1} unit="px" label="Gap" />
           ),
         },
         alignment: {
           type: "radio",
-          label: "Block Alignment",
+          label: "Alignment",
           options: [
             { label: "Left", value: "left" },
             { label: "Center", value: "center" },
@@ -1063,7 +1063,7 @@ export const puckConfig: Config<Components> = {
         },
         itemAlignment: {
           type: "radio",
-          label: "Item Text Alignment",
+          label: "Text alignment",
           options: [
             { label: "Left", value: "left" },
             { label: "Center", value: "center" },
@@ -1072,7 +1072,7 @@ export const puckConfig: Config<Components> = {
         },
         showImage: {
           type: "radio",
-          label: "Show Item Image",
+          label: "Image",
           options: [
             { label: "Yes", value: true },
             { label: "No", value: false },
@@ -1080,7 +1080,7 @@ export const puckConfig: Config<Components> = {
         },
         showDescription: {
           type: "radio",
-          label: "Show Description",
+          label: "Description",
           options: [
             { label: "Yes", value: true },
             { label: "No", value: false },
@@ -1088,7 +1088,7 @@ export const puckConfig: Config<Components> = {
         },
         showIcon: {
           type: "radio",
-          label: "Show Icon",
+          label: "Icon",
           options: [
             { label: "Yes", value: true },
             { label: "No", value: false },
@@ -1096,7 +1096,7 @@ export const puckConfig: Config<Components> = {
         },
         imagePosition: {
           type: "select",
-          label: "Image Position",
+          label: "Position",
           options: [
             { label: "Left of text", value: "left" },
             { label: "Right of text", value: "right" },
@@ -1105,14 +1105,14 @@ export const puckConfig: Config<Components> = {
         },
         imageSize: {
           type: "custom",
-          label: "Image Size (px)",
+          label: "Size",
           render: ({ value, onChange }) => (
             <SliderField value={value} onChange={onChange} min={24} max={400} step={4} unit="px" label="Image Size" />
           ),
         },
         imageAspectRatio: {
           type: "select",
-          label: "Image Aspect Ratio",
+          label: "Aspect ratio",
           options: [
             { label: "Square (1:1)", value: "square" },
             { label: "4:3", value: "4:3" },
@@ -1123,77 +1123,77 @@ export const puckConfig: Config<Components> = {
         },
         imageBorderRadius: {
           type: "custom",
-          label: "Image Corner Radius (px)",
+          label: "Corner radius",
           render: ({ value, onChange }) => (
             <SliderField value={value} onChange={onChange} min={0} max={200} step={1} unit="px" label="Image Radius" />
           ),
         },
         iconGap: {
           type: "custom",
-          label: "Icon/Image Gap (px)",
+          label: "Gap beside image or icon",
           render: ({ value, onChange }) => (
             <SliderField value={value} onChange={onChange} min={0} max={32} step={1} unit="px" label="Icon Gap" />
           ),
         },
         bgColor: {
           type: "custom",
-          label: "Item Background Color",
+          label: "Background",
           render: ({ value, onChange }) => (
             <ColorField value={value} onChange={onChange} />
           ),
         },
         bgOpacity: {
           type: "custom",
-          label: "Item Background Opacity",
+          label: "Background opacity",
           render: ({ value, onChange }) => (
             <SliderField value={value} onChange={onChange} min={0} max={100} step={5} unit="%" label="Opacity" />
           ),
         },
         textColor: {
           type: "custom",
-          label: "Text Color",
+          label: "Text color",
           render: ({ value, onChange }) => (
             <ColorField value={value} onChange={onChange} />
           ),
         },
         borderColor: {
           type: "custom",
-          label: "Border Color",
+          label: "Border color",
           render: ({ value, onChange }) => (
             <ColorField value={value} onChange={onChange} />
           ),
         },
         borderWidth: {
           type: "custom",
-          label: "Border Width (px)",
+          label: "Border width",
           render: ({ value, onChange }) => (
             <SliderField value={value} onChange={onChange} min={0} max={6} step={1} unit="px" label="Border Width" />
           ),
         },
         borderRadius: {
           type: "custom",
-          label: "Item Corner Radius (px)",
+          label: "Corner radius",
           render: ({ value, onChange }) => (
             <SliderField value={value} onChange={onChange} min={0} max={100} step={1} unit="px" label="Corner Radius" />
           ),
         },
         paddingX: {
           type: "custom",
-          label: "Item Padding X (px)",
+          label: "Horizontal",
           render: ({ value, onChange }) => (
             <SliderField value={value} onChange={onChange} min={0} max={64} step={1} unit="px" label="Padding X" />
           ),
         },
         paddingY: {
           type: "custom",
-          label: "Item Padding Y (px)",
+          label: "Vertical",
           render: ({ value, onChange }) => (
             <SliderField value={value} onChange={onChange} min={0} max={48} step={1} unit="px" label="Padding Y" />
           ),
         },
         labelStyle: {
           type: "custom",
-          label: "Label text style",
+          label: "Text style",
           render: ({ value, onChange }) => (
             <TextStyleControl value={value} onChange={onChange} fallback="body" withColor={false} />
           ),
@@ -1208,35 +1208,35 @@ export const puckConfig: Config<Components> = {
         },
         descriptionStyle: {
           type: "custom",
-          label: "Description text style",
+          label: "Text style",
           render: ({ value, onChange }) => (
             <TextStyleControl value={value} onChange={onChange} fallback="body" />
           ),
         },
         hoverBgColor: {
           type: "custom",
-          label: "Hover Background Color",
+          label: "Hover background",
           render: ({ value, onChange }) => (
             <ColorField value={value} onChange={onChange} />
           ),
         },
         hoverTextColor: {
           type: "custom",
-          label: "Hover Text Color",
+          label: "Hover text",
           render: ({ value, onChange }) => (
             <ColorField value={value} onChange={onChange} />
           ),
         },
         hoverBorderColor: {
           type: "custom",
-          label: "Hover Border Color",
+          label: "Hover border",
           render: ({ value, onChange }) => (
             <ColorField value={value} onChange={onChange} />
           ),
         },
         hoverEffect: {
           type: "select",
-          label: "Hover Effect",
+          label: "Effect",
           options: [
             { label: "None", value: "none" },
             { label: "Lift", value: "lift" },
@@ -1257,7 +1257,7 @@ export const puckConfig: Config<Components> = {
         },
         hoverShadow: {
           type: "select",
-          label: "Hover Shadow",
+          label: "Hover shadow",
           options: [
             { label: "None", value: "none" },
             { label: "Small", value: "sm" },
@@ -1267,7 +1267,7 @@ export const puckConfig: Config<Components> = {
         },
         dividers: {
           type: "radio",
-          label: "Dividers (Vertical List only)",
+          label: "Between rows",
           options: [
             { label: "Yes", value: true },
             { label: "No", value: false },
@@ -1275,28 +1275,28 @@ export const puckConfig: Config<Components> = {
         },
         dividerColor: {
           type: "custom",
-          label: "Divider Color",
+          label: "Divider color",
           render: ({ value, onChange }) => (
             <ColorField value={value} onChange={onChange} />
           ),
         },
         marginTop: {
           type: "custom",
-          label: "Margin Top (px)",
+          label: "Space above",
           render: ({ value, onChange }) => (
             <SpacingControl value={value} onChange={onChange} />
           ),
         },
         marginBottom: {
           type: "custom",
-          label: "Margin Bottom (px)",
+          label: "Space below",
           render: ({ value, onChange }) => (
             <SpacingControl value={value} onChange={onChange} />
           ),
         },
         transitionMs: {
           type: "custom",
-          label: "Transition (ms)",
+          label: "Transition",
           render: ({ value, onChange }) => (
             <SliderField value={value} onChange={onChange} min={0} max={800} step={10} unit="ms" label="Transition" />
           ),
@@ -1350,24 +1350,24 @@ export const puckConfig: Config<Components> = {
         label: { type: "text", label: "Label" },
         link: {
           type: "custom",
-          label: "Link",
+          label: "Goes to",
           render: ({ value, onChange }) => (
             <LinkPicker value={value} onChange={onChange} />
           ),
         },
         linkTarget: {
           type: "select",
-          label: "Link Opens In",
+          label: "Opens in",
           options: [
             { label: "Same Tab", value: "_self" },
             { label: "New Tab", value: "_blank" },
           ],
         },
-        ariaLabel: { type: "text", label: "Aria Label (accessibility)" },
-        iconText: { type: "text", label: "Icon (text/emoji, e.g. → ↗ ★)" },
+        ariaLabel: { type: "text", label: "Screen-reader label" },
+        iconText: { type: "text", label: "Icon (text or emoji, e.g. → ↗ ★)" },
         iconPosition: {
           type: "radio",
-          label: "Icon Position",
+          label: "Position",
           options: [
             { label: "Left", value: "left" },
             { label: "Right", value: "right" },
@@ -1375,7 +1375,7 @@ export const puckConfig: Config<Components> = {
         },
         iconGap: {
           type: "custom",
-          label: "Icon Gap (px)",
+          label: "Gap",
           render: ({ value, onChange }) => (
             <SliderField value={value} onChange={onChange} min={0} max={32} step={1} unit="px" label="Icon Gap" />
           ),
@@ -1391,7 +1391,7 @@ export const puckConfig: Config<Components> = {
         },
         widthMode: {
           type: "select",
-          label: "Width Mode",
+          label: "Width",
           options: [
             { label: "Auto (fits content)", value: "auto" },
             { label: "Full Width", value: "full" },
@@ -1400,56 +1400,56 @@ export const puckConfig: Config<Components> = {
         },
         customWidth: {
           type: "custom",
-          label: "Custom Width (%)",
+          label: "Custom width",
           render: ({ value, onChange }) => (
             <SliderField value={value} onChange={onChange} min={10} max={100} step={1} unit="%" label="Width" />
           ),
         },
         minWidth: {
           type: "custom",
-          label: "Min Width (px)",
+          label: "Min width",
           render: ({ value, onChange }) => (
             <SliderField value={value} onChange={onChange} min={0} max={400} step={4} unit="px" label="Min Width" />
           ),
         },
         bgColor: {
           type: "custom",
-          label: "Background Color",
+          label: "Background",
           render: ({ value, onChange }) => (
             <ColorField value={value} onChange={onChange} />
           ),
         },
         bgOpacity: {
           type: "custom",
-          label: "Background Opacity",
+          label: "Background opacity",
           render: ({ value, onChange }) => (
             <SliderField value={value} onChange={onChange} min={0} max={100} step={5} unit="%" label="Opacity" />
           ),
         },
         textColor: {
           type: "custom",
-          label: "Text Color",
+          label: "Text color",
           render: ({ value, onChange }) => (
             <ColorField value={value} onChange={onChange} />
           ),
         },
         borderColor: {
           type: "custom",
-          label: "Border Color",
+          label: "Border color",
           render: ({ value, onChange }) => (
             <ColorField value={value} onChange={onChange} />
           ),
         },
         borderWidth: {
           type: "custom",
-          label: "Border Width (px)",
+          label: "Border width",
           render: ({ value, onChange }) => (
             <SliderField value={value} onChange={onChange} min={0} max={8} step={1} unit="px" label="Border Width" />
           ),
         },
         borderStyle: {
           type: "select",
-          label: "Border Style",
+          label: "Border style",
           options: [
             { label: "Solid", value: "solid" },
             { label: "Dashed", value: "dashed" },
@@ -1458,35 +1458,35 @@ export const puckConfig: Config<Components> = {
         },
         borderRadius: {
           type: "custom",
-          label: "Corner Radius (px)",
+          label: "Corner radius",
           render: ({ value, onChange }) => (
             <SliderField value={value} onChange={onChange} min={0} max={100} step={1} unit="px" label="Corner Radius" />
           ),
         },
         paddingX: {
           type: "custom",
-          label: "Horizontal Padding (px)",
+          label: "Horizontal",
           render: ({ value, onChange }) => (
             <SliderField value={value} onChange={onChange} min={0} max={80} step={1} unit="px" label="Horizontal Padding" />
           ),
         },
         paddingY: {
           type: "custom",
-          label: "Vertical Padding (px)",
+          label: "Vertical",
           render: ({ value, onChange }) => (
             <SliderField value={value} onChange={onChange} min={0} max={60} step={1} unit="px" label="Vertical Padding" />
           ),
         },
         marginTop: {
           type: "custom",
-          label: "Margin Top (px)",
+          label: "Space above",
           render: ({ value, onChange }) => (
             <SpacingControl value={value} onChange={onChange} />
           ),
         },
         marginBottom: {
           type: "custom",
-          label: "Margin Bottom (px)",
+          label: "Space below",
           render: ({ value, onChange }) => (
             <SpacingControl value={value} onChange={onChange} />
           ),
@@ -1508,28 +1508,28 @@ export const puckConfig: Config<Components> = {
         },
         hoverBgColor: {
           type: "custom",
-          label: "Hover Background Color",
+          label: "Hover background",
           render: ({ value, onChange }) => (
             <ColorField value={value} onChange={onChange} />
           ),
         },
         hoverTextColor: {
           type: "custom",
-          label: "Hover Text Color",
+          label: "Hover text",
           render: ({ value, onChange }) => (
             <ColorField value={value} onChange={onChange} />
           ),
         },
         hoverBorderColor: {
           type: "custom",
-          label: "Hover Border Color",
+          label: "Hover border",
           render: ({ value, onChange }) => (
             <ColorField value={value} onChange={onChange} />
           ),
         },
         hoverEffect: {
           type: "select",
-          label: "Hover Effect",
+          label: "Effect",
           options: [
             { label: "None", value: "none" },
             { label: "Lift", value: "lift" },
@@ -1549,7 +1549,7 @@ export const puckConfig: Config<Components> = {
         },
         hoverShadow: {
           type: "select",
-          label: "Hover Shadow",
+          label: "Hover shadow",
           options: [
             { label: "None", value: "none" },
             { label: "Small", value: "sm" },
@@ -1559,7 +1559,7 @@ export const puckConfig: Config<Components> = {
         },
         transitionMs: {
           type: "custom",
-          label: "Transition Duration (ms)",
+          label: "Transition",
           render: ({ value, onChange }) => (
             <SliderField value={value} onChange={onChange} min={0} max={800} step={10} unit="ms" label="Transition" />
           ),
@@ -1617,7 +1617,7 @@ export const puckConfig: Config<Components> = {
         height: { type: "number", label: "Height", min: 0, max: 1000 },
         line: {
           type: "radio",
-          label: "Horizontal Rule",
+          label: "Draw a rule",
           options: [
             { label: "Yes", value: true },
             { label: "No", value: false },
@@ -1625,21 +1625,21 @@ export const puckConfig: Config<Components> = {
         },
         lineWidth: {
           type: "custom",
-          label: "Rule Thickness (px)",
+          label: "Thickness",
           render: ({ value, onChange }) => (
             <SliderField value={value} onChange={onChange} min={1} max={8} step={1} unit="px" label="Thickness" />
           ),
         },
         lineLength: {
           type: "custom",
-          label: "Rule Width (%)",
+          label: "Length",
           render: ({ value, onChange }) => (
             <SliderField value={value} onChange={onChange} min={10} max={100} step={5} unit="%" label="Width" />
           ),
         },
         lineAlign: {
           type: "radio",
-          label: "Rule Alignment",
+          label: "Alignment",
           options: [
             { label: "Left", value: "left" },
             { label: "Center", value: "center" },
@@ -1648,7 +1648,7 @@ export const puckConfig: Config<Components> = {
         },
         lineColor: {
           type: "custom",
-          label: "Rule Color",
+          label: "Color",
           render: ({ value, onChange }) => (
             <ColorField value={value} onChange={onChange} emptyLabel="Theme hairline" />
           ),
@@ -1689,8 +1689,8 @@ export const puckConfig: Config<Components> = {
     Container: {
       label: "Container",
       fields: {
-        paddingLeft: { type: "number", label: "Left Padding (px)", min: 0, max: 300 },
-        paddingRight: { type: "number", label: "Right Padding (px)", min: 0, max: 300 },
+        paddingLeft: { type: "number", label: "Left padding", min: 0, max: 300 },
+        paddingRight: { type: "number", label: "Right padding", min: 0, max: 300 },
       },
       defaultProps: { paddingLeft: 0, paddingRight: 0 },
       render: ({ paddingLeft, paddingRight, puck }) => (
@@ -1713,7 +1713,7 @@ export const puckConfig: Config<Components> = {
         },
         distribution: {
           type: "select",
-          label: "Width Distribution",
+          label: "Widths",
           options: [],
         },
         gap: {
@@ -1744,7 +1744,7 @@ export const puckConfig: Config<Components> = {
           ...fields,
           distribution: {
             type: "select" as const,
-            label: "Width Distribution",
+            label: "Widths",
             options: data.props.columns === "3" ? threeColOptions : twoColOptions,
           },
         };
@@ -1800,10 +1800,10 @@ export const puckConfig: Config<Components> = {
             <GalleryPicker value={value} onChange={onChange} />
           ),
         },
-        maxPhotos: { type: "number", label: `Max ${siteConfig.labels.photos}`, min: 1, max: 20 },
+        maxPhotos: { type: "number", label: `Max ${siteConfig.labels.photos.toLowerCase()}`, min: 1, max: 20 },
         height: {
           type: "select",
-          label: "Height (or min-height when aspect ratio is set)",
+          label: "Height",
           options: [
             { label: "Full Screen (100dvh)", value: "100dvh" },
             { label: "90%", value: "90dvh" },
@@ -1818,7 +1818,7 @@ export const puckConfig: Config<Components> = {
         },
         aspectRatio: {
           type: "select",
-          label: "Aspect Ratio",
+          label: "Aspect ratio",
           options: [
             { label: "None (use height only)", value: "none" },
             { label: "16:9", value: "16:9" },
@@ -1829,7 +1829,7 @@ export const puckConfig: Config<Components> = {
         },
         fullBleed: {
           type: "radio",
-          label: "Full Bleed (edge-to-edge)",
+          label: "Full bleed",
           options: [
             { label: "Yes", value: true },
             { label: "No", value: false },
@@ -1837,7 +1837,7 @@ export const puckConfig: Config<Components> = {
         },
         maxWidth: {
           type: "select",
-          label: "Max Width (when Full Bleed is off)",
+          label: "Max width",
           options: [
             { label: "100%", value: "100%" },
             { label: "90%", value: "90%" },
@@ -1849,7 +1849,7 @@ export const puckConfig: Config<Components> = {
         },
         objectFit: {
           type: "select",
-          label: "Image Fit",
+          label: "Image fit",
           options: [
             { label: "Cover (fill & crop)", value: "cover" },
             { label: "Contain (letterbox)", value: "contain" },
@@ -1857,14 +1857,14 @@ export const puckConfig: Config<Components> = {
         },
         overlayOpacity: {
           type: "custom",
-          label: "Dark Overlay Opacity",
+          label: "Dark overlay",
           render: ({ value, onChange }) => (
             <SliderField value={value} onChange={onChange} min={0} max={80} step={5} unit="%" label="Overlay Opacity" />
           ),
         },
         autoPlay: {
           type: "radio",
-          label: "Auto-play",
+          label: "Autoplay",
           options: [
             { label: "Yes", value: true },
             { label: "No", value: false },
@@ -1879,7 +1879,7 @@ export const puckConfig: Config<Components> = {
         },
         pauseOnHover: {
           type: "radio",
-          label: "Pause on Hover",
+          label: "Pause on hover",
           options: [
             { label: "Yes", value: true },
             { label: "No", value: false },
@@ -1887,14 +1887,14 @@ export const puckConfig: Config<Components> = {
         },
         transitionDuration: {
           type: "custom",
-          label: "Fade Duration (ms)",
+          label: "Fade speed",
           render: ({ value, onChange }) => (
             <SliderField value={value} onChange={onChange} min={100} max={2000} step={100} unit="ms" label="Fade Duration" />
           ),
         },
         showArrows: {
           type: "radio",
-          label: "Show Arrows",
+          label: "Arrows",
           options: [
             { label: "Yes", value: true },
             { label: "No", value: false },
@@ -1902,7 +1902,7 @@ export const puckConfig: Config<Components> = {
         },
         showDots: {
           type: "radio",
-          label: "Show Dots",
+          label: "Dots",
           options: [
             { label: "Yes", value: true },
             { label: "No", value: false },
@@ -1961,7 +1961,7 @@ export const puckConfig: Config<Components> = {
       fields: {
         sourceMode: {
           type: "radio",
-          label: "Slide Source",
+          label: "Source",
           options: [
             { label: "Manual slides", value: "manual" },
             { label: `From ${siteConfig.labels.gallery.toLowerCase()}`, value: "gallery" },
@@ -1969,56 +1969,56 @@ export const puckConfig: Config<Components> = {
         },
         gallerySlug: {
           type: "custom",
-          label: `${siteConfig.labels.gallery} (when source is gallery)`,
+          label: siteConfig.labels.gallery,
           render: ({ value, onChange }) => (
             <GalleryPicker value={value} onChange={onChange} />
           ),
         },
         maxPhotos: {
           type: "custom",
-          label: "Max Photos (gallery source)",
+          label: "Max photos",
           render: ({ value, onChange }) => (
             <SliderField value={value} onChange={onChange} min={1} max={50} step={1} unit="" label="Max Photos" />
           ),
         },
         slides: {
           type: "custom",
-          label: "Slides (manual source)",
+          label: "Slides",
           render: ({ value, onChange }) => (
             <CarouselSlideEditor value={value} onChange={onChange} />
           ),
         },
         slideTitleStyle: {
           type: "custom",
-          label: "Slide title text style (manual slides)",
+          label: "Title",
           render: ({ value, onChange }) => (
             <TextStyleControl value={value} onChange={onChange} fallback="collectionTitle" withColor={false} />
           ),
         },
         slideSubtitleStyle: {
           type: "custom",
-          label: "Slide subtitle text style (manual slides)",
+          label: "Subtitle",
           render: ({ value, onChange }) => (
             <TextStyleControl value={value} onChange={onChange} fallback="body" withColor={false} />
           ),
         },
         slidesPerView: {
           type: "custom",
-          label: "Slides Per View",
+          label: "Slides per view",
           render: ({ value, onChange }) => (
             <SliderField value={value} onChange={onChange} min={1} max={5} step={1} unit="" label="Slides Per View" />
           ),
         },
         gap: {
           type: "custom",
-          label: "Gap Between Slides (px)",
+          label: "Gap",
           render: ({ value, onChange }) => (
-            <SliderField value={value} onChange={onChange} min={0} max={48} step={2} unit="px" label="Gap" />
+            <SliderField value={value} onChange={onChange} min={0} max={64} step={2} unit="px" label="Gap" />
           ),
         },
         aspectRatio: {
           type: "select",
-          label: "Aspect Ratio",
+          label: "Aspect ratio",
           options: [
             { label: "None (use height)", value: "none" },
             { label: "16:9 (landscape)", value: "16:9" },
@@ -2046,7 +2046,7 @@ export const puckConfig: Config<Components> = {
         },
         transition: {
           type: "select",
-          label: "Transition Style",
+          label: "Transition",
           options: [
             { label: "Slide", value: "slide" },
             { label: "Fade (single slide only)", value: "fade" },
@@ -2054,14 +2054,14 @@ export const puckConfig: Config<Components> = {
         },
         transitionDuration: {
           type: "custom",
-          label: "Transition Duration (ms)",
+          label: "Transition speed",
           render: ({ value, onChange }) => (
             <SliderField value={value} onChange={onChange} min={100} max={2000} step={100} unit="ms" label="Duration" />
           ),
         },
         objectFit: {
           type: "select",
-          label: "Image Fit",
+          label: "Image fit",
           options: [
             { label: "Cover (fill & crop)", value: "cover" },
             { label: "Contain (letterbox)", value: "contain" },
@@ -2069,14 +2069,14 @@ export const puckConfig: Config<Components> = {
         },
         borderRadius: {
           type: "custom",
-          label: "Corner Radius (px)",
+          label: "Corner radius",
           render: ({ value, onChange }) => (
-            <SliderField value={value} onChange={onChange} min={0} max={32} step={1} unit="px" label="Corner Radius" />
+            <SliderField value={value} onChange={onChange} min={0} max={48} step={1} unit="px" label="Corner Radius" />
           ),
         },
         autoPlay: {
           type: "radio",
-          label: "Auto-play",
+          label: "Autoplay",
           options: [
             { label: "Yes", value: true },
             { label: "No", value: false },
@@ -2091,7 +2091,7 @@ export const puckConfig: Config<Components> = {
         },
         pauseOnHover: {
           type: "radio",
-          label: "Pause on Hover",
+          label: "Pause on hover",
           options: [
             { label: "Yes", value: true },
             { label: "No", value: false },
@@ -2099,7 +2099,7 @@ export const puckConfig: Config<Components> = {
         },
         showArrows: {
           type: "radio",
-          label: "Show Arrows",
+          label: "Arrows",
           options: [
             { label: "Yes", value: true },
             { label: "No", value: false },
@@ -2107,7 +2107,7 @@ export const puckConfig: Config<Components> = {
         },
         showDots: {
           type: "radio",
-          label: "Show Dots",
+          label: "Dots",
           options: [
             { label: "Yes", value: true },
             { label: "No", value: false },
@@ -2115,14 +2115,14 @@ export const puckConfig: Config<Components> = {
         },
         initialSlide: {
           type: "custom",
-          label: "Initial Slide (centered on load)",
+          label: "Start on slide",
           render: ({ value, onChange }) => (
             <SliderField value={value} onChange={onChange} min={1} max={50} step={1} unit="" label="Initial Slide" />
           ),
         },
         slideLinkOverrides: {
           type: "custom",
-          label: "Per-photo links (gallery source)",
+          label: "Per-photo links",
           render: ({ value, onChange }) => (
             <CarouselGalleryLinkOverridesEditor value={value} onChange={onChange} />
           ),
@@ -2186,7 +2186,7 @@ export const puckConfig: Config<Components> = {
             <GalleryPicker value={value} onChange={onChange} />
           ),
         },
-        maxPhotos: { type: "number", label: `Max ${siteConfig.labels.photos}`, min: 1, max: 50 },
+        maxPhotos: { type: "number", label: `Max ${siteConfig.labels.photos.toLowerCase()}`, min: 1, max: 50 },
         layout: {
           type: "select",
           label: "Layout",
@@ -2206,33 +2206,33 @@ export const puckConfig: Config<Components> = {
         },
         aspectRatio: {
           type: "select",
-          label: "Aspect Ratio",
+          label: "Aspect ratio",
           options: GALLERY_ASPECT_OPTIONS,
         },
         gap: {
           type: "custom",
-          label: "Gap (px)",
+          label: "Gap",
           render: ({ value, onChange }) => (
-            <SliderField value={value} onChange={onChange} min={0} max={48} step={1} unit="px" label="Gap" />
+            <SliderField value={value} onChange={onChange} min={0} max={64} step={1} unit="px" label="Gap" />
           ),
         },
         imageMaxWidth: {
           type: "custom",
-          label: "Image Max Width (px)",
+          label: "Max photo width",
           render: ({ value, onChange }) => (
             <SliderField value={value} onChange={onChange} min={100} max={800} step={10} unit="px" label="Max Width" />
           ),
         },
         borderRadius: {
           type: "custom",
-          label: "Corner Radius (px)",
+          label: "Corner radius",
           render: ({ value, onChange }) => (
-            <SliderField value={value} onChange={onChange} min={0} max={32} step={1} unit="px" label="Corner Radius" />
+            <SliderField value={value} onChange={onChange} min={0} max={48} step={1} unit="px" label="Corner Radius" />
           ),
         },
         showMetadata: {
           type: "radio",
-          label: "Show Photo Info",
+          label: "Show",
           options: [
             { label: "Yes", value: true },
             { label: "No", value: false },
@@ -2240,50 +2240,50 @@ export const puckConfig: Config<Components> = {
         },
         metadataFields: {
           type: "custom",
-          label: "Info to Display",
+          label: "Details to show",
           render: ({ value, onChange }) => (
             <MetadataFieldsPicker value={value} onChange={onChange} />
           ),
         },
         captionTitleStyle: {
           type: "custom",
-          label: "Photo title text style",
+          label: "Title",
           render: ({ value, onChange }) => (
             <TextStyleControl value={value} onChange={onChange} fallback="photoTitle" />
           ),
         },
         captionMetaStyle: {
           type: "custom",
-          label: "Photo details text style",
+          label: "Details",
           render: ({ value, onChange }) => (
             <TextStyleControl value={value} onChange={onChange} fallback="meta" />
           ),
         },
         useGlobalLightbox: {
           type: "radio",
-          label: "Lightbox Settings",
+          label: "Settings",
           options: [
-            { label: "Use global defaults", value: true },
-            { label: "Customize for this embed", value: false },
+            { label: "Site defaults", value: true },
+            { label: "Custom", value: false },
           ],
         },
         lightboxMetadataFields: {
           type: "custom",
-          label: "Lightbox: Metadata to Show",
+          label: "Details to show",
           render: ({ value, onChange }) => (
             <MetadataFieldsPicker value={value ?? ["title", "location"]} onChange={onChange} />
           ),
         },
         lightboxCornerRadius: {
           type: "custom",
-          label: "Lightbox: Corner Radius (px)",
+          label: "Corner radius",
           render: ({ value, onChange }) => (
-            <SliderField value={value ?? 0} onChange={onChange} min={0} max={32} step={1} unit="px" label="Corner Radius" />
+            <SliderField value={value ?? 0} onChange={onChange} min={0} max={48} step={1} unit="px" label="Corner Radius" />
           ),
         },
         lightboxCaptionPosition: {
           type: "select",
-          label: "Lightbox: Caption Position",
+          label: "Caption position",
           options: [
             { label: "Below image", value: "below" },
             { label: "Overlay — top", value: "overlay-top" },
@@ -2292,7 +2292,7 @@ export const puckConfig: Config<Components> = {
         },
         lightboxFadeSpeed: {
           type: "select",
-          label: "Lightbox: Fade Speed",
+          label: "Fade speed",
           options: [
             { label: "None (instant)", value: "none" },
             { label: "Fast (150ms)", value: "fast" },
@@ -2302,7 +2302,7 @@ export const puckConfig: Config<Components> = {
         },
         lightboxCaptionAlignment: {
           type: "select",
-          label: "Lightbox: Caption Alignment",
+          label: "Caption alignment",
           options: [
             { label: "Left", value: "left" },
             { label: "Center", value: "center" },
@@ -2486,17 +2486,17 @@ export const puckConfig: Config<Components> = {
     Form: {
       label: "Form",
       fields: {
-        formName: { type: "text", label: "Form Name (identifier)" },
-        submitLabel: { type: "text", label: "Submit Button Text" },
+        formName: { type: "text", label: "Form name (identifier)" },
+        submitLabel: { type: "text", label: "Submit button" },
         labelStyle: {
           type: "custom",
-          label: "Field label text style",
+          label: "Text style",
           render: ({ value, onChange }) => (
             <TextStyleControl value={value} onChange={onChange} fallback="label" />
           ),
         },
-        successMessage: { type: "textarea", label: "Success Message" },
-        recipientEmail: { type: "text", label: "Notification Email (for future use)" },
+        successMessage: { type: "textarea", label: "Success message" },
+        recipientEmail: { type: "text", label: "Notification email (not used yet)" },
       },
       defaultProps: {
         formName: "contact",
@@ -2512,7 +2512,7 @@ export const puckConfig: Config<Components> = {
       label: "Text Field",
       fields: {
         label: { type: "text", label: "Label" },
-        name: { type: "text", label: "Field Name (key)" },
+        name: { type: "text", label: "Field name (key)" },
         placeholder: { type: "text", label: "Placeholder" },
         required: {
           type: "radio",
@@ -2524,7 +2524,7 @@ export const puckConfig: Config<Components> = {
         },
         fieldType: {
           type: "select",
-          label: "Input Type",
+          label: "Input type",
           options: [
             { label: "Text", value: "text" },
             { label: "Email", value: "email" },
@@ -2547,7 +2547,7 @@ export const puckConfig: Config<Components> = {
       label: "Text Area",
       fields: {
         label: { type: "text", label: "Label" },
-        name: { type: "text", label: "Field Name (key)" },
+        name: { type: "text", label: "Field name (key)" },
         placeholder: { type: "text", label: "Placeholder" },
         required: {
           type: "radio",
@@ -2573,7 +2573,7 @@ export const puckConfig: Config<Components> = {
       label: "Dropdown Select",
       fields: {
         label: { type: "text", label: "Label" },
-        name: { type: "text", label: "Field Name (key)" },
+        name: { type: "text", label: "Field name (key)" },
         required: {
           type: "radio",
           label: "Required",
@@ -2600,7 +2600,7 @@ export const puckConfig: Config<Components> = {
       label: "Radio Buttons",
       fields: {
         label: { type: "text", label: "Label" },
-        name: { type: "text", label: "Field Name (key)" },
+        name: { type: "text", label: "Field name (key)" },
         required: {
           type: "radio",
           label: "Required",
@@ -2627,7 +2627,7 @@ export const puckConfig: Config<Components> = {
       label: "Checkbox Group",
       fields: {
         label: { type: "text", label: "Label" },
-        name: { type: "text", label: "Field Name (key)" },
+        name: { type: "text", label: "Field name (key)" },
         options: {
           type: "textarea",
           label: "Options (one per line, use value|label for custom values)",
@@ -2645,7 +2645,7 @@ export const puckConfig: Config<Components> = {
       label: "Checkbox",
       fields: {
         label: { type: "text", label: "Label" },
-        name: { type: "text", label: "Field Name (key)" },
+        name: { type: "text", label: "Field name (key)" },
       },
       defaultProps: {
         label: "I agree to the terms",
