@@ -4,8 +4,30 @@ import { useFormField } from "@/lib/hooks/useFormField";
 import { textStyleCss } from "@/lib/theme/text-style-value";
 import { useFormContext } from "./FormContext";
 
-// Choice labels (radio, checkbox) read as running text.
-const OPTION_TEXT = textStyleCss(undefined, "body");
+// ---------- Shared look ----------
+
+// Colours and corners come from CSS vars the Form sets; the fallbacks are the
+// look fields had before, for one dropped outside any Form.
+const BOX =
+  "w-full rounded-[var(--form-radius,4px)] border border-[color:var(--form-border,#d4d4d4)] bg-[color:var(--form-bg,#ffffff)] px-3 py-2 outline-none transition-colors placeholder:text-[color:var(--form-placeholder,darkgray)] focus:border-[color:var(--form-focus,#737373)] focus:ring-1 focus:ring-[color:var(--form-focus,#737373)]";
+const UNDERLINE =
+  "w-full rounded-none border-0 border-b border-[color:var(--form-border,#d4d4d4)] bg-[color:var(--form-bg,transparent)] px-0 py-2 outline-none transition-colors placeholder:text-[color:var(--form-placeholder,darkgray)] focus:border-[color:var(--form-focus,#737373)]";
+const CHOICE = "accent-[color:var(--form-focus,#171717)]";
+
+/** Class and text style for an input, textarea or select in this form. */
+function useInputLook() {
+  const form = useFormContext();
+  return {
+    className: form?.fieldLook === "underline" ? UNDERLINE : BOX,
+    style: textStyleCss(form?.fieldTextStyle, "body"),
+  };
+}
+
+/** The text beside a radio button or checkbox. */
+function useOptionText() {
+  const form = useFormContext();
+  return textStyleCss(form?.fieldTextStyle, "body");
+}
 
 // ---------- Shared label ----------
 
@@ -19,9 +41,6 @@ function FieldLabel({ label, required }: { label: string; required?: boolean }) 
   );
 }
 
-const inputClasses =
-  "w-full rounded border border-neutral-300 px-3 py-2 text-sm text-neutral-900 outline-none transition-colors focus:border-neutral-500 focus:ring-1 focus:ring-neutral-500";
-
 // ---------- TextField ----------
 
 export type TextFieldProps = {
@@ -34,6 +53,7 @@ export type TextFieldProps = {
 
 export function TextFieldRender({ label, name, placeholder, required, fieldType }: TextFieldProps) {
   const { value, update } = useFormField(name, "", { required, type: fieldType });
+  const look = useInputLook();
 
   return (
     <div className="py-2">
@@ -45,7 +65,8 @@ export function TextFieldRender({ label, name, placeholder, required, fieldType 
         required={required}
         value={value as string}
         onChange={(e) => update(e.target.value)}
-        className={inputClasses}
+        className={look.className}
+        style={look.style}
       />
     </div>
   );
@@ -63,6 +84,7 @@ export type TextAreaProps = {
 
 export function TextAreaRender({ label, name, placeholder, required, rows }: TextAreaProps) {
   const { value, update } = useFormField(name, "", { required });
+  const look = useInputLook();
 
   return (
     <div className="py-2">
@@ -74,7 +96,8 @@ export function TextAreaRender({ label, name, placeholder, required, rows }: Tex
         rows={rows}
         value={value as string}
         onChange={(e) => update(e.target.value)}
-        className={inputClasses + " resize-y"}
+        className={look.className + " resize-y"}
+        style={look.style}
       />
     </div>
   );
@@ -91,6 +114,7 @@ export type SelectFieldProps = {
 
 export function SelectFieldRender({ label, name, required, options }: SelectFieldProps) {
   const { value, update } = useFormField(name, "", { required });
+  const look = useInputLook();
 
   const optList = options
     .split("\n")
@@ -105,7 +129,8 @@ export function SelectFieldRender({ label, name, required, options }: SelectFiel
         required={required}
         value={value as string}
         onChange={(e) => update(e.target.value)}
-        className={inputClasses}
+        className={look.className}
+        style={look.style}
       >
         <option value="">Select...</option>
         {optList.map((opt) => {
@@ -132,6 +157,7 @@ export type RadioGroupProps = {
 
 export function RadioGroupRender({ label, name, required, options }: RadioGroupProps) {
   const { value, update } = useFormField(name, "", { required });
+  const optionText = useOptionText();
 
   const optList = options
     .split("\n")
@@ -145,7 +171,7 @@ export function RadioGroupRender({ label, name, required, options }: RadioGroupP
         {optList.map((opt) => {
           const [val, lbl] = opt.includes("|") ? opt.split("|", 2) : [opt, opt];
           return (
-            <label key={val} className="flex items-center gap-2" style={OPTION_TEXT}>
+            <label key={val} className="flex items-center gap-2" style={optionText}>
               <input
                 type="radio"
                 name={name}
@@ -153,7 +179,7 @@ export function RadioGroupRender({ label, name, required, options }: RadioGroupP
                 required={required}
                 checked={value === val}
                 onChange={() => update(val)}
-                className="accent-neutral-900"
+                className={CHOICE}
               />
               {lbl}
             </label>
@@ -175,6 +201,7 @@ export type CheckboxGroupProps = {
 export function CheckboxGroupRender({ label, name, options }: CheckboxGroupProps) {
   const { value, update } = useFormField(name, [] as string[]);
 
+  const optionText = useOptionText();
   const selected = value as string[];
   const optList = options
     .split("\n")
@@ -195,14 +222,14 @@ export function CheckboxGroupRender({ label, name, options }: CheckboxGroupProps
         {optList.map((opt) => {
           const [val, lbl] = opt.includes("|") ? opt.split("|", 2) : [opt, opt];
           return (
-            <label key={val} className="flex items-center gap-2" style={OPTION_TEXT}>
+            <label key={val} className="flex items-center gap-2" style={optionText}>
               <input
                 type="checkbox"
                 name={name}
                 value={val}
                 checked={selected.includes(val)}
                 onChange={() => toggle(val)}
-                className="accent-neutral-900"
+                className={CHOICE}
               />
               {lbl}
             </label>
@@ -222,15 +249,16 @@ export type CheckboxProps = {
 
 export function CheckboxRender({ label, name }: CheckboxProps) {
   const { value, update } = useFormField(name, "false");
+  const optionText = useOptionText();
 
   return (
-    <label className="flex items-center gap-2 py-2" style={OPTION_TEXT}>
+    <label className="flex items-center gap-2 py-2" style={optionText}>
       <input
         type="checkbox"
         name={name}
         checked={value === "true"}
         onChange={(e) => update(e.target.checked ? "true" : "false")}
-        className="accent-neutral-900"
+        className={CHOICE}
       />
       {label}
     </label>

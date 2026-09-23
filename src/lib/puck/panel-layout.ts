@@ -498,6 +498,28 @@ export const PANEL_LAYOUTS: Layouts = {
     groups: [
       { tab: "content", title: "Form", fields: ["formName", "submitLabel", "successMessage", "recipientEmail"], summary: (p) => p.formName },
       { tab: "style", title: "Field labels", fields: ["labelStyle"], summary: (p) => textStyleSummary(p.labelStyle, "label") },
+      {
+        tab: "style",
+        title: "Field text",
+        fields: ["fieldTextStyle", "placeholderColor"],
+        summary: (p) => textStyleSummary(p.fieldTextStyle, "body"),
+      },
+      {
+        tab: "style",
+        title: "Fields",
+        fields: ["fieldLook", "fieldBorderColor", "fieldBackground", "fieldRadius"],
+        summary: (p) => list(p.fieldLook === "underline" ? "Underline" : "Box", colorSummary(p.fieldBorderColor)),
+      },
+      {
+        tab: "style",
+        title: "Submit button",
+        fields: ["submitTextStyle", "submitTextColor", "submitBgColor", "submitHoverBgColor", "submitRadius"],
+        summary: (p) => list(textStyleSummary(p.submitTextStyle, "label"), colorSummary(p.submitBgColor)),
+      },
     ],
+    when: {
+      // An underline has no corners to round.
+      fieldRadius: (p) => p.fieldLook !== "underline",
+    },
   },
 };

@@ -22,7 +22,7 @@ import { parseLinks } from "@/lib/parseLinks";
 import siteConfig from "@/lib/site.config";
 import { ColorControl, SegmentedControl, SliderControl, SpacingControl, TextStyleControl } from "@/components/admin/controls";
 import { textStyleCss, type TextStyleValue } from "@/lib/theme/text-style-value";
-import { migrateButton, migrateGalleriesIndex, migrateImageBlock, migrateLinkList } from "@/lib/puck/legacy-typography";
+import { migrateButton, migrateForm, migrateGalleriesIndex, migrateImageBlock, migrateLinkList } from "@/lib/puck/legacy-typography";
 import { cssColor, withAlpha } from "@/lib/theme/color";
 import {
   GALLERY_ASPECT_CSS,
@@ -2497,6 +2497,84 @@ export const puckConfig: Config<Components> = {
         },
         successMessage: { type: "textarea", label: "Success message" },
         recipientEmail: { type: "text", label: "Notification email (not used yet)" },
+        fieldTextStyle: {
+          type: "custom",
+          label: "Text style",
+          render: ({ value, onChange }) => (
+            <TextStyleControl value={value} onChange={onChange} fallback="body" />
+          ),
+        },
+        placeholderColor: {
+          type: "custom",
+          label: "Placeholder color",
+          render: ({ value, onChange }) => (
+            <ColorField value={value ?? ""} onChange={onChange} emptyLabel="Browser default" />
+          ),
+        },
+        fieldLook: {
+          type: "radio",
+          label: "Look",
+          options: [
+            { label: "Box", value: "box" },
+            { label: "Underline", value: "underline" },
+          ],
+        },
+        fieldBorderColor: {
+          type: "custom",
+          label: "Border color",
+          render: ({ value, onChange }) => (
+            <ColorField value={value ?? ""} onChange={onChange} />
+          ),
+        },
+        fieldBackground: {
+          type: "custom",
+          label: "Background",
+          render: ({ value, onChange }) => (
+            <ColorField value={value ?? ""} onChange={onChange} allowTransparent />
+          ),
+        },
+        fieldRadius: {
+          type: "custom",
+          label: "Corner radius",
+          render: ({ value, onChange }) => (
+            <SliderField value={value ?? 0} onChange={onChange} min={0} max={24} step={1} unit="px" />
+          ),
+        },
+        submitTextStyle: {
+          type: "custom",
+          label: "Text style",
+          render: ({ value, onChange }) => (
+            <TextStyleControl value={value} onChange={onChange} fallback="label" withColor={false} />
+          ),
+        },
+        submitTextColor: {
+          type: "custom",
+          label: "Text color",
+          render: ({ value, onChange }) => (
+            <ColorField value={value ?? ""} onChange={onChange} />
+          ),
+        },
+        submitBgColor: {
+          type: "custom",
+          label: "Background",
+          render: ({ value, onChange }) => (
+            <ColorField value={value ?? ""} onChange={onChange} />
+          ),
+        },
+        submitHoverBgColor: {
+          type: "custom",
+          label: "Hover background",
+          render: ({ value, onChange }) => (
+            <ColorField value={value ?? ""} onChange={onChange} />
+          ),
+        },
+        submitRadius: {
+          type: "custom",
+          label: "Corner radius",
+          render: ({ value, onChange }) => (
+            <SliderField value={value ?? 0} onChange={onChange} min={0} max={32} step={1} unit="px" />
+          ),
+        },
       },
       defaultProps: {
         formName: "contact",
@@ -2504,8 +2582,21 @@ export const puckConfig: Config<Components> = {
         labelStyle: { style: "label" },
         successMessage: "Thank you! Your submission has been received.",
         recipientEmail: "",
+        fieldTextStyle: { style: "body" },
+        placeholderColor: "token:muted",
+        fieldLook: "box",
+        fieldBorderColor: "token:rule",
+        fieldBackground: "transparent",
+        fieldRadius: 2,
+        submitTextStyle: { style: "label" },
+        submitTextColor: "token:background",
+        submitBgColor: "token:accent",
+        submitHoverBgColor: "token:text",
+        submitRadius: 2,
       },
-      render: (props) => <FormWrapperRender {...props} />,
+      // Forms saved before these settings keep the look they had.
+      resolveData: ({ props }) => ({ props: migrateForm(props) }),
+      render: (props) => <FormWrapperRender {...migrateForm(props)} />,
     },
 
     TextField: {
