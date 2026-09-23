@@ -3,12 +3,15 @@
 import { useRef, useCallback, useState } from "react";
 import { DropZone } from "@puckeditor/core";
 import { FormContext } from "./FormContext";
+import type { TextStyleValue } from "@/lib/theme/text-style-value";
 
 export type FormWrapperProps = {
   formName: string;
   submitLabel: string;
   successMessage: string;
   recipientEmail: string;
+  /** How every field label inside this form is set. */
+  labelStyle?: TextStyleValue;
 };
 
 type FieldEntry = {
@@ -22,6 +25,7 @@ export function FormWrapperRender({
   submitLabel,
   successMessage,
   recipientEmail,
+  labelStyle,
 }: FormWrapperProps) {
   const fieldsRef = useRef<Map<string, FieldEntry>>(new Map());
   const [status, setStatus] = useState<"idle" | "submitting" | "success" | "error">("idle");
@@ -120,7 +124,7 @@ export function FormWrapperRender({
   }
 
   return (
-    <FormContext.Provider value={{ register, update }}>
+    <FormContext.Provider value={{ register, update, labelStyle }}>
       <form onSubmit={handleSubmit} className="space-y-4">
         {/* Honeypot — hidden from real users */}
         <div style={{ position: "absolute", left: "-9999px", opacity: 0, height: 0, overflow: "hidden" }} aria-hidden="true">

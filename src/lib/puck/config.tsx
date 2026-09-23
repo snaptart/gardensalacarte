@@ -20,14 +20,15 @@ import GalleryPhotoMultiPicker from "@/components/admin/GalleryPhotoMultiPicker"
 import NextLink from "next/link";
 import { parseLinks } from "@/lib/parseLinks";
 import siteConfig from "@/lib/site.config";
-import { ColorControl, SegmentedControl, SliderControl, SpacingControl } from "@/components/admin/controls";
+import { ColorControl, SegmentedControl, SliderControl, SpacingControl, TextStyleControl } from "@/components/admin/controls";
+import { textStyleCss, type TextStyleValue } from "@/lib/theme/text-style-value";
+import { migrateButton, migrateGalleriesIndex, migrateImageBlock, migrateLinkList } from "@/lib/puck/legacy-typography";
 import { cssColor, withAlpha } from "@/lib/theme/color";
 import {
   GALLERY_ASPECT_CSS,
   GALLERY_ASPECT_OPTIONS,
   type GalleryAspect,
 } from "@/lib/theme/aspect";
-import { fontRole } from "@/lib/theme/role-style";
 import Lightbox from "@/components/public/Lightbox";
 import type { LightboxPhoto, LightboxSettings } from "@/components/public/Lightbox";
 import StoriesIndex, { STORIES_INDEX_DEFAULTS } from "@/components/public/stories/StoriesIndex";
@@ -94,7 +95,9 @@ type RichTextProps = {
 type HeroProps = {
   imageUrl: string;
   title: string;
+  titleStyle: TextStyleValue;
   subtitle: string;
+  subtitleStyle: TextStyleValue;
   height: string;
   overlay: boolean;
   focalX: number;
@@ -106,13 +109,10 @@ type ImageBlockProps = {
   alt: string;
   aspectRatio: "natural" | "square" | "4:3" | "3:2" | "16:9";
   caption: string;
+  captionStyle: TextStyleValue;
   width: number;
   captionX: number;
   captionY: number;
-  captionFontSize: number;
-  captionColor: string;
-  captionBold: boolean;
-  captionItalic: boolean;
   captionBgColor: string;
   captionBgOpacity: number;
   borderRadius: number;
@@ -158,6 +158,8 @@ type GalleryEmbedProps = {
   borderRadius: number;
   showMetadata: boolean;
   metadataFields: string[];
+  captionTitleStyle: TextStyleValue;
+  captionMetaStyle: TextStyleValue;
   useGlobalLightbox: boolean;
   lightboxMetadataFields: string[] | null;
   lightboxCornerRadius: number | null;
@@ -219,6 +221,8 @@ type CarouselProps = {
   gallerySlug: string;
   maxPhotos: number;
   slides: CarouselSlide[];
+  slideTitleStyle: TextStyleValue;
+  slideSubtitleStyle: TextStyleValue;
   slidesPerView: number;
   gap: number;
   aspectRatio: "none" | "16:9" | "3:2" | "4:3" | "1:1" | "3:4" | "2:3" | "9:16";
@@ -246,16 +250,9 @@ type GalleriesIndexProps = {
   gap: number;
   showCount: boolean;
   dividerColor: string;
-  // Index List gets its own type controls — a row of titles wants different
-  // settings from a caption under a cover. Each falls back to the grid's value
-  // when unset, so blocks saved before these existed look unchanged.
-  listTitleFontRole: "headings" | "body" | "navMenu" | "labels";
-  listTitleSize: number;
-  listTitleWeight: "300" | "400" | "500" | "600" | "700" | "800";
-  listTitleColor: string;
-  listTitleTransform: "none" | "uppercase" | "lowercase" | "capitalize";
-  listTitleTracking: number;
-  listTitleItalic: boolean;
+  // Index List gets its own title style — a row of titles wants different
+  // settings from a caption under a cover.
+  listTitleStyle: TextStyleValue;
   fullBleed: boolean;
   maxWidth: number;
   aspectRatio: GalleryAspect;
@@ -265,13 +262,8 @@ type GalleriesIndexProps = {
   showDescription: boolean;
   titlePosition: "below" | "overlay-bottom" | "overlay-top" | "overlay-center";
   textAlignment: "left" | "center" | "right";
-  titleFontRole: "headings" | "body" | "navMenu" | "labels";
-  titleSize: number;
-  titleColor: string;
-  titleWeight: "300" | "400" | "500" | "600" | "700" | "800";
-  titleTransform: "none" | "uppercase" | "lowercase" | "capitalize";
-  descriptionSize: number;
-  descriptionColor: string;
+  titleStyle: TextStyleValue;
+  descriptionStyle: TextStyleValue;
   textPaddingX: number;
   textPaddingY: number;
   textGap: number;
@@ -317,15 +309,9 @@ type LinkListProps = {
   borderRadius: number;
   paddingX: number;
   paddingY: number;
-  fontRoleKey: "body" | "headings" | "navMenu" | "labels";
-  fontSize: number;
-  fontWeight: "300" | "400" | "500" | "600" | "700" | "800";
-  letterSpacing: number;
-  textTransform: "none" | "uppercase" | "lowercase" | "capitalize";
-  italic: boolean;
+  labelStyle: TextStyleValue;
   underline: boolean;
-  descriptionSize: number;
-  descriptionColor: string;
+  descriptionStyle: TextStyleValue;
   hoverBgColor: string;
   hoverTextColor: string;
   hoverBorderColor: string;
@@ -362,12 +348,7 @@ type ButtonProps = {
   paddingY: number;
   marginTop: number;
   marginBottom: number;
-  fontRoleKey: "body" | "headings" | "navMenu" | "labels";
-  fontSize: number;
-  fontWeight: "300" | "400" | "500" | "600" | "700" | "800";
-  letterSpacing: number;
-  textTransform: "none" | "uppercase" | "lowercase" | "capitalize";
-  italic: boolean;
+  labelStyle: TextStyleValue;
   underline: boolean;
   hoverBgColor: string;
   hoverTextColor: string;
@@ -479,7 +460,21 @@ export const puckConfig: Config<Components> = {
           ),
         },
         title: { type: "text", label: "Title" },
+        titleStyle: {
+          type: "custom",
+          label: "Title text style",
+          render: ({ value, onChange }) => (
+            <TextStyleControl value={value} onChange={onChange} fallback="display" withColor={false} />
+          ),
+        },
         subtitle: { type: "text", label: "Subtitle" },
+        subtitleStyle: {
+          type: "custom",
+          label: "Subtitle text style",
+          render: ({ value, onChange }) => (
+            <TextStyleControl value={value} onChange={onChange} fallback="lead" withColor={false} />
+          ),
+        },
         height: {
           type: "select",
           label: "Height",
@@ -512,13 +507,15 @@ export const puckConfig: Config<Components> = {
       defaultProps: {
         imageUrl: "",
         title: "",
+        titleStyle: { style: "display" },
         subtitle: "",
+        subtitleStyle: { style: "lead" },
         height: "500px",
         overlay: true,
         focalX: 50,
         focalY: 50,
       },
-      render: ({ imageUrl, title, subtitle, height, overlay, focalX, focalY }) => (
+      render: ({ imageUrl, title, titleStyle, subtitle, subtitleStyle, height, overlay, focalX, focalY }) => (
         <div
           className="relative flex items-center justify-center bg-neutral-200 bg-cover"
           style={{
@@ -532,12 +529,12 @@ export const puckConfig: Config<Components> = {
           )}
           <div className="relative z-10 text-center px-4">
             {title && (
-              <h1 className="text-4xl md:text-6xl mb-4" style={{ ...fontRole("headings", { tracking: "-0.025em" }), color: "var(--theme-color-hero-overlay)" }}>
+              <h1 className="mb-4" style={{ ...textStyleCss(titleStyle, "display", { withColor: false }), color: "var(--theme-color-hero-overlay)" }}>
                 {title}
               </h1>
             )}
             {subtitle && (
-              <p className="text-xl md:text-2xl" style={{ ...fontRole("overlay"), color: "var(--theme-color-hero-overlay)", opacity: 0.9 }}>
+              <p style={{ ...textStyleCss(subtitleStyle, "lead", { withColor: false }), color: "var(--theme-color-hero-overlay)", opacity: 0.9 }}>
                 {subtitle}
               </p>
             )}
@@ -586,6 +583,13 @@ export const puckConfig: Config<Components> = {
           ),
         },
         caption: { type: "text", label: "Caption" },
+        captionStyle: {
+          type: "custom",
+          label: "Caption text style",
+          render: ({ value, onChange }) => (
+            <TextStyleControl value={value} onChange={onChange} fallback="photoTitle" />
+          ),
+        },
         captionX: {
           type: "custom",
           label: "Caption Horizontal Position",
@@ -599,36 +603,6 @@ export const puckConfig: Config<Components> = {
           render: ({ value, onChange }) => (
             <SliderField value={value} onChange={onChange} min={-20} max={120} step={1} unit="%" label="Vertical Position" />
           ),
-        },
-        captionFontSize: {
-          type: "custom",
-          label: "Caption Font Size",
-          render: ({ value, onChange }) => (
-            <SliderField value={value} onChange={onChange} min={10} max={48} step={1} unit="px" label="Font Size" />
-          ),
-        },
-        captionColor: {
-          type: "custom",
-          label: "Caption Color",
-          render: ({ value, onChange }) => (
-            <ColorField value={value} onChange={onChange} />
-          ),
-        },
-        captionBold: {
-          type: "radio",
-          label: "Caption Bold",
-          options: [
-            { label: "Yes", value: true },
-            { label: "No", value: false },
-          ],
-        },
-        captionItalic: {
-          type: "radio",
-          label: "Caption Italic",
-          options: [
-            { label: "Yes", value: true },
-            { label: "No", value: false },
-          ],
         },
         captionBgColor: {
           type: "custom",
@@ -679,13 +653,10 @@ export const puckConfig: Config<Components> = {
         alt: "",
         aspectRatio: "natural",
         caption: "",
+        captionStyle: { style: "photoTitle" },
         width: 60,
         captionX: 50,
         captionY: 110,
-        captionFontSize: 14,
-        captionColor: "#737373",
-        captionBold: false,
-        captionItalic: true,
         captionBgColor: "#000000",
         captionBgOpacity: 0,
         borderRadius: 4,
@@ -694,21 +665,20 @@ export const puckConfig: Config<Components> = {
         focalX: 50,
         focalY: 50,
       },
-      render: ({ url, alt, aspectRatio, caption, width, captionX, captionY, captionFontSize, captionColor, captionBold, captionItalic, captionBgColor, captionBgOpacity, borderRadius, linkUrl, linkTarget, focalX, focalY }) => {
+      resolveData: ({ props }) => ({ props: migrateImageBlock(props) }),
+      render: (raw) => {
+        const { url, alt, aspectRatio, caption, captionStyle, width, captionX, captionY, captionBgColor, captionBgOpacity, borderRadius, linkUrl, linkTarget, focalX, focalY } = migrateImageBlock(raw);
         const isPriority = useImagePriority();
         const isOverlay = captionY >= 0 && captionY <= 100;
         const arMap: Record<string, string> = { square: "1/1", "4:3": "4/3", "3:2": "3/2", "16:9": "16/9" };
         const arValue = arMap[aspectRatio];
         const focalPos = `${focalX ?? 50}% ${focalY ?? 50}%`;
-        const captionStyle: React.CSSProperties = {
+        const captionBox: React.CSSProperties = {
+          ...textStyleCss(captionStyle, "photoTitle"),
           position: "absolute",
           left: `${captionX}%`,
           top: `${captionY}%`,
           transform: "translate(-50%, -50%)",
-          fontSize: `${captionFontSize}px`,
-          color: cssColor(captionColor),
-          fontWeight: captionBold ? "bold" : "normal",
-          fontStyle: captionItalic ? "italic" : "normal",
           backgroundColor: captionBgOpacity > 0 ? withAlpha(captionBgColor, captionBgOpacity / 100) : "transparent",
           padding: captionBgOpacity > 0 ? "4px 10px" : undefined,
           borderRadius: captionBgOpacity > 0 ? "4px" : undefined,
@@ -769,7 +739,7 @@ export const puckConfig: Config<Components> = {
               <div className="relative overflow-visible">
                 {imageEl}
                 {caption && (
-                  <figcaption style={{ ...captionStyle, fontFamily: "var(--theme-font-captions)" }}>
+                  <figcaption style={captionBox}>
                     {caption}
                   </figcaption>
                 )}
@@ -852,65 +822,11 @@ export const puckConfig: Config<Components> = {
             <ColorField value={value} onChange={onChange} />
           ),
         },
-        listTitleFontRole: {
-          type: "select",
-          label: "List Title Font",
-          options: [
-            { label: "Headings", value: "headings" },
-            { label: "Body", value: "body" },
-            { label: "Nav / Menu", value: "navMenu" },
-            { label: "Labels", value: "labels" },
-          ],
-        },
-        listTitleSize: {
+        listTitleStyle: {
           type: "custom",
-          label: "List Title Size (px)",
+          label: "List title text style (Index List)",
           render: ({ value, onChange }) => (
-            <SliderField value={value} onChange={onChange} min={12} max={72} step={1} unit="px" label="List Title Size" />
-          ),
-        },
-        listTitleWeight: {
-          type: "select",
-          label: "List Title Weight",
-          options: [
-            { label: "Light (300)", value: "300" },
-            { label: "Regular (400)", value: "400" },
-            { label: "Medium (500)", value: "500" },
-            { label: "Semibold (600)", value: "600" },
-            { label: "Bold (700)", value: "700" },
-            { label: "Extra Bold (800)", value: "800" },
-          ],
-        },
-        listTitleTracking: {
-          type: "custom",
-          label: "List Title Letter Spacing (px)",
-          render: ({ value, onChange }) => (
-            <SliderField value={value} onChange={onChange} min={-2} max={10} step={0.5} unit="px" label="Letter Spacing" />
-          ),
-        },
-        listTitleTransform: {
-          type: "select",
-          label: "List Title Transform",
-          options: [
-            { label: "None", value: "none" },
-            { label: "UPPERCASE", value: "uppercase" },
-            { label: "lowercase", value: "lowercase" },
-            { label: "Capitalize", value: "capitalize" },
-          ],
-        },
-        listTitleItalic: {
-          type: "radio",
-          label: "List Title Italic",
-          options: [
-            { label: "Yes", value: true },
-            { label: "No", value: false },
-          ],
-        },
-        listTitleColor: {
-          type: "custom",
-          label: "List Title Color",
-          render: ({ value, onChange }) => (
-            <ColorField value={value} onChange={onChange} />
+            <TextStyleControl value={value} onChange={onChange} fallback="collectionTitle" />
           ),
         },
         gap: {
@@ -993,64 +909,18 @@ export const puckConfig: Config<Components> = {
             { label: "Right", value: "right" },
           ],
         },
-        titleFontRole: {
-          type: "select",
-          label: "Title Font Role",
-          options: [
-            { label: "Headings", value: "headings" },
-            { label: "Body", value: "body" },
-            { label: "Nav / Menu", value: "navMenu" },
-            { label: "Labels", value: "labels" },
-          ],
-        },
-        titleSize: {
+        titleStyle: {
           type: "custom",
-          label: "Title Size (px)",
+          label: "Title text style (Cover Grid)",
           render: ({ value, onChange }) => (
-            <SliderField value={value} onChange={onChange} min={10} max={48} step={1} unit="px" label="Title Size" />
+            <TextStyleControl value={value} onChange={onChange} fallback="collectionTitle" />
           ),
         },
-        titleColor: {
+        descriptionStyle: {
           type: "custom",
-          label: "Title Color",
+          label: "Description text style",
           render: ({ value, onChange }) => (
-            <ColorField value={value} onChange={onChange} />
-          ),
-        },
-        titleWeight: {
-          type: "select",
-          label: "Title Weight",
-          options: [
-            { label: "Light (300)", value: "300" },
-            { label: "Regular (400)", value: "400" },
-            { label: "Medium (500)", value: "500" },
-            { label: "Semibold (600)", value: "600" },
-            { label: "Bold (700)", value: "700" },
-            { label: "Extra Bold (800)", value: "800" },
-          ],
-        },
-        titleTransform: {
-          type: "select",
-          label: "Title Transform",
-          options: [
-            { label: "None", value: "none" },
-            { label: "UPPERCASE", value: "uppercase" },
-            { label: "lowercase", value: "lowercase" },
-            { label: "Capitalize", value: "capitalize" },
-          ],
-        },
-        descriptionSize: {
-          type: "custom",
-          label: "Description Size (px)",
-          render: ({ value, onChange }) => (
-            <SliderField value={value} onChange={onChange} min={10} max={24} step={1} unit="px" label="Description Size" />
-          ),
-        },
-        descriptionColor: {
-          type: "custom",
-          label: "Description Color",
-          render: ({ value, onChange }) => (
-            <ColorField value={value} onChange={onChange} />
+            <TextStyleControl value={value} onChange={onChange} fallback="body" />
           ),
         },
         textPaddingX: {
@@ -1120,13 +990,7 @@ export const puckConfig: Config<Components> = {
         gap: 16,
         showCount: true,
         dividerColor: "#e5e5e5",
-        listTitleFontRole: "headings",
-        listTitleSize: 20,
-        listTitleWeight: "300",
-        listTitleColor: "#171717",
-        listTitleTransform: "none",
-        listTitleTracking: 0,
-        listTitleItalic: false,
+        listTitleStyle: { style: "collectionTitle", size: 20 },
         fullBleed: false,
         maxWidth: 100,
         aspectRatio: "4:5",
@@ -1136,13 +1000,8 @@ export const puckConfig: Config<Components> = {
         showDescription: false,
         titlePosition: "below",
         textAlignment: "center",
-        titleFontRole: "headings",
-        titleSize: 18,
-        titleColor: "#171717",
-        titleWeight: "500",
-        titleTransform: "none",
-        descriptionSize: 13,
-        descriptionColor: "#737373",
+        titleStyle: { style: "collectionTitle" },
+        descriptionStyle: { style: "body" },
         textPaddingX: 8,
         textPaddingY: 12,
         textGap: 4,
@@ -1152,7 +1011,8 @@ export const puckConfig: Config<Components> = {
         marginBottom: 0,
         transitionMs: 300,
       },
-      render: (props) => <GalleriesIndexRender {...props} />,
+      resolveData: ({ props }) => ({ props: migrateGalleriesIndex(props) }),
+      render: (props) => <GalleriesIndexRender {...migrateGalleriesIndex(props)} />,
     },
 
     LinkList: {
@@ -1331,59 +1191,12 @@ export const puckConfig: Config<Components> = {
             <SliderField value={value} onChange={onChange} min={0} max={48} step={1} unit="px" label="Padding Y" />
           ),
         },
-        fontRoleKey: {
-          type: "select",
-          label: "Font Role",
-          options: [
-            { label: "Body", value: "body" },
-            { label: "Headings", value: "headings" },
-            { label: "Nav / Menu", value: "navMenu" },
-            { label: "Labels", value: "labels" },
-          ],
-        },
-        fontSize: {
+        labelStyle: {
           type: "custom",
-          label: "Font Size (px)",
+          label: "Label text style",
           render: ({ value, onChange }) => (
-            <SliderField value={value} onChange={onChange} min={10} max={36} step={1} unit="px" label="Font Size" />
+            <TextStyleControl value={value} onChange={onChange} fallback="body" withColor={false} />
           ),
-        },
-        fontWeight: {
-          type: "select",
-          label: "Font Weight",
-          options: [
-            { label: "Light (300)", value: "300" },
-            { label: "Regular (400)", value: "400" },
-            { label: "Medium (500)", value: "500" },
-            { label: "Semibold (600)", value: "600" },
-            { label: "Bold (700)", value: "700" },
-            { label: "Extra Bold (800)", value: "800" },
-          ],
-        },
-        letterSpacing: {
-          type: "custom",
-          label: "Letter Spacing (px)",
-          render: ({ value, onChange }) => (
-            <SliderField value={value} onChange={onChange} min={-2} max={12} step={0.5} unit="px" label="Letter Spacing" />
-          ),
-        },
-        textTransform: {
-          type: "select",
-          label: "Text Transform",
-          options: [
-            { label: "None", value: "none" },
-            { label: "UPPERCASE", value: "uppercase" },
-            { label: "lowercase", value: "lowercase" },
-            { label: "Capitalize", value: "capitalize" },
-          ],
-        },
-        italic: {
-          type: "radio",
-          label: "Italic",
-          options: [
-            { label: "Yes", value: true },
-            { label: "No", value: false },
-          ],
         },
         underline: {
           type: "radio",
@@ -1393,18 +1206,11 @@ export const puckConfig: Config<Components> = {
             { label: "No", value: false },
           ],
         },
-        descriptionSize: {
+        descriptionStyle: {
           type: "custom",
-          label: "Description Size (px)",
+          label: "Description text style",
           render: ({ value, onChange }) => (
-            <SliderField value={value} onChange={onChange} min={10} max={24} step={1} unit="px" label="Description Size" />
-          ),
-        },
-        descriptionColor: {
-          type: "custom",
-          label: "Description Color",
-          render: ({ value, onChange }) => (
-            <ColorField value={value} onChange={onChange} />
+            <TextStyleControl value={value} onChange={onChange} fallback="body" />
           ),
         },
         hoverBgColor: {
@@ -1519,15 +1325,9 @@ export const puckConfig: Config<Components> = {
         borderRadius: 4,
         paddingX: 16,
         paddingY: 12,
-        fontRoleKey: "body",
-        fontSize: 16,
-        fontWeight: "500",
-        letterSpacing: 0,
-        textTransform: "none",
-        italic: false,
+        labelStyle: { style: "body" },
         underline: false,
-        descriptionSize: 13,
-        descriptionColor: "#737373",
+        descriptionStyle: { style: "body" },
         hoverBgColor: "#f5f5f5",
         hoverTextColor: "#171717",
         hoverBorderColor: "#d4d4d4",
@@ -1540,7 +1340,8 @@ export const puckConfig: Config<Components> = {
         marginBottom: 0,
         transitionMs: 200,
       },
-      render: (props) => <LinkListRender {...props} />,
+      resolveData: ({ props }) => ({ props: migrateLinkList(props) }),
+      render: (props) => <LinkListRender {...migrateLinkList(props)} />,
     },
 
     Button: {
@@ -1690,59 +1491,12 @@ export const puckConfig: Config<Components> = {
             <SpacingControl value={value} onChange={onChange} />
           ),
         },
-        fontRoleKey: {
-          type: "select",
-          label: "Font Role",
-          options: [
-            { label: "Body", value: "body" },
-            { label: "Headings", value: "headings" },
-            { label: "Nav / Menu", value: "navMenu" },
-            { label: "Labels", value: "labels" },
-          ],
-        },
-        fontSize: {
+        labelStyle: {
           type: "custom",
-          label: "Font Size (px)",
+          label: "Text style",
           render: ({ value, onChange }) => (
-            <SliderField value={value} onChange={onChange} min={10} max={48} step={1} unit="px" label="Font Size" />
+            <TextStyleControl value={value} onChange={onChange} fallback="label" withColor={false} />
           ),
-        },
-        fontWeight: {
-          type: "select",
-          label: "Font Weight",
-          options: [
-            { label: "Light (300)", value: "300" },
-            { label: "Regular (400)", value: "400" },
-            { label: "Medium (500)", value: "500" },
-            { label: "Semibold (600)", value: "600" },
-            { label: "Bold (700)", value: "700" },
-            { label: "Extra Bold (800)", value: "800" },
-          ],
-        },
-        letterSpacing: {
-          type: "custom",
-          label: "Letter Spacing (px)",
-          render: ({ value, onChange }) => (
-            <SliderField value={value} onChange={onChange} min={-2} max={12} step={0.5} unit="px" label="Letter Spacing" />
-          ),
-        },
-        textTransform: {
-          type: "select",
-          label: "Text Transform",
-          options: [
-            { label: "None", value: "none" },
-            { label: "UPPERCASE", value: "uppercase" },
-            { label: "lowercase", value: "lowercase" },
-            { label: "Capitalize", value: "capitalize" },
-          ],
-        },
-        italic: {
-          type: "radio",
-          label: "Italic",
-          options: [
-            { label: "Yes", value: true },
-            { label: "No", value: false },
-          ],
         },
         underline: {
           type: "radio",
@@ -1834,12 +1588,7 @@ export const puckConfig: Config<Components> = {
         paddingY: 12,
         marginTop: 0,
         marginBottom: 0,
-        fontRoleKey: "labels",
-        fontSize: 14,
-        fontWeight: "500",
-        letterSpacing: 0,
-        textTransform: "none",
-        italic: false,
+        labelStyle: { style: "label" },
         underline: false,
         hoverBgColor: "#404040",
         hoverTextColor: "#ffffff",
@@ -1849,7 +1598,9 @@ export const puckConfig: Config<Components> = {
         hoverShadow: "md",
         transitionMs: 200,
       },
-      render: (props) => <ButtonRender {...props} />,
+      // Blocks saved before text styles: convert the old font settings.
+      resolveData: ({ props }) => ({ props: migrateButton(props) }),
+      render: (props) => <ButtonRender {...migrateButton(props)} />,
     },
 
     Spacer: {
@@ -2237,6 +1988,20 @@ export const puckConfig: Config<Components> = {
             <CarouselSlideEditor value={value} onChange={onChange} />
           ),
         },
+        slideTitleStyle: {
+          type: "custom",
+          label: "Slide title text style (manual slides)",
+          render: ({ value, onChange }) => (
+            <TextStyleControl value={value} onChange={onChange} fallback="collectionTitle" withColor={false} />
+          ),
+        },
+        slideSubtitleStyle: {
+          type: "custom",
+          label: "Slide subtitle text style (manual slides)",
+          render: ({ value, onChange }) => (
+            <TextStyleControl value={value} onChange={onChange} fallback="body" withColor={false} />
+          ),
+        },
         slidesPerView: {
           type: "custom",
           label: "Slides Per View",
@@ -2368,6 +2133,8 @@ export const puckConfig: Config<Components> = {
         gallerySlug: "",
         maxPhotos: 12,
         slides: [],
+        slideTitleStyle: { style: "collectionTitle" },
+        slideSubtitleStyle: { style: "body" },
         slidesPerView: 3,
         gap: 16,
         aspectRatio: "4:3",
@@ -2478,6 +2245,20 @@ export const puckConfig: Config<Components> = {
             <MetadataFieldsPicker value={value} onChange={onChange} />
           ),
         },
+        captionTitleStyle: {
+          type: "custom",
+          label: "Photo title text style",
+          render: ({ value, onChange }) => (
+            <TextStyleControl value={value} onChange={onChange} fallback="photoTitle" />
+          ),
+        },
+        captionMetaStyle: {
+          type: "custom",
+          label: "Photo details text style",
+          render: ({ value, onChange }) => (
+            <TextStyleControl value={value} onChange={onChange} fallback="meta" />
+          ),
+        },
         useGlobalLightbox: {
           type: "radio",
           label: "Lightbox Settings",
@@ -2540,6 +2321,8 @@ export const puckConfig: Config<Components> = {
         borderRadius: 8,
         showMetadata: false,
         metadataFields: ["title"],
+        captionTitleStyle: { style: "photoTitle" },
+        captionMetaStyle: { style: "meta" },
         useGlobalLightbox: true,
         lightboxMetadataFields: ["title", "location"],
         lightboxCornerRadius: 0,
@@ -2547,7 +2330,7 @@ export const puckConfig: Config<Components> = {
         lightboxFadeSpeed: "medium",
         lightboxCaptionAlignment: "left",
       },
-      render: ({ gallerySlug, maxPhotos, layout, columns, aspectRatio, gap, imageMaxWidth, borderRadius, showMetadata, metadataFields, useGlobalLightbox, lightboxMetadataFields, lightboxCornerRadius, lightboxCaptionPosition, lightboxFadeSpeed, lightboxCaptionAlignment, puck }) => {
+      render: ({ gallerySlug, maxPhotos, layout, columns, aspectRatio, gap, imageMaxWidth, borderRadius, showMetadata, metadataFields, captionTitleStyle, captionMetaStyle, useGlobalLightbox, lightboxMetadataFields, lightboxCornerRadius, lightboxCaptionPosition, lightboxFadeSpeed, lightboxCaptionAlignment, puck }) => {
         if (!gallerySlug) {
           return (
             <div className="rounded border-2 border-dashed border-neutral-300 p-8 text-center text-neutral-400">
@@ -2568,6 +2351,8 @@ export const puckConfig: Config<Components> = {
             borderRadius={borderRadius}
             showMetadata={showMetadata}
             metadataFields={metadataFields}
+            captionTitleStyle={captionTitleStyle}
+            captionMetaStyle={captionMetaStyle}
             useGlobalLightbox={useGlobalLightbox}
             lightboxMetadataFields={lightboxMetadataFields}
             lightboxCornerRadius={lightboxCornerRadius}
@@ -2703,12 +2488,20 @@ export const puckConfig: Config<Components> = {
       fields: {
         formName: { type: "text", label: "Form Name (identifier)" },
         submitLabel: { type: "text", label: "Submit Button Text" },
+        labelStyle: {
+          type: "custom",
+          label: "Field label text style",
+          render: ({ value, onChange }) => (
+            <TextStyleControl value={value} onChange={onChange} fallback="label" />
+          ),
+        },
         successMessage: { type: "textarea", label: "Success Message" },
         recipientEmail: { type: "text", label: "Notification Email (for future use)" },
       },
       defaultProps: {
         formName: "contact",
         submitLabel: "Submit",
+        labelStyle: { style: "label" },
         successMessage: "Thank you! Your submission has been received.",
         recipientEmail: "",
       },
@@ -3065,12 +2858,7 @@ function ButtonRender(props: ButtonProps) {
     paddingY,
     marginTop,
     marginBottom,
-    fontRoleKey,
-    fontSize,
-    fontWeight,
-    letterSpacing,
-    textTransform,
-    italic,
+    labelStyle,
     underline,
     hoverBgColor,
     hoverTextColor,
@@ -3096,12 +2884,7 @@ function ButtonRender(props: ButtonProps) {
         : { display: "inline-block" };
 
   const buttonStyle: React.CSSProperties = {
-    ...fontRole(fontRoleKey),
-    fontSize: `${fontSize}px`,
-    fontWeight,
-    letterSpacing: `${letterSpacing}px`,
-    textTransform,
-    fontStyle: italic ? "italic" : "normal",
+    ...textStyleCss(labelStyle, "label", { withColor: false }),
     textDecoration: underline ? "underline" : "none",
     color: fg,
     backgroundColor: bg,
@@ -3114,7 +2897,7 @@ function ButtonRender(props: ButtonProps) {
     transition: `background-color ${transitionMs}ms, color ${transitionMs}ms, border-color ${transitionMs}ms, box-shadow ${transitionMs}ms, transform ${transitionMs}ms`,
     cursor: link ? "pointer" : "default",
     textAlign: "center",
-    lineHeight: 1.2,
+    lineHeight: labelStyle?.lineHeight ?? 1.2,
     boxSizing: "border-box",
     ...widthStyle,
   };
@@ -3279,13 +3062,7 @@ function GalleriesIndexRender(props: GalleriesIndexProps) {
     gap,
     showCount,
     dividerColor,
-    listTitleFontRole,
-    listTitleSize,
-    listTitleWeight,
-    listTitleColor,
-    listTitleTransform,
-    listTitleTracking,
-    listTitleItalic,
+    listTitleStyle,
     fullBleed,
     maxWidth,
     aspectRatio,
@@ -3295,13 +3072,8 @@ function GalleriesIndexRender(props: GalleriesIndexProps) {
     showDescription,
     titlePosition,
     textAlignment,
-    titleFontRole,
-    titleSize,
-    titleColor,
-    titleWeight,
-    titleTransform,
-    descriptionSize,
-    descriptionColor,
+    titleStyle,
+    descriptionStyle,
     textPaddingX,
     textPaddingY,
     textGap,
@@ -3310,7 +3082,7 @@ function GalleriesIndexRender(props: GalleriesIndexProps) {
     marginTop,
     marginBottom,
     transitionMs,
-  } = withCssColors(props, ["dividerColor", "listTitleColor", "titleColor", "descriptionColor", "overlayBgColor"]);
+  } = withCssColors(props, ["dividerColor", "overlayBgColor"]);
 
   const [galleries, setGalleries] = useState<GalleryRow[]>([]);
   const [hoveredId, setHoveredId] = useState<string | null>(null);
@@ -3347,6 +3119,7 @@ function GalleriesIndexRender(props: GalleriesIndexProps) {
   const limited = maxItems > 0 ? sorted.slice(0, maxItems) : sorted;
 
   const colCount = parseInt(columns, 10) || 3;
+  const descriptionCss = textStyleCss(descriptionStyle, "body");
   const arValue = GALLERY_AR_MAP[aspectRatio];
   const isOverlay = titlePosition !== "below";
 
@@ -3399,16 +3172,7 @@ function GalleriesIndexRender(props: GalleriesIndexProps) {
               <span style={{ minWidth: 0 }}>
                 <span
                   style={{
-                    ...fontRole(listTitleFontRole ?? titleFontRole),
-                    fontSize: `${listTitleSize ?? titleSize}px`,
-                    fontWeight: listTitleWeight ?? titleWeight,
-                    color: listTitleColor || titleColor,
-                    textTransform: listTitleTransform ?? titleTransform,
-                    // Only set when asked, so an unset control leaves the theme
-                    // role's own tracking and slant alone rather than forcing them.
-                    ...(listTitleTracking ? { letterSpacing: `${listTitleTracking}px` } : {}),
-                    ...(listTitleItalic ? { fontStyle: "italic" as const } : {}),
-                    lineHeight: 1.25,
+                    ...textStyleCss(listTitleStyle, "collectionTitle"),
                   }}
                 >
                   {g.title}
@@ -3417,10 +3181,8 @@ function GalleriesIndexRender(props: GalleriesIndexProps) {
                   <span
                     style={{
                       display: "block",
+                      ...descriptionCss,
                       marginTop: `${textGap}px`,
-                      fontSize: `${descriptionSize}px`,
-                      color: descriptionColor,
-                      lineHeight: 1.5,
                     }}
                   >
                     {g.description}
@@ -3430,10 +3192,8 @@ function GalleriesIndexRender(props: GalleriesIndexProps) {
               {showCount && typeof g.photoCount === "number" && (
                 <span
                   style={{
+                    ...textStyleCss(undefined, "meta"),
                     flexShrink: 0,
-                    fontSize: `${descriptionSize}px`,
-                    color: descriptionColor,
-                    letterSpacing: "0.1em",
                   }}
                 >
                   {g.photoCount < 10 ? `0${g.photoCount}` : g.photoCount}
@@ -3463,13 +3223,8 @@ function GalleriesIndexRender(props: GalleriesIndexProps) {
           const titleEl = showTitle && (
             <div
               style={{
-                ...fontRole(titleFontRole),
-                fontSize: `${titleSize}px`,
-                fontWeight: titleWeight,
-                color: titleColor,
-                textTransform: titleTransform,
+                ...textStyleCss(titleStyle, "collectionTitle"),
                 textAlign: textAlignment,
-                lineHeight: 1.25,
               }}
             >
               {g.title}
@@ -3479,11 +3234,9 @@ function GalleriesIndexRender(props: GalleriesIndexProps) {
           const descEl = showDescription && g.description && (
             <div
               style={{
-                fontSize: `${descriptionSize}px`,
-                color: descriptionColor,
+                ...descriptionCss,
                 textAlign: textAlignment,
                 marginTop: `${textGap}px`,
-                lineHeight: 1.4,
               }}
             >
               {g.description}
@@ -3726,15 +3479,9 @@ function LinkListRender(props: LinkListProps) {
     borderRadius,
     paddingX,
     paddingY,
-    fontRoleKey,
-    fontSize,
-    fontWeight,
-    letterSpacing,
-    textTransform,
-    italic,
+    labelStyle,
     underline,
-    descriptionSize,
-    descriptionColor,
+    descriptionStyle,
     hoverBgColor,
     hoverTextColor,
     hoverBorderColor,
@@ -3746,9 +3493,10 @@ function LinkListRender(props: LinkListProps) {
     marginTop,
     marginBottom,
     transitionMs,
-  } = withCssColors(props, ["bgColor", "textColor", "borderColor", "descriptionColor", "hoverBgColor", "hoverTextColor", "hoverBorderColor", "dividerColor"]);
+  } = withCssColors(props, ["bgColor", "textColor", "borderColor", "hoverBgColor", "hoverTextColor", "hoverBorderColor", "dividerColor"]);
 
   const safeItems = items ?? [];
+  const descriptionCss = textStyleCss(descriptionStyle, "body");
 
   const justify =
     alignment === "left" ? "flex-start" : alignment === "right" ? "flex-end" : "center";
@@ -3830,12 +3578,7 @@ function LinkListRender(props: LinkListProps) {
         const showHoverUnderline = hovered && hoverEffect === "underline";
 
         const itemStyle: React.CSSProperties = {
-          ...fontRole(fontRoleKey),
-          fontSize: `${fontSize}px`,
-          fontWeight,
-          letterSpacing: `${letterSpacing}px`,
-          textTransform,
-          fontStyle: italic ? "italic" : "normal",
+          ...textStyleCss(labelStyle, "body", { withColor: false }),
           textDecoration: underline || showHoverUnderline ? "underline" : "none",
           color: fg,
           backgroundColor: bg,
@@ -3911,15 +3654,10 @@ function LinkListRender(props: LinkListProps) {
             {showDescription && item.description && (
               <div
                 style={{
-                  fontSize: `${descriptionSize}px`,
-                  color: hovered ? hoverTextColor : descriptionColor,
+                  ...descriptionCss,
+                  ...(hovered ? { color: hoverTextColor } : {}),
                   marginTop: 2,
-                  fontWeight: 400,
-                  textTransform: "none",
-                  letterSpacing: 0,
-                  fontStyle: "normal",
                   textDecoration: "none",
-                  lineHeight: 1.4,
                 }}
               >
                 {item.description}
@@ -3934,12 +3672,8 @@ function LinkListRender(props: LinkListProps) {
               flexShrink: 0,
               marginLeft: "auto",
               paddingLeft: 16,
-              fontSize: `${descriptionSize}px`,
-              color: hovered ? hoverTextColor : descriptionColor,
-              fontWeight: 400,
-              textTransform: "none",
-              letterSpacing: 0,
-              fontStyle: "normal",
+              ...descriptionCss,
+              ...(hovered ? { color: hoverTextColor } : {}),
               textDecoration: "none",
             }}
           >
@@ -4372,6 +4106,8 @@ function CarouselLinkGalleryHelper({ onPick }: { onPick: (slug: string) => void 
 
 function CarouselClient({
   slides,
+  slideTitleStyle,
+  slideSubtitleStyle,
   slidesPerView,
   gap,
   aspectRatio,
@@ -4867,8 +4603,8 @@ function CarouselClient({
           className="flex flex-col items-center justify-center p-6 text-center"
           style={{ ...slideStyle, backgroundColor: cssColor(slide.bgColor), color: cssColor(slide.textColor) }}
         >
-          {slide.title && <h3 className="text-xl mb-2" style={fontRole("headings")}>{slide.title}</h3>}
-          {slide.subtitle && <p className="text-sm opacity-80">{slide.subtitle}</p>}
+          {slide.title && <h3 className="mb-2" style={textStyleCss(slideTitleStyle, "collectionTitle", { withColor: false })}>{slide.title}</h3>}
+          {slide.subtitle && <p className="opacity-80" style={textStyleCss(slideSubtitleStyle, "body", { withColor: false })}>{slide.subtitle}</p>}
         </div>
       );
     }
@@ -4892,8 +4628,8 @@ function CarouselClient({
         )}
         <div className="absolute inset-0 bg-black/30" style={{ borderRadius: `${borderRadius}px` }} />
         <div className="absolute inset-0 flex flex-col items-center justify-center p-4 text-center" style={{ color: cssColor(slide.textColor, "#fff") }}>
-          {slide.title && <h3 className="text-xl mb-1" style={fontRole("headings")}>{slide.title}</h3>}
-          {slide.subtitle && <p className="text-sm opacity-90">{slide.subtitle}</p>}
+          {slide.title && <h3 className="mb-1" style={textStyleCss(slideTitleStyle, "collectionTitle", { withColor: false })}>{slide.title}</h3>}
+          {slide.subtitle && <p className="opacity-90" style={textStyleCss(slideSubtitleStyle, "body", { withColor: false })}>{slide.subtitle}</p>}
         </div>
       </div>
     ));
@@ -5165,6 +4901,8 @@ interface GalleryEmbedRendererProps {
   borderRadius: number;
   showMetadata: boolean;
   metadataFields: string[];
+  captionTitleStyle?: TextStyleValue;
+  captionMetaStyle?: TextStyleValue;
   useGlobalLightbox: boolean;
   lightboxMetadataFields: string[] | null;
   lightboxCornerRadius: number | null;
@@ -5179,7 +4917,7 @@ const aspectRatioValues = GALLERY_ASPECT_CSS;
 const gridColClasses = { "2": "grid-cols-1 sm:grid-cols-2", "3": "grid-cols-1 sm:grid-cols-2 md:grid-cols-3", "4": "grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4" };
 const masonryColClasses = { "2": "columns-1 sm:columns-2", "3": "columns-1 sm:columns-2 md:columns-3", "4": "columns-1 sm:columns-2 md:columns-3 lg:columns-4" };
 
-function GalleryEmbedRenderer({ slug, max, layout, columns, aspectRatio, gap, imageMaxWidth, borderRadius, showMetadata, metadataFields, useGlobalLightbox, lightboxMetadataFields, lightboxCornerRadius, lightboxCaptionPosition, lightboxFadeSpeed, lightboxCaptionAlignment, globalLightbox, serverPhotos }: GalleryEmbedRendererProps) {
+function GalleryEmbedRenderer({ slug, max, layout, columns, aspectRatio, gap, imageMaxWidth, borderRadius, showMetadata, metadataFields, captionTitleStyle, captionMetaStyle, useGlobalLightbox, lightboxMetadataFields, lightboxCornerRadius, lightboxCaptionPosition, lightboxFadeSpeed, lightboxCaptionAlignment, globalLightbox, serverPhotos }: GalleryEmbedRendererProps) {
   const lbBase = globalLightbox ?? DEFAULT_LIGHTBOX;
   const lb: GlobalLightboxSettings = useGlobalLightbox ? lbBase : {
     metadataFields: lightboxMetadataFields ?? lbBase.metadataFields,
@@ -5224,24 +4962,27 @@ function GalleryEmbedRenderer({ slug, max, layout, columns, aspectRatio, gap, im
 
   const gapStyle = { gap: `${gap}px` };
 
+  const titleCss = textStyleCss(captionTitleStyle, "photoTitle");
+  const metaCss = textStyleCss(captionMetaStyle, "meta");
+
   const renderPhotoMeta = (photo: EmbedPhoto) => {
     if (!showMetadata || metadataFields.length === 0) return null;
     return (
-      <div className="mt-1.5 space-y-0.5 text-sm" style={{ color: "var(--theme-color-gallery-captions)" }}>
+      <div className="mt-1.5 space-y-0.5">
         {metadataFields.includes("title") && photo.title && (
-          <p className="font-medium" style={{ fontFamily: "var(--theme-font-captions)" }}>{parseLinks(photo.title)}</p>
+          <p style={titleCss}>{parseLinks(photo.title)}</p>
         )}
         {metadataFields.includes("filename") && photo.filename && (
-          <p className="text-xs" style={{ opacity: 0.65 }}>{photo.filename}</p>
+          <p style={metaCss}>{photo.filename}</p>
         )}
         {metadataFields.includes("description") && photo.description && (
-          <p style={{ opacity: 0.85 }}>{parseLinks(photo.description)}</p>
+          <p style={metaCss}>{parseLinks(photo.description)}</p>
         )}
         {metadataFields.includes("location") && photo.location && (
-          <p className="text-xs" style={{ opacity: 0.65 }}>{parseLinks(photo.location)}</p>
+          <p style={metaCss}>{parseLinks(photo.location)}</p>
         )}
         {metadataFields.includes("camera") && photo.cameraSettings && (
-          <p className="text-xs" style={{ opacity: 0.65 }}>
+          <p style={metaCss}>
             {[photo.cameraSettings.camera, photo.cameraSettings.lens, photo.cameraSettings.aperture, photo.cameraSettings.shutter, photo.cameraSettings.iso ? `ISO ${photo.cameraSettings.iso}` : null].filter(Boolean).join(" \u00b7 ")}
           </p>
         )}

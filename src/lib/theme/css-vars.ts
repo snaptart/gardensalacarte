@@ -96,6 +96,8 @@ function textStyleVars(key: TextStyleKey, style: TextStyle): string {
   return (
     `  --theme-text-${s}-family: var(--theme-font-${r}-family);\n` +
     `  --theme-text-${s}-size: ${style.size}px;\n` +
+    // Lets a block's own px size shrink on phones in the same proportion.
+    `  --theme-text-${s}-scale: 1;\n` +
     `  --theme-text-${s}-line-height: ${style.lineHeight};\n` +
     `  --theme-text-${s}-weight: ${weight};\n` +
     `  --theme-text-${s}-style: ${slant};\n` +
@@ -124,9 +126,12 @@ export function buildThemeCssVars(theme: ThemeSettings): string {
   const perRoleClasses = ROLE_KEYS.map(roleClass).join("\n");
   const textStyles = resolveTextStyles(theme.textStyles);
   const perTextVars = TEXT_STYLE_KEYS.map((k) => textStyleVars(k, textStyles[k])).join("");
-  const perTextMobile = TEXT_STYLE_KEYS.map(
-    (k) => `    --theme-text-${TEXT_STYLE_SLUGS[k]}-size: ${textStyles[k].mobileSize}px;\n`
-  ).join("");
+  const perTextMobile = TEXT_STYLE_KEYS.map((k) => {
+    const { size, mobileSize } = textStyles[k];
+    const scale = size > 0 ? Math.round((mobileSize / size) * 1000) / 1000 : 1;
+    const s = TEXT_STYLE_SLUGS[k];
+    return `    --theme-text-${s}-size: ${mobileSize}px;\n    --theme-text-${s}-scale: ${scale};\n`;
+  }).join("");
   const perTextClasses = TEXT_STYLE_KEYS.map(textStyleClass).join("\n");
 
   return `:root {
