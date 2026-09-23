@@ -320,6 +320,66 @@ export default function LookAndFeelPage() {
             className="w-full accent-admin-accent"
           />
         </Field>
+        <Field
+          label="Wordmark"
+          inline
+          hint="How the site title is set when there's no logo image. Leave size blank to follow the logo size."
+        >
+          <div className="flex flex-wrap items-center gap-x-4 gap-y-2 text-[12px] text-admin-ink-soft">
+            <label className="flex items-center gap-1.5">
+              Size
+              <Input
+                type="number"
+                min={10}
+                max={80}
+                placeholder="auto"
+                value={themeDraft.wordmarkSize ?? ""}
+                onChange={(e) => {
+                  const v = e.target.value.trim();
+                  updateTheme("wordmarkSize", v === "" ? null : Number(v));
+                }}
+                className="w-20"
+              />
+              px
+            </label>
+            <label className="flex items-center gap-1.5">
+              Weight
+              <Select
+                value={themeDraft.wordmarkWeight}
+                onChange={(e) => updateTheme("wordmarkWeight", Number(e.target.value))}
+                className="w-24"
+              >
+                {[300, 400, 500, 600, 700, 800].map((w) => (
+                  <option key={w} value={w}>
+                    {w}
+                  </option>
+                ))}
+              </Select>
+            </label>
+            <label className="flex items-center gap-1.5">
+              Tracking
+              <Input
+                type="number"
+                min={-0.05}
+                max={0.5}
+                step={0.01}
+                value={themeDraft.wordmarkTracking}
+                onChange={(e) => updateTheme("wordmarkTracking", Number(e.target.value) || 0)}
+                className="w-20"
+              />
+              em
+            </label>
+            <label className="flex items-center gap-1.5 cursor-pointer">
+              <input
+                type="checkbox"
+                checked={themeDraft.wordmarkUppercase}
+                onChange={(e) => updateTheme("wordmarkUppercase", e.target.checked)}
+                className="accent-admin-accent"
+              />
+              <span style={{ textTransform: "uppercase", letterSpacing: "1px" }}>Caps</span>
+            </label>
+          </div>
+        </Field>
       </SettingGroup>
 
       {/* Menu layout */}
@@ -375,6 +435,16 @@ export default function LookAndFeelPage() {
           label="Text"
           value={themeDraft.colorText}
           onChange={(v) => updateTheme("colorText", v)}
+        />
+        <ColorField
+          label="Secondary text"
+          value={themeDraft.colorTextSoft}
+          onChange={(v) => updateTheme("colorTextSoft", v)}
+        />
+        <ColorField
+          label="Muted (captions, meta)"
+          value={themeDraft.colorMuted}
+          onChange={(v) => updateTheme("colorMuted", v)}
         />
         <ColorField
           label="Accent / link"

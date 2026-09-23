@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import Link from "next/link";
+import { fontRole } from "@/lib/theme/role-style";
 
 interface MobileMenuProps {
   items: { id: string; label: string; url: string; targetType: string }[];
@@ -36,12 +37,18 @@ export function MobileMenu({ items, instagramUrl, menuFontSize }: MobileMenuProp
 
       {open && (
         <div
-          className="absolute left-0 right-0 top-full w-full border-b border-neutral-200 z-50"
-          style={{ backgroundColor: "var(--theme-color-header-bg)" }}
+          className="absolute left-0 right-0 top-full w-full border-b z-50"
+          style={{
+            backgroundColor: "var(--theme-color-header-bg)",
+            borderColor: "var(--theme-color-rule)",
+          }}
         >
           <div
-            className="flex flex-col items-center gap-6 px-6 py-6 tracking-wide"
-            style={{ fontSize: `${menuFontSize}px`, fontFamily: "var(--theme-font-nav-menu)" }}
+            className="flex flex-col items-center gap-6 px-6 py-6"
+            style={{
+              ...fontRole("navMenu", { tracking: "0.025em" }),
+              fontSize: `var(--theme-font-nav-menu-size, ${menuFontSize}px)`,
+            }}
           >
             {items.map((item) => (
               <Link

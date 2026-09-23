@@ -70,9 +70,10 @@ export default function ThemePreview({ theme, siteTitle, logoUrl }: ThemePreview
                 <span
                   style={{
                     fontFamily: getFontFallback(theme.fontHeadings),
-                    fontSize: `${theme.logoSize * 0.3}px`,
-                    fontWeight: 300,
-                    letterSpacing: "0.1em",
+                    fontSize: `${(theme.wordmarkSize ?? theme.logoSize * 0.6) * 0.5}px`,
+                    fontWeight: theme.wordmarkWeight,
+                    textTransform: theme.wordmarkUppercase ? "uppercase" : "none",
+                    letterSpacing: `${theme.wordmarkTracking}em`,
                   }}
                 >
                   {siteTitle || "Site Title"}
@@ -88,9 +89,10 @@ export default function ThemePreview({ theme, siteTitle, logoUrl }: ThemePreview
                 <span
                   style={{
                     fontFamily: getFontFallback(theme.fontHeadings),
-                    fontSize: `${theme.logoSize * 0.3}px`,
-                    fontWeight: 300,
-                    letterSpacing: "0.1em",
+                    fontSize: `${(theme.wordmarkSize ?? theme.logoSize * 0.6) * 0.5}px`,
+                    fontWeight: theme.wordmarkWeight,
+                    textTransform: theme.wordmarkUppercase ? "uppercase" : "none",
+                    letterSpacing: `${theme.wordmarkTracking}em`,
                   }}
                 >
                   {siteTitle || "Site Title"}
@@ -114,9 +116,10 @@ export default function ThemePreview({ theme, siteTitle, logoUrl }: ThemePreview
                   className="mr-4"
                   style={{
                     fontFamily: getFontFallback(theme.fontHeadings),
-                    fontSize: `${theme.logoSize * 0.3}px`,
-                    fontWeight: 300,
-                    letterSpacing: "0.1em",
+                    fontSize: `${(theme.wordmarkSize ?? theme.logoSize * 0.6) * 0.5}px`,
+                    fontWeight: theme.wordmarkWeight,
+                    textTransform: theme.wordmarkUppercase ? "uppercase" : "none",
+                    letterSpacing: `${theme.wordmarkTracking}em`,
                   }}
                 >
                   {siteTitle || "Site Title"}
