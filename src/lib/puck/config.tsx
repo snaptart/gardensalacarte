@@ -530,7 +530,7 @@ export const puckConfig: Config<Components> = {
           )}
           <div className="relative z-10 text-center px-4">
             {title && (
-              <h1 className="text-4xl md:text-6xl tracking-tight mb-4" style={{ ...fontRole("headings"), color: "var(--theme-color-hero-overlay)" }}>
+              <h1 className="text-4xl md:text-6xl mb-4" style={{ ...fontRole("headings", { tracking: "-0.025em" }), color: "var(--theme-color-hero-overlay)" }}>
                 {title}
               </h1>
             )}

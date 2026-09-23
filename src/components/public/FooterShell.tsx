@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import { parseLinks } from "@/lib/parseLinks";
+import { fontRole } from "@/lib/theme/role-style";
 
 interface FooterShellProps {
   footerText: string | null;
@@ -66,7 +67,7 @@ export function FooterShell({
           style={{
             borderColor: "var(--theme-color-rule)",
             backgroundColor: "var(--theme-color-footer-bg)",
-            fontFamily: "var(--theme-font-footer-family, var(--theme-font-footer))",
+            ...fontRole("footer"),
             fontSize: "var(--theme-font-footer-size, var(--theme-footer-font-size))",
             color: "var(--theme-color-footer-text)",
           }}

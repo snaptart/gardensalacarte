@@ -7,6 +7,7 @@ import type { ThemeSettings } from "@/lib/theme/types";
 import { MobileMenu } from "./MobileMenu";
 import siteConfig from "@/lib/site.config";
 import { PAGE_CONTAINER } from "@/lib/theme/layout";
+import { fontRole } from "@/lib/theme/role-style";
 
 export async function Navbar() {
   let items: { id: string; label: string; url: string; targetType: string }[] = [];
@@ -32,22 +33,27 @@ export async function Navbar() {
   const instagramUrl = navSettings?.instagramUrl;
 
   const mobileLogoSize = Math.round(theme.logoSize / 3);
+  const wordmarkSize = theme.wordmarkSize ?? Math.round(theme.logoSize * 0.6);
 
-  const logoEl = (size: number) => (
+  const logoEl = (mobile: boolean) => (
     <Link href="/" className="flex items-center gap-3">
       {logoUrl ? (
         <img
           src={logoUrl}
           alt={siteTitle}
           className="w-auto"
-          style={{ height: `${size}px` }}
+          style={{ height: `${mobile ? mobileLogoSize : theme.logoSize}px` }}
         />
       ) : (
         <span
-          className="font-light tracking-widest"
           style={{
             fontFamily: "var(--theme-font-headings)",
-            fontSize: `${size * 0.6}px`,
+            // A third of the desktop size (the image logo's ratio) makes a
+            // text wordmark unreadably small, so text only steps down a little.
+            fontSize: `${mobile ? Math.round(wordmarkSize * 0.8) : wordmarkSize}px`,
+            fontWeight: theme.wordmarkWeight,
+            textTransform: theme.wordmarkUppercase ? "uppercase" : "none",
+            letterSpacing: `${theme.wordmarkTracking}em`,
           }}
         >
           {siteTitle}
@@ -59,8 +65,11 @@ export async function Navbar() {
   // Desktop menu (hidden on mobile)
   const menuEl = (
     <div
-      className="hidden md:flex items-center gap-8 tracking-wide"
-      style={{ fontSize: `var(--theme-font-nav-menu-size, ${theme.menuFontSize}px)`, fontFamily: "var(--theme-font-nav-menu-family, var(--theme-font-nav-menu))" }}
+      className="hidden md:flex items-center gap-8"
+      style={{
+        ...fontRole("navMenu", { tracking: "0.025em" }),
+        fontSize: `var(--theme-font-nav-menu-size, ${theme.menuFontSize}px)`,
+      }}
     >
       {items.map((item) => (
         <Link
@@ -96,7 +105,7 @@ export async function Navbar() {
   // Build 3-column layout: [left] [center] [right]
   // Place logo and menu into the correct slots based on theme
   const slots: Record<string, React.ReactNode[]> = { left: [], center: [], right: [] };
-  slots[theme.logoPosition].push(<div key="logo">{logoEl(theme.logoSize)}</div>);
+  slots[theme.logoPosition].push(<div key="logo">{logoEl(false)}</div>);
   slots[theme.menuJustify].push(<div key="menu">{menuEl}</div>);
 
   return (
@@ -125,7 +134,7 @@ export async function Navbar() {
         <div className="justify-self-start">
           {mobileMenuEl}
         </div>
-        <div>{logoEl(mobileLogoSize)}</div>
+        <div>{logoEl(true)}</div>
         <div />
       </nav>
     </header>
