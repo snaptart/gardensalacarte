@@ -150,6 +150,27 @@ export const TEXT_STYLE_LABELS: Record<TextStyleKey, string> = {
   meta: "Meta",
 };
 
+export const ROLE_LABELS: Record<FontRoleKey, string> = {
+  headings: "Headings",
+  body: "Body",
+  navMenu: "Nav menu",
+  footer: "Footer",
+  captions: "Captions",
+  overlay: "Overlay text",
+  labels: "Labels",
+};
+
+/** The ThemeSettings field holding each role's typeface. */
+export const ROLE_FAMILY_FIELDS: Record<FontRoleKey, keyof ThemeSettings> = {
+  headings: "fontHeadings",
+  body: "fontBody",
+  navMenu: "fontNavMenu",
+  footer: "fontFooter",
+  captions: "fontCaptions",
+  overlay: "fontOverlay",
+  labels: "fontLabels",
+};
+
 export const COLOR_TOKENS: {
   key: ColorTokenKey;
   label: string;

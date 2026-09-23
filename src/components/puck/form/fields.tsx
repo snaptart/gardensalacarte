@@ -1,13 +1,18 @@
 "use client";
 
 import { useFormField } from "@/lib/hooks/useFormField";
-import { fontRole } from "@/lib/theme/role-style";
+import { textStyleCss } from "@/lib/theme/text-style-value";
+import { useFormContext } from "./FormContext";
+
+// Choice labels (radio, checkbox) read as running text.
+const OPTION_TEXT = textStyleCss(undefined, "body");
 
 // ---------- Shared label ----------
 
 function FieldLabel({ label, required }: { label: string; required?: boolean }) {
+  const form = useFormContext();
   return (
-    <label className="mb-1 block text-neutral-700" style={fontRole("body")}>
+    <label className="mb-1 block" style={textStyleCss(form?.labelStyle, "label")}>
       {label}
       {required && <span className="ml-0.5 text-red-500">*</span>}
     </label>
@@ -140,7 +145,7 @@ export function RadioGroupRender({ label, name, required, options }: RadioGroupP
         {optList.map((opt) => {
           const [val, lbl] = opt.includes("|") ? opt.split("|", 2) : [opt, opt];
           return (
-            <label key={val} className="flex items-center gap-2 text-sm text-neutral-700" style={fontRole("body")}>
+            <label key={val} className="flex items-center gap-2" style={OPTION_TEXT}>
               <input
                 type="radio"
                 name={name}
@@ -190,7 +195,7 @@ export function CheckboxGroupRender({ label, name, options }: CheckboxGroupProps
         {optList.map((opt) => {
           const [val, lbl] = opt.includes("|") ? opt.split("|", 2) : [opt, opt];
           return (
-            <label key={val} className="flex items-center gap-2 text-sm text-neutral-700" style={fontRole("body")}>
+            <label key={val} className="flex items-center gap-2" style={OPTION_TEXT}>
               <input
                 type="checkbox"
                 name={name}
@@ -219,7 +224,7 @@ export function CheckboxRender({ label, name }: CheckboxProps) {
   const { value, update } = useFormField(name, "false");
 
   return (
-    <label className="flex items-center gap-2 py-2 text-sm text-neutral-700" style={fontRole("body")}>
+    <label className="flex items-center gap-2 py-2" style={OPTION_TEXT}>
       <input
         type="checkbox"
         name={name}
