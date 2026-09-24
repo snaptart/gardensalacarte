@@ -397,14 +397,26 @@ export default function LookAndFeelPage() {
       </SettingGroup>
 
       {/* Footer */}
-      <SettingGroup title="Footer" desc="Footer alignment on the public site. Size is set in Typography.">
-        <Field label="Position" inline>
+      <SettingGroup
+        title="Footer"
+        desc="A bar across the foot of every page, or a small info button in a corner. Its text and size are set in Settings and Typography."
+      >
+        <Field label="Style" inline>
           <RadioGroup
-            options={["left", "center", "right"]}
-            value={footerAlignment}
-            onChange={(v) => setFooterAlignment(v)}
+            options={["bar", "floating"]}
+            value={themeDraft.footerStyle}
+            onChange={(v) => updateTheme("footerStyle", v as ThemeSettings["footerStyle"])}
           />
         </Field>
+        {themeDraft.footerStyle === "floating" && (
+          <Field label="Corner" inline>
+            <RadioGroup
+              options={["left", "center", "right"]}
+              value={footerAlignment}
+              onChange={(v) => setFooterAlignment(v)}
+            />
+          </Field>
+        )}
       </SettingGroup>
 
       {/* Colors */}

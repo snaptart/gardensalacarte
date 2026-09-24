@@ -87,6 +87,8 @@ export interface ThemeSettings {
   wordmarkTracking: number;
   menuFontSize: number;
   menuJustify: "left" | "center" | "right";
+  /** bar: the design's footer across the foot of every page · floating: the "i" button in a corner. */
+  footerStyle: "bar" | "floating";
   footerFontSize: number;
   colorSiteBg: string;
   colorHeaderBg: string;
@@ -221,6 +223,7 @@ export const THEME_DEFAULTS: ThemeSettings = {
   wordmarkTracking: 0.1,
   menuFontSize: 14,
   menuJustify: "right",
+  footerStyle: "bar",
   footerFontSize: 14,
   colorSiteBg: "#ffffff",
   colorHeaderBg: "#ffffff",

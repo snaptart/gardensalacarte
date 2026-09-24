@@ -1,11 +1,11 @@
 "use client";
 
 import { useState } from "react";
-import Link from "next/link";
 import { fontRole } from "@/lib/theme/role-style";
+import { NavLink } from "./NavLink";
 
 interface MobileMenuProps {
-  items: { id: string; label: string; url: string; targetType: string }[];
+  items: { id: string; label: string; url: string; targetType: string; sectionPaths?: string[] }[];
   instagramUrl: string | null;
   menuFontSize: number;
 }
@@ -51,15 +51,16 @@ export function MobileMenu({ items, instagramUrl, menuFontSize }: MobileMenuProp
             }}
           >
             {items.map((item) => (
-              <Link
+              <NavLink
                 key={item.id}
                 href={item.url}
-                className="transition-colors hover:opacity-70"
+                sectionPaths={item.sectionPaths}
+                external={item.targetType === "external"}
+                className="border-b border-transparent py-1 transition-colors hover:opacity-70 aria-[current]:border-current"
                 onClick={() => setOpen(false)}
-                {...(item.targetType === "external" ? { target: "_blank", rel: "noopener noreferrer" } : {})}
               >
                 {item.label}
-              </Link>
+              </NavLink>
             ))}
             {instagramUrl && (
               <a
