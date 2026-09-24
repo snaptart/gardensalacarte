@@ -4,6 +4,7 @@ import type { ReactNode } from "react";
 import { useFormField } from "@/lib/hooks/useFormField";
 import { textStyleCss } from "@/lib/theme/text-style-value";
 import { useFormContext } from "./FormContext";
+import { Editable } from "@/components/puck/inline/Editable";
 
 // ---------- Shared look ----------
 
@@ -62,7 +63,7 @@ function FieldLabel({ label, required }: { label: string; required?: boolean }) 
   const form = useFormContext();
   return (
     <label className="mb-1 block" style={textStyleCss(form?.labelStyle, "label")}>
-      {label}
+      <Editable path="label" value={label} placeholder="Label" />
       {required && <span className="ml-0.5 text-red-500">*</span>}
     </label>
   );
@@ -293,7 +294,7 @@ export function CheckboxRender({ label, name }: CheckboxProps) {
         onChange={(e) => update(e.target.checked ? "true" : "false")}
         className={CHOICE}
       />
-      {label}
+      <Editable path="label" value={label} placeholder="Label" />
     </label>
   );
 }

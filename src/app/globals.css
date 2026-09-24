@@ -68,6 +68,20 @@ body {
   min-height: 0;
 }
 
+/* Click-to-edit text on the Puck canvas (components/puck/inline/Editable.tsx).
+   Blank text shows a faded prompt, or what the site shows in its place
+   (e.g. the photo's own title). */
+[data-inline-edit] {
+  cursor: text;
+}
+[data-inline-edit]:empty::before {
+  content: attr(data-placeholder);
+  opacity: 0.4;
+}
+[data-inline-edit][data-fallback]:empty::before {
+  opacity: 1;
+}
+
 /* Tiptap: ensure empty paragraphs (line breaks) render with height */
 .ProseMirror p.is-editor-empty:first-child::before {
   content: attr(data-placeholder);

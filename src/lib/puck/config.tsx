@@ -18,6 +18,8 @@ import type { JSONContent } from "@tiptap/react";
 import { renderRichText } from "@/lib/tiptap/render-html";
 import { richTextCss } from "@/lib/tiptap/rich-text-css";
 import TiptapEditor from "@/components/admin/TiptapEditor";
+import { Editable, InlineEditScope } from "@/components/puck/inline/Editable";
+import { InlineRichText } from "@/components/puck/inline/InlineRichText";
 import ImagePicker from "@/components/admin/ImagePicker";
 import GalleryPhotoMultiPicker from "@/components/admin/GalleryPhotoMultiPicker";
 import NextLink from "next/link";
@@ -499,9 +501,17 @@ export const puckConfig: Config<Components> = {
       defaultProps: {
         content: { type: "doc", content: [{ type: "paragraph" }] },
       },
-      render: ({ content }) => {
+      render: ({ content, puck }) => {
+        if (puck?.isEditing) {
+          return (
+            <>
+              <style>{RICH_TEXT_CSS}</style>
+              <InlineRichText path="content" content={content} className="richtext-render mx-auto max-w-none" />
+            </>
+          );
+        }
         const html = renderRichText(content);
-        if (!html) return <p className="text-neutral-400 italic">Start typing...</p>;
+        if (!html) return <></>;
         return (
           <>
             <style>{RICH_TEXT_CSS}</style>
@@ -595,12 +605,12 @@ export const puckConfig: Config<Components> = {
           <div className="relative z-10 text-center px-4">
             {title && (
               <h1 className="mb-4" style={{ ...textStyleCss(titleStyle, "display", { withColor: false }), color: "var(--theme-color-hero-overlay)" }}>
-                {title}
+                <Editable path="title" value={title} />
               </h1>
             )}
             {subtitle && (
               <p style={{ ...textStyleCss(subtitleStyle, "lead", { withColor: false }), color: "var(--theme-color-hero-overlay)", opacity: 0.9 }}>
-                {subtitle}
+                <Editable path="subtitle" value={subtitle} />
               </p>
             )}
             {!imageUrl && !title && (
@@ -805,7 +815,7 @@ export const puckConfig: Config<Components> = {
                 {imageEl}
                 {caption && (
                   <figcaption style={captionBox}>
-                    {caption}
+                    <Editable path="caption" value={caption} />
                   </figcaption>
                 )}
               </div>
@@ -3892,7 +3902,9 @@ function ButtonRender(props: ButtonProps) {
       }}
     >
       {iconEl}
-      <span>{label}</span>
+      <span>
+        <Editable path="label" value={label} />
+      </span>
     </span>
   );
 
@@ -4672,7 +4684,9 @@ function LinkListRender(props: LinkListProps) {
 
         const textEl = (
           <div style={{ flex: 1, minWidth: 0 }}>
-            <div>{item.label}</div>
+            <div>
+              <Editable path={`items[${i}].label`} value={item.label} />
+            </div>
             {showDescription && item.description && (
               <div
                 style={{
@@ -4682,7 +4696,7 @@ function LinkListRender(props: LinkListProps) {
                   textDecoration: "none",
                 }}
               >
-                {item.description}
+                <Editable path={`items[${i}].description`} value={item.description} />
               </div>
             )}
           </div>
@@ -4699,7 +4713,7 @@ function LinkListRender(props: LinkListProps) {
               textDecoration: "none",
             }}
           >
-            {item.meta}
+            <Editable path={`items[${i}].meta`} value={item.meta} />
           </span>
         ) : null;
 
@@ -6258,6 +6272,16 @@ for (const [name, component] of Object.entries(puckConfig.components) as [string
     <BreakpointVisibility hideOn={props.hideOn as Breakpoint[] | undefined} editing={!!props.puck?.isEditing}>
       <Block {...props} />
     </BreakpointVisibility>
+  );
+}
+
+// On the editor canvas, a block's <Editable> text can be typed into.
+for (const component of Object.values(puckConfig.components) as ComponentConfig<any>[]) {
+  const Block = component.render;
+  component.render = (props) => (
+    <InlineEditScope id={props.id as string | undefined} editing={!!props.puck?.isEditing}>
+      <Block {...props} />
+    </InlineEditScope>
   );
 }
 
