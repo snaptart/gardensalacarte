@@ -3,6 +3,7 @@ import { COLOR_TOKENS, TEXT_STYLE_LABELS, type TextStyleKey } from "@/lib/theme/
 import { SPACE_SCALE } from "@/lib/theme/layout";
 import { colorTokenOf } from "@/lib/theme/color";
 import { hasAdjustments, type TextStyleValue } from "@/lib/theme/text-style-value";
+import { columnsSummary } from "@/lib/puck/responsive";
 
 /**
  * How each block's settings are laid out in the properties panel: which tab
@@ -193,8 +194,9 @@ export const PANEL_LAYOUTS: Layouts = {
       {
         tab: "layout",
         title: "Arrangement",
-        fields: ["layout", "columns", "gap"],
-        summary: (p) => (p.layout === "list" ? "Index list" : list("Cover grid", `${p.columns} columns`, `gap ${p.gap}px`)),
+        fields: ["layout", "columns", "tabletColumns", "phoneColumns", "gap"],
+        summary: (p) =>
+          p.layout === "list" ? "Index list" : list("Cover grid", columnsSummary(Number(p.columns), p.tabletColumns, p.phoneColumns), `gap ${p.gap}px`),
       },
       {
         tab: "layout",
@@ -222,6 +224,8 @@ export const PANEL_LAYOUTS: Layouts = {
       dividerColor: (p) => p.layout === "list",
       imageHoverEffect: (p) => p.layout !== "list",
       columns: (p) => p.layout !== "list",
+      tabletColumns: (p) => p.layout !== "list",
+      phoneColumns: (p) => p.layout !== "list",
       gap: (p) => p.layout !== "list",
       titlePosition: (p) => p.layout !== "list",
       textAlignment: (p) => p.layout !== "list",
@@ -276,8 +280,13 @@ export const PANEL_LAYOUTS: Layouts = {
       {
         tab: "layout",
         title: "Arrangement",
-        fields: ["layout", "columns", "gap", "alignment", "itemAlignment"],
-        summary: (p) => list(LINK_LIST_LAYOUTS[p.layout] ?? p.layout, p.layout === "card-grid" && `${p.columns} columns`, `gap ${p.gap}px`),
+        fields: ["layout", "columns", "tabletColumns", "phoneColumns", "gap", "alignment", "itemAlignment"],
+        summary: (p) =>
+          list(
+            LINK_LIST_LAYOUTS[p.layout] ?? p.layout,
+            p.layout === "card-grid" && columnsSummary(Number(p.columns), p.tabletColumns, p.phoneColumns),
+            `gap ${p.gap}px`,
+          ),
       },
       {
         tab: "layout",
@@ -299,6 +308,8 @@ export const PANEL_LAYOUTS: Layouts = {
       dividers: (p) => p.layout === "vertical-list" && !(p.borderWidth > 0),
       dividerColor: (p) => p.layout === "vertical-list" && !(p.borderWidth > 0) && p.dividers,
       columns: (p) => p.layout === "card-grid",
+      tabletColumns: (p) => p.layout === "card-grid",
+      phoneColumns: (p) => p.layout === "card-grid",
       alignment: (p) => p.layout === "horizontal-pills" || p.layout === "button-stack",
     },
   },
@@ -470,9 +481,14 @@ export const PANEL_LAYOUTS: Layouts = {
       {
         tab: "layout",
         title: "Arrangement",
-        fields: ["layout", "columns", "aspectRatio", "gap", "hangOffset", "hangGap", "imageMaxWidth"],
+        fields: ["layout", "columns", "tabletColumns", "phoneColumns", "aspectRatio", "gap", "hangOffset", "hangGap", "imageMaxWidth"],
         summary: (p) =>
-          list(capitalise(p.layout), p.layout !== "hang" && `${p.columns} columns`, p.layout !== "masonry" && p.aspectRatio, `gap ${p.gap}px`),
+          list(
+            capitalise(p.layout),
+            p.layout !== "hang" && columnsSummary(Number(p.columns), p.tabletColumns, p.phoneColumns),
+            p.layout !== "masonry" && p.aspectRatio,
+            `gap ${p.gap}px`,
+          ),
       },
     ],
     when: {
@@ -482,6 +498,8 @@ export const PANEL_LAYOUTS: Layouts = {
       // The Hang layout's numbers use the details style.
       captionMetaStyle: (p) => p.showMetadata || (p.layout === "hang" && p.numbered),
       columns: (p) => p.layout !== "hang",
+      tabletColumns: (p) => p.layout !== "hang",
+      phoneColumns: (p) => p.layout !== "hang",
       imageMaxWidth: (p) => p.layout !== "hang",
       hangOffset: (p) => p.layout === "hang",
       hangGap: (p) => p.layout === "hang",
@@ -559,14 +577,20 @@ export const PANEL_LAYOUTS: Layouts = {
       {
         tab: "layout",
         title: "Arrangement",
-        fields: ["layout", "columns", "dividers"],
+        fields: ["layout", "columns", "tabletColumns", "phoneColumns", "dividers"],
         summary: (p) =>
-          p.layout === "columns" ? `${p.columns} columns` : p.layout === "inline" ? "In a line" : list("Rows", p.dividers && "rules"),
+          p.layout === "columns"
+            ? columnsSummary(Number(p.columns), p.tabletColumns, p.phoneColumns)
+            : p.layout === "inline"
+              ? "In a line"
+              : list("Rows", p.dividers && "rules"),
       },
       SPACING,
     ],
     when: {
       columns: (p) => p.layout === "columns",
+      tabletColumns: (p) => p.layout === "columns",
+      phoneColumns: (p) => p.layout === "columns",
       dividers: (p) => p.layout === "rows",
     },
   },
@@ -603,8 +627,8 @@ export const PANEL_LAYOUTS: Layouts = {
       {
         tab: "layout",
         title: "Grid",
-        fields: ["columns", "aspectRatio", "columnGap", "rowGap"],
-        summary: (p) => list(`${p.columns} columns`, p.aspectRatio, `gaps ${p.columnGap}/${p.rowGap}px`),
+        fields: ["columns", "tabletColumns", "phoneColumns", "aspectRatio", "columnGap", "rowGap"],
+        summary: (p) => list(columnsSummary(Number(p.columns), p.tabletColumns, p.phoneColumns), p.aspectRatio, `gaps ${p.columnGap}/${p.rowGap}px`),
       },
       SPACING,
     ],
@@ -662,10 +686,19 @@ export const PANEL_LAYOUTS: Layouts = {
         fields: ["submitTextStyle", "submitTextColor", "submitBgColor", "submitHoverBgColor", "submitRadius"],
         summary: (p) => list(textStyleSummary(p.submitTextStyle, "label"), colorSummary(p.submitBgColor)),
       },
+      {
+        tab: "style",
+        title: "Panel",
+        fields: ["panel", "panelColor", "panelPadding", "panelRadius"],
+        summary: (p) => (p.panel ? list(colorSummary(p.panelColor), `padding ${p.panelPadding ?? 48}px`) : "None"),
+      },
     ],
     when: {
       // An underline has no corners to round.
       fieldRadius: (p) => p.fieldLook !== "underline",
+      panelColor: (p) => !!p.panel,
+      panelPadding: (p) => !!p.panel,
+      panelRadius: (p) => !!p.panel,
     },
   },
 };

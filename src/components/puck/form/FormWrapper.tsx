@@ -32,6 +32,11 @@ export type FormWrapperProps = {
   submitTextColor?: string;
   submitHoverBgColor?: string;
   submitRadius?: number;
+  /** A recessed panel behind the whole form, as on the Contact board. */
+  panel?: boolean;
+  panelColor?: string;
+  panelPadding?: number;
+  panelRadius?: number;
 };
 
 type FieldEntry = {
@@ -57,6 +62,10 @@ export function FormWrapperRender({
   submitTextColor,
   submitHoverBgColor,
   submitRadius,
+  panel,
+  panelColor,
+  panelPadding,
+  panelRadius,
 }: FormWrapperProps) {
   const fieldsRef = useRef<Map<string, FieldEntry>>(new Map());
   const [status, setStatus] = useState<"idle" | "submitting" | "success" | "error">("idle");
@@ -172,9 +181,18 @@ export function FormWrapperRender({
     "--form-submit-hover": cssColor(submitHoverBgColor, "#404040"),
   } as CSSProperties;
 
+  // The panel's padding eases off on small screens so the fields keep their width.
+  const panelCss: CSSProperties = panel
+    ? {
+        background: cssColor(panelColor, "var(--theme-color-surface, #f2efe9)"),
+        padding: `min(${panelPadding ?? 48}px, 7vw)`,
+        borderRadius: panelRadius ?? 0,
+      }
+    : {};
+
   return (
     <FormContext.Provider value={{ register, update, labelStyle, fieldTextStyle, fieldLook }}>
-      <form onSubmit={handleSubmit} className="space-y-4" style={formVars}>
+      <form onSubmit={handleSubmit} className="@container space-y-4" style={{ ...formVars, ...panelCss }}>
         {/* Honeypot — hidden from real users */}
         <div style={{ position: "absolute", left: "-9999px", opacity: 0, height: 0, overflow: "hidden" }} aria-hidden="true">
           <label>
@@ -183,7 +201,8 @@ export function FormWrapperRender({
           </label>
         </div>
 
-        <DropZone zone="form-fields" />
+        {/* Half-width fields pair up once the form is 512px wide. */}
+        <DropZone zone="form-fields" className="grid grid-cols-1 gap-x-6 @min-[32rem]:grid-cols-2" />
 
         {errorMsg && (
           <p className="text-sm text-red-600">{errorMsg}</p>

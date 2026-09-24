@@ -1,5 +1,6 @@
 "use client";
 
+import type { ReactNode } from "react";
 import { useFormField } from "@/lib/hooks/useFormField";
 import { textStyleCss } from "@/lib/theme/text-style-value";
 import { useFormContext } from "./FormContext";
@@ -29,6 +30,32 @@ function useOptionText() {
   return textStyleCss(form?.fieldTextStyle, "body");
 }
 
+// ---------- Width ----------
+
+/** A field takes the form's whole row, or half of it beside another half field. */
+export type FieldWidth = "full" | "half";
+
+/**
+ * The field's cell in the Form's grid. It carries Puck's drag handle, so in the
+ * editor the field itself (not a wrapper Puck adds) is the grid item. Half
+ * fields pair up once the form is 512px wide; below that every field is full.
+ */
+export function FormFieldCell({
+  width,
+  dragRef,
+  children,
+}: {
+  width?: FieldWidth;
+  dragRef?: ((el: Element | null) => void) | null;
+  children: ReactNode;
+}) {
+  return (
+    <div ref={dragRef ?? undefined} className={width === "half" ? "min-w-0" : "min-w-0 @min-[32rem]:col-span-2"}>
+      {children}
+    </div>
+  );
+}
+
 // ---------- Shared label ----------
 
 function FieldLabel({ label, required }: { label: string; required?: boolean }) {
@@ -49,6 +76,7 @@ export type TextFieldProps = {
   placeholder: string;
   required: boolean;
   fieldType: "text" | "email" | "tel" | "url";
+  width?: FieldWidth;
 };
 
 export function TextFieldRender({ label, name, placeholder, required, fieldType }: TextFieldProps) {
@@ -80,6 +108,7 @@ export type TextAreaProps = {
   placeholder: string;
   required: boolean;
   rows: number;
+  width?: FieldWidth;
 };
 
 export function TextAreaRender({ label, name, placeholder, required, rows }: TextAreaProps) {
@@ -110,6 +139,7 @@ export type SelectFieldProps = {
   name: string;
   required: boolean;
   options: string;
+  width?: FieldWidth;
 };
 
 export function SelectFieldRender({ label, name, required, options }: SelectFieldProps) {
@@ -153,6 +183,7 @@ export type RadioGroupProps = {
   name: string;
   required: boolean;
   options: string;
+  width?: FieldWidth;
 };
 
 export function RadioGroupRender({ label, name, required, options }: RadioGroupProps) {
@@ -196,6 +227,7 @@ export type CheckboxGroupProps = {
   label: string;
   name: string;
   options: string;
+  width?: FieldWidth;
 };
 
 export function CheckboxGroupRender({ label, name, options }: CheckboxGroupProps) {
@@ -245,6 +277,7 @@ export function CheckboxGroupRender({ label, name, options }: CheckboxGroupProps
 export type CheckboxProps = {
   label: string;
   name: string;
+  width?: FieldWidth;
 };
 
 export function CheckboxRender({ label, name }: CheckboxProps) {
