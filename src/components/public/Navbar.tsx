@@ -1,32 +1,13 @@
 import Link from "next/link";
-import { db } from "@/lib/db";
-import { menuItems, siteSettings, themes } from "@/lib/db/schema";
-import { asc, eq } from "drizzle-orm";
-import { resolveTheme } from "@/lib/theme/types";
-import type { ThemeSettings } from "@/lib/theme/types";
+import { loadSiteChrome } from "@/lib/site-chrome";
 import { MobileMenu } from "./MobileMenu";
+import { NavLink } from "./NavLink";
 import siteConfig from "@/lib/site.config";
 import { PAGE_CONTAINER } from "@/lib/theme/layout";
 import { fontRole } from "@/lib/theme/role-style";
 
 export async function Navbar() {
-  let items: { id: string; label: string; url: string; targetType: string }[] = [];
-  let navSettings: { siteTitle: string; logoUrl: string | null; instagramUrl: string | null; activeThemeId: string | null } | null = null;
-  let theme: ThemeSettings = resolveTheme();
-
-  try {
-    items = await db.select().from(menuItems).orderBy(asc(menuItems.position));
-    const rows = await db.select().from(siteSettings).limit(1);
-    navSettings = rows[0] ?? null;
-    if (navSettings?.activeThemeId) {
-      const themeRows = await db.select().from(themes).where(eq(themes.id, navSettings.activeThemeId)).limit(1);
-      if (themeRows[0]) {
-        theme = resolveTheme(themeRows[0].themeSettings as Record<string, unknown>);
-      }
-    }
-  } catch {
-    // DB not available — use fallback
-  }
+  const { items, settings: navSettings, theme } = await loadSiteChrome();
 
   const siteTitle = navSettings?.siteTitle ?? siteConfig.siteName;
   const logoUrl = navSettings?.logoUrl;
@@ -72,14 +53,16 @@ export async function Navbar() {
       }}
     >
       {items.map((item) => (
-        <Link
+        <NavLink
           key={item.id}
           href={item.url}
-          className="transition-colors hover:opacity-70"
-          {...(item.targetType === "external" ? { target: "_blank", rel: "noopener noreferrer" } : {})}
+          sectionPaths={item.sectionPaths}
+          external={item.targetType === "external"}
+          // The current page or section is underlined, as on the design's boards.
+          className="border-b border-transparent py-1.5 transition-colors hover:opacity-70 aria-[current]:border-current"
         >
           {item.label}
-        </Link>
+        </NavLink>
       ))}
       {instagramUrl && (
         <a
