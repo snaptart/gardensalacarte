@@ -1,6 +1,7 @@
 import type { CSSProperties, ReactNode } from "react";
 import { responsiveGrid, type PhoneColumns, type TabletColumns } from "@/lib/puck/responsive";
 import { textStyleCss, type TextStyleValue } from "@/lib/theme/text-style-value";
+import { Editable } from "@/components/puck/inline/Editable";
 
 /**
  * Page sections from the design canvas, built from theme text styles:
@@ -77,6 +78,7 @@ export function PageIntroRender(p: PageIntroProps) {
   const Title = p.titleTag === "h2" ? "h2" : "h1";
   const centered = p.alignment === "center";
   const stats = (p.stats ?? []).filter((s) => s.label || s.value);
+  const paras = paragraphs(p.text ?? "");
 
   return (
     <section
@@ -93,18 +95,29 @@ export function PageIntroRender(p: PageIntroProps) {
     >
       <div style={{ maxWidth: p.textMaxWidth > 0 ? p.textMaxWidth : undefined }}>
         {p.eyebrow && (
-          <p style={{ ...textStyleCss(p.eyebrowStyle, "label"), margin: "0 0 20px" }}>{p.eyebrow}</p>
+          <p style={{ ...textStyleCss(p.eyebrowStyle, "label"), margin: "0 0 20px" }}>
+            <Editable path="eyebrow" value={p.eyebrow} />
+          </p>
         )}
-        {p.title && <Title style={{ ...textStyleCss(p.titleStyle, "display"), margin: 0 }}>{p.title}</Title>}
-        {paragraphs(p.text ?? "").map((para, i) => (
+        {p.title && (
+          <Title style={{ ...textStyleCss(p.titleStyle, "display"), margin: 0 }}>
+            <Editable path="title" value={p.title} />
+          </Title>
+        )}
+        {paras.map((para, i) => (
           <p key={i} style={{ ...textStyleCss(p.textStyle, "lead"), margin: `${i === 0 ? 24 : 16}px 0 0`, whiteSpace: "pre-line" }}>
-            {para}
+            <Editable
+              path="text"
+              value={para}
+              multiline
+              compose={(typed) => paras.map((q, j) => (j === i ? typed : q)).join("\n\n")}
+            />
           </p>
         ))}
         {p.linkLabel && p.link && (
           <p style={{ margin: "28px 0 0" }}>
             <AccentLink href={p.link} style={textStyleCss(p.linkStyle, "label", { withColor: false })}>
-              {p.linkLabel}
+              <Editable path="linkLabel" value={p.linkLabel} />
             </AccentLink>
           </p>
         )}
@@ -112,12 +125,19 @@ export function PageIntroRender(p: PageIntroProps) {
 
       {stats.length > 0 && (
         <dl className={centered ? "flex flex-wrap justify-center gap-x-14 gap-y-6" : "flex flex-wrap gap-x-14 gap-y-6"} style={{ margin: 0 }}>
-          {stats.map((s) => (
-            <div key={s.id}>
-              <dt style={textStyleCss(p.statLabelStyle, "meta")}>{s.label}</dt>
-              <dd style={{ ...textStyleCss(p.statValueStyle, "collectionTitle"), margin: "8px 0 0" }}>{s.value}</dd>
-            </div>
-          ))}
+          {stats.map((s) => {
+            const at = p.stats.indexOf(s);
+            return (
+              <div key={s.id}>
+                <dt style={textStyleCss(p.statLabelStyle, "meta")}>
+                  <Editable path={`stats[${at}].label`} value={s.label} />
+                </dt>
+                <dd style={{ ...textStyleCss(p.statValueStyle, "collectionTitle"), margin: "8px 0 0" }}>
+                  <Editable path={`stats[${at}].value`} value={s.value} />
+                </dd>
+              </div>
+            );
+          })}
         </dl>
       )}
     </section>
@@ -147,7 +167,9 @@ export function SectionHeaderRender(p: SectionHeaderProps) {
         borderBottom: p.ruleBelow ? RULE : undefined,
       }}
     >
-      <Title style={{ ...textStyleCss(p.titleStyle, "label"), margin: 0 }}>{p.title}</Title>
+      <Title style={{ ...textStyleCss(p.titleStyle, "label"), margin: 0 }}>
+        <Editable path="title" value={p.title} placeholder="Section title" />
+      </Title>
       {p.linkLabel && p.link && (
         <a
           href={p.link}
@@ -156,7 +178,7 @@ export function SectionHeaderRender(p: SectionHeaderProps) {
           className="shrink-0 transition-opacity hover:opacity-70"
           style={{ ...textStyleCss(p.linkStyle, "meta"), textDecoration: "none" }}
         >
-          {p.linkLabel}
+          <Editable path="linkLabel" value={p.linkLabel} />
         </a>
       )}
     </div>
@@ -198,23 +220,26 @@ export function BreadcrumbRender({ editing, ...p }: BreadcrumbProps & { editing?
   return (
     <nav aria-label="Breadcrumb" style={spacing(p)}>
       <ol className="m-0 flex list-none flex-wrap items-baseline p-0">
-        {items.map((c, i) => (
-          <li key={c.id} className="flex items-baseline">
-            {i > 0 && separator}
-            {c.link ? (
-              <a href={c.link} className="transition-opacity hover:opacity-70" style={{ ...linkCss, textDecoration: "none" }}>
-                {c.label}
-              </a>
-            ) : (
-              <span style={linkCss}>{c.label}</span>
-            )}
-          </li>
-        ))}
+        {items.map((c, i) => {
+          const label = <Editable path={`items[${p.items.indexOf(c)}].label`} value={c.label} />;
+          return (
+            <li key={c.id} className="flex items-baseline">
+              {i > 0 && separator}
+              {c.link ? (
+                <a href={c.link} className="transition-opacity hover:opacity-70" style={{ ...linkCss, textDecoration: "none" }}>
+                  {label}
+                </a>
+              ) : (
+                <span style={linkCss}>{label}</span>
+              )}
+            </li>
+          );
+        })}
         {p.current && (
           <li className="flex items-baseline">
             {items.length > 0 && separator}
             <span aria-current="page" style={textStyleCss(p.currentStyle, "meta")}>
-              {p.current}
+              <Editable path="current" value={p.current} />
             </span>
           </li>
         )}
@@ -244,8 +269,11 @@ export function DetailsRender({ editing, ...p }: DetailsProps & { editing?: bool
   const termCss = textStyleCss(p.termStyle, "meta");
   const descriptionCss = textStyleCss(p.descriptionStyle, "collectionTitle");
 
-  const description = (it: DetailItem) =>
-    it.link ? (
+  const term = (it: DetailItem) => <Editable path={`items[${p.items.indexOf(it)}].term`} value={it.term} />;
+  // Line breaks show everywhere but the one-line layout.
+  const description = (it: DetailItem, multiline = true) => {
+    const text = <Editable path={`items[${p.items.indexOf(it)}].description`} value={it.description} multiline={multiline} />;
+    return it.link ? (
       <a
         href={it.link}
         target={isExternal(it.link) ? "_blank" : undefined}
@@ -253,11 +281,12 @@ export function DetailsRender({ editing, ...p }: DetailsProps & { editing?: bool
         className="transition-opacity hover:opacity-75"
         style={{ color: "var(--theme-color-accent)", textDecoration: "none" }}
       >
-        {it.description}
+        {text}
       </a>
     ) : (
-      it.description
+      text
     );
+  };
 
   if (items.length === 0) {
     // A placeholder in the editor; nothing on the site.
@@ -276,7 +305,7 @@ export function DetailsRender({ editing, ...p }: DetailsProps & { editing?: bool
         <dl className={`${grid.className} gap-x-6 gap-y-10`} style={grid.style}>
           {items.map((it) => (
             <div key={it.id}>
-              <dt style={termCss}>{it.term}</dt>
+              <dt style={termCss}>{term(it)}</dt>
               <dd style={{ ...descriptionCss, margin: "14px 0 0", whiteSpace: "pre-line" }}>{description(it)}</dd>
             </div>
           ))}
@@ -290,7 +319,7 @@ export function DetailsRender({ editing, ...p }: DetailsProps & { editing?: bool
       <dl className="flex flex-wrap gap-x-14 gap-y-6" style={spacing(p)}>
         {items.map((it) => (
           <div key={it.id}>
-            <dt style={termCss}>{it.term}</dt>
+            <dt style={termCss}>{term(it)}</dt>
             <dd style={{ ...descriptionCss, margin: "8px 0 0" }}>{description(it)}</dd>
           </div>
         ))}
@@ -302,7 +331,7 @@ export function DetailsRender({ editing, ...p }: DetailsProps & { editing?: bool
     <dl style={{ ...spacing(p), borderTop: p.dividers ? RULE : undefined }}>
       {items.map((it) => (
         <div key={it.id} style={{ padding: "18px 0", borderBottom: p.dividers ? RULE : undefined }}>
-          <dt style={termCss}>{it.term}</dt>
+          <dt style={termCss}>{term(it)}</dt>
           <dd style={{ ...descriptionCss, margin: "8px 0 0", whiteSpace: "pre-line" }}>{description(it)}</dd>
         </div>
       ))}

@@ -3,6 +3,7 @@
 import { useRef, useCallback, useState, type CSSProperties } from "react";
 import { DropZone } from "@puckeditor/core";
 import { FormContext } from "./FormContext";
+import { Editable } from "@/components/puck/inline/Editable";
 import { textStyleCss, type TextStyleValue } from "@/lib/theme/text-style-value";
 import { cssColor } from "@/lib/theme/color";
 
@@ -214,7 +215,7 @@ export function FormWrapperRender({
           className="bg-[color:var(--form-submit-bg)] px-6 py-2.5 transition-colors hover:bg-[color:var(--form-submit-hover)] disabled:opacity-50"
           style={submitCss}
         >
-          {status === "submitting" ? "Submitting..." : submitLabel || "Submit"}
+          {status === "submitting" ? "Submitting..." : <Editable path="submitLabel" value={submitLabel} fallback="Submit" />}
         </button>
       </form>
     </FormContext.Provider>

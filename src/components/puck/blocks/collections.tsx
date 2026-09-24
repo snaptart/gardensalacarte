@@ -3,6 +3,7 @@
 import { useEffect, useState, type CSSProperties } from "react";
 import { textStyleCss, type TextStyleValue } from "@/lib/theme/text-style-value";
 import { fetchGalleries, type GalleryListRow } from "@/lib/galleries-client";
+import { Editable } from "@/components/puck/inline/Editable";
 
 /**
  * Next Collection — the large link at the foot of a collection page that
@@ -67,7 +68,9 @@ export function NextCollectionRender({ editing, ...p }: NextCollectionProps & { 
       className="group flex flex-wrap items-center justify-between gap-x-6 gap-y-3"
       style={{ ...spacing, padding: "40px 0", borderTop: RULE, borderBottom: RULE, textDecoration: "none", color: "inherit" }}
     >
-      <span style={textStyleCss(p.labelStyle, "label")}>{p.label}</span>
+      <span style={textStyleCss(p.labelStyle, "label")}>
+        <Editable path="label" value={p.label} />
+      </span>
       <span className="flex items-center gap-5">
         <span className="transition-opacity group-hover:opacity-75" style={textStyleCss(p.titleStyle, "display")}>
           {next.title}

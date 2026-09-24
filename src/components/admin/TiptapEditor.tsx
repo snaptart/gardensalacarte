@@ -163,7 +163,7 @@ function TextColorButton({ editor }: { editor: Editor }) {
   );
 }
 
-function MenuBar({ editor }: { editor: Editor }) {
+export function MenuBar({ editor }: { editor: Editor }) {
   const theme = useActiveTheme();
 
   // The block the cursor is in, and the style it has (or would have by default).
@@ -379,6 +379,12 @@ export default function TiptapEditor({ content, onChange }: TiptapEditorProps) {
       onChange(editor.getJSON());
     },
   });
+
+  // Text typed on the canvas arrives as a new value; take it in unless this editor is the one typing.
+  useEffect(() => {
+    if (!editor || editor.isFocused || !content) return;
+    if (JSON.stringify(content) !== JSON.stringify(editor.getJSON())) editor.commands.setContent(content, { emitUpdate: false });
+  }, [editor, content]);
 
   return (
     <div className="overflow-visible rounded-md border border-admin-border-strong bg-admin-surface">

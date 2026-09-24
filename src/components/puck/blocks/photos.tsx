@@ -6,6 +6,7 @@ import { GALLERY_ASPECT_CSS, GALLERY_ASPECT_OPTIONS, type GalleryAspect } from "
 import { textStyleCss, type TextStyleValue } from "@/lib/theme/text-style-value";
 import { responsiveGrid, type PhoneColumns, type TabletColumns } from "@/lib/puck/responsive";
 import { freshPhoto, type LibraryPhoto, type PhotoRef } from "@/lib/puck/photo-ref";
+import { Editable } from "@/components/puck/inline/Editable";
 
 /**
  * Photograph blocks from the design canvas:
@@ -145,8 +146,14 @@ export function PhotoPlateRender({ library, lightbox, editing, ...p }: PhotoPlat
           className="flex flex-wrap items-baseline justify-between gap-x-6 gap-y-1"
           style={{ marginTop: 18, paddingTop: p.captionRule ? 14 : 0, borderTop: p.captionRule ? RULE : undefined }}
         >
-          <span style={textStyleCss(p.titleStyle, "photoTitle")}>{title}</span>
-          {meta && <span style={textStyleCss(p.metaStyle, "meta")}>{meta}</span>}
+          <span style={textStyleCss(p.titleStyle, "photoTitle")}>
+            <Editable path="title" value={p.title} fallback={displayTitle(photo)} />
+          </span>
+          {meta && (
+            <span style={textStyleCss(p.metaStyle, "meta")}>
+              <Editable path="meta" value={p.meta} fallback={photo.location ?? ""} />
+            </span>
+          )}
         </figcaption>
       )}
       {p.onClick === "lightbox" && (
@@ -203,7 +210,11 @@ export function SelectedWorkRender({ library, lightbox, editing, ...p }: Selecte
             ) : (
               picture
             )}
-            {p.showTitles && title && <figcaption style={{ ...titleCss, marginTop: 14 }}>{title}</figcaption>}
+            {p.showTitles && title && (
+              <figcaption style={{ ...titleCss, marginTop: 14 }}>
+                <Editable path={`photos[${i}].titleOverride`} value={photo.titleOverride} fallback={photo.title ?? ""} />
+              </figcaption>
+            )}
           </figure>
         );
       })}
