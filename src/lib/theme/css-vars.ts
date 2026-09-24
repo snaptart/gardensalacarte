@@ -121,7 +121,13 @@ function textStyleClass(key: TextStyleKey): string {
 }`;
 }
 
-export function buildThemeCssVars(theme: ThemeSettings): string {
+/**
+ * The theme as CSS: variables plus the role and text-style classes.
+ * `scope` puts the variables on a selector instead of :root (the admin's
+ * previews), and drops the phone sizes, which follow the screen, not the preview.
+ */
+export function buildThemeCssVars(theme: ThemeSettings, options: { scope?: string } = {}): string {
+  const scope = options.scope ?? ":root";
   const perRoleVars = ROLE_KEYS.map((k) => roleVars(theme, k)).join("");
   const perRoleClasses = ROLE_KEYS.map(roleClass).join("\n");
   const textStyles = resolveTextStyles(theme.textStyles);
@@ -134,7 +140,7 @@ export function buildThemeCssVars(theme: ThemeSettings): string {
   }).join("");
   const perTextClasses = TEXT_STYLE_KEYS.map(textStyleClass).join("\n");
 
-  return `:root {
+  return `${scope} {
   /* Family aliases — kept for consumers that only need fontFamily */
   --theme-font-headings: ${getFontFallback(theme.fontHeadings)};
   --theme-font-body: ${getFontFallback(theme.fontBody)};
@@ -166,10 +172,10 @@ ${perRoleVars}  --theme-body-font-size: ${theme.bodyFontSize}px;
   --theme-color-surface: ${theme.colorSurface};
   /* Text styles */
 ${perTextVars}}
-@media (max-width: 767px) {
+${options.scope ? "" : `@media (max-width: 767px) {
   :root {
 ${perTextMobile}  }
 }
-${perRoleClasses}
+`}${perRoleClasses}
 ${perTextClasses}`;
 }

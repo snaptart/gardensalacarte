@@ -7,8 +7,9 @@ import siteConfig from "@/lib/site.config";
 import { FooterShell } from "./FooterShell";
 
 /**
- * The site footer. By default the design's bar: the wordmark and footer text on
- * the left, the menu on the right, stacking on phones. Look → Footer can
+ * The site footer. By default the design's bar: the wordmark with the tagline
+ * (or, without one, the footer text) on the left, the menu's links, and the
+ * footer text as the © line on the right; stacking on phones. Look → Footer can
  * switch it to the floating "i" button instead.
  */
 export async function Footer() {
@@ -54,9 +55,9 @@ export async function Footer() {
           >
             {siteTitle}
           </Link>
-          {settings.footerText && (
+          {(settings.tagline || settings.footerText) && (
             <p className="mt-2.5 break-words" style={textStyle}>
-              {parseLinks(settings.footerText)}
+              {parseLinks(settings.tagline || settings.footerText || "")}
             </p>
           )}
         </div>
@@ -85,6 +86,13 @@ export async function Footer() {
               </a>
             )}
           </nav>
+        )}
+
+        {/* With a tagline under the name, the footer text sits at the end as the © line. */}
+        {settings.tagline && settings.footerText && (
+          <p className="break-words md:text-right" style={textStyle}>
+            {parseLinks(settings.footerText)}
+          </p>
         )}
       </div>
     </footer>
