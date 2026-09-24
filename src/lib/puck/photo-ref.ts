@@ -21,6 +21,8 @@ export type PhotoRef = {
   description: string | null;
   location: string | null;
   cameraSettings: CameraSettings;
+  /** ISO string; missing on refs saved before it was kept. */
+  takenAt?: string | null;
   /** Replaces the photo's own title in this block. */
   titleOverride?: string;
 };
@@ -35,6 +37,7 @@ export type LibraryPhoto = {
   description: string | null;
   location: string | null;
   cameraSettings: CameraSettings;
+  takenAt: string | null;
   width: number;
   height: number;
   focalX: number;
@@ -76,5 +79,6 @@ export function freshPhoto(ref: PhotoRef, library?: Record<string, LibraryPhoto>
     description: live.description,
     location: live.location,
     cameraSettings: live.cameraSettings,
+    takenAt: live.takenAt,
   };
 }

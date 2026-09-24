@@ -20,7 +20,8 @@ import {
   GALLERY_ASPECT_OPTIONS,
   type GalleryAspect,
 } from "@/lib/theme/aspect";
-import Lightbox from "@/components/public/Lightbox";
+import Lightbox, { photoDate } from "@/components/public/Lightbox";
+import { useGalleryTitle } from "@/lib/galleries-client";
 import type { LightboxPhoto, LightboxSettings } from "@/components/public/Lightbox";
 import StoriesIndex, { STORIES_INDEX_DEFAULTS } from "@/components/public/stories/StoriesIndex";
 import type { IndexStory } from "@/components/public/stories/StoriesIndex";
@@ -4542,6 +4543,7 @@ const METADATA_OPTIONS = [
   { key: "filename", label: "Filename" },
   { key: "description", label: "Description" },
   { key: "location", label: "Location" },
+  { key: "date", label: "Date taken" },
   { key: "camera", label: "Camera Settings" },
 ] as const;
 
@@ -5682,6 +5684,7 @@ export interface EmbedPhoto {
   description: string | null;
   location: string | null;
   cameraSettings: { camera?: string; lens?: string; iso?: string; aperture?: string; shutter?: string } | null;
+  takenAt?: Date | string | null;
   width: number;
   height: number;
   focalX: number;
@@ -5739,6 +5742,7 @@ function GalleryEmbedRenderer({ slug, max, layout, columns, aspectRatio, gap, im
   const [fetchedPhotos, setFetchedPhotos] = useState<EmbedPhoto[]>([]);
   const [loading, setLoading] = useState(!serverPhotos);
   const [lightboxIndex, setLightboxIndex] = useState<number | null>(null);
+  const collectionTitle = useGalleryTitle(slug);
 
   useEffect(() => {
     if (serverPhotos) return;
@@ -5789,6 +5793,9 @@ function GalleryEmbedRenderer({ slug, max, layout, columns, aspectRatio, gap, im
         )}
         {metadataFields.includes("location") && photo.location && (
           <p style={metaCss}>{parseLinks(photo.location)}</p>
+        )}
+        {metadataFields.includes("date") && photoDate(photo.takenAt) && (
+          <p style={metaCss}>{photoDate(photo.takenAt)}</p>
         )}
         {metadataFields.includes("camera") && photo.cameraSettings && (
           <p style={metaCss}>
@@ -5905,7 +5912,7 @@ function GalleryEmbedRenderer({ slug, max, layout, columns, aspectRatio, gap, im
             </div>
           </div>
         </div>
-        <Lightbox photos={photos} selectedIndex={lightboxIndex} onClose={() => setLightboxIndex(null)} settings={lb} />
+        <Lightbox photos={photos} selectedIndex={lightboxIndex} onClose={() => setLightboxIndex(null)} settings={lb} collectionTitle={collectionTitle} />
       </>
     );
   }
@@ -5935,6 +5942,7 @@ function GalleryEmbedRenderer({ slug, max, layout, columns, aspectRatio, gap, im
         selectedIndex={lightboxIndex}
         onClose={() => setLightboxIndex(null)}
         settings={lb}
+        collectionTitle={collectionTitle}
       />
     </>
   );

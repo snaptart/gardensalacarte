@@ -1,188 +1,115 @@
 "use client";
 
-import type { FontRoleKey, FontRoleStyle, ThemeSettings } from "@/lib/theme/types";
+import {
+  ROLE_FAMILY_FIELDS,
+  TEXT_STYLE_DEFAULTS,
+  type FontRoleKey,
+  type TextStyleKey,
+  type ThemeSettings,
+} from "@/lib/theme/types";
 import { getFontFallback } from "@/lib/theme/fonts";
 
-function roleStyle(theme: ThemeSettings, key: FontRoleKey): FontRoleStyle {
-  return theme.fontStyles?.[key] ?? {};
-}
-
-function roleCss(
-  theme: ThemeSettings,
-  key: FontRoleKey,
-  family: string,
-  defaultSize: number,
-): React.CSSProperties {
-  const s = roleStyle(theme, key);
+/** A text style's typeface, weight, slant and case, at the preview's own size. */
+function textCss(theme: ThemeSettings, key: TextStyleKey, size: number): React.CSSProperties {
+  const style = { ...TEXT_STYLE_DEFAULTS[key], ...(theme.textStyles?.[key] ?? {}) };
+  const role = theme.fontStyles?.[style.role] ?? {};
   return {
-    fontFamily: getFontFallback(family),
-    fontWeight: s.weight ?? 400,
-    fontStyle: s.italic ? "italic" : "normal",
-    textTransform: s.uppercase ? "uppercase" : "none",
-    fontSize: s.size ?? defaultSize,
+    fontFamily: getFontFallback(String(theme[ROLE_FAMILY_FIELDS[style.role]])),
+    fontWeight: style.weight ?? role.weight ?? 400,
+    fontStyle: (style.italic ?? role.italic) ? "italic" : "normal",
+    textTransform: (style.uppercase ?? role.uppercase) ? "uppercase" : "none",
+    fontSize: size,
+    lineHeight: 1.15,
   };
 }
 
-// Mini version of the Hall expanded-photo lightbox: blurred photo on the left,
-// metadata drawer on the right. Theme-driven text elements react to Typography
-// settings.
+function fontCss(theme: ThemeSettings, role: FontRoleKey): React.CSSProperties {
+  return { fontFamily: getFontFallback(String(theme[ROLE_FAMILY_FIELDS[role]])) };
+}
+
+const mix = (a: string, pct: number, b: string) => `color-mix(in srgb, ${a} ${pct}%, ${b})`;
+
+// Mini version of the public lightbox (components/public/Lightbox.tsx): counter
+// and close ring above, the photograph between two arrow rings, the caption
+// under a hairline. Reacts to the lightbox colours and the text styles.
 export default function LightboxPreview({ theme }: { theme: ThemeSettings }) {
-  const labelStyle = roleCss(theme, "labels", theme.fontLabels, 8);
-  const titleStyle = roleCss(theme, "headings", theme.fontHeadings, 18);
-  const bodyStyle = roleCss(theme, "body", theme.fontBody, 11);
+  const bg = theme.colorLightboxBg || "#14130F";
+  const text = theme.colorLightboxText || "#FBFAF8";
+  const muted = mix(text, 62, bg);
+  const ring = mix(text, 22, bg);
+  const rule = mix(text, 12, bg);
+  const body = fontCss(theme, "body");
+
+  const roundButton = (size: number): React.CSSProperties => ({
+    width: size,
+    height: size,
+    borderRadius: "50%",
+    border: `1px solid ${ring}`,
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center",
+    flexShrink: 0,
+  });
 
   return (
     <div className="overflow-hidden rounded-lg border border-neutral-300 shadow-sm">
       <div
-        className="relative grid"
-        style={{
-          gridTemplateColumns: "1fr 140px",
-          aspectRatio: "4 / 3",
-          background: "rgba(42, 38, 32, 0.85)",
-          backdropFilter: "blur(16px)",
-        }}
+        className="relative flex flex-col"
+        style={{ aspectRatio: "4 / 3", background: bg, color: text }}
       >
-        {/* Photo column */}
-        <div
-          className="flex items-center justify-center"
-          style={{ padding: 16, position: "relative" }}
-        >
-          <div
-            style={{
-              width: "80%",
-              aspectRatio: "3 / 2",
-              padding: 6,
-              background: "#fff",
-              boxShadow: "0 10px 24px rgba(0,0,0,0.4)",
-              position: "relative",
-            }}
-          >
-            <div
-              style={{
-                position: "absolute",
-                inset: 6,
-                background:
-                  "linear-gradient(135deg, #c5bfae 0%, #8a8274 50%, #5a554a 100%)",
-              }}
-            />
-          </div>
+        <div className="flex items-center justify-between" style={{ padding: "10px 12px 0" }}>
+          <span style={{ ...body, fontSize: 8, letterSpacing: "0.16em", color: muted }}>
+            02 / 12&nbsp;&nbsp;&middot;&nbsp;&nbsp;North Shore
+          </span>
+          <span style={roundButton(18)} aria-hidden="true">
+            <svg width="6" height="6" viewBox="0 0 16 16" fill="none" stroke={text} strokeWidth="1.6" strokeLinecap="round">
+              <path d="M1 1l14 14M15 1L1 15" />
+            </svg>
+          </span>
+        </div>
 
-          {/* Prev/next hints at bottom */}
+        <div className="flex flex-1 items-center justify-center" style={{ padding: "8px 44px 0" }}>
           <div
             style={{
-              position: "absolute",
-              bottom: 8,
-              left: "50%",
-              transform: "translateX(-50%)",
-              display: "flex",
-              gap: 10,
-              alignItems: "center",
-              ...labelStyle,
-              letterSpacing: "2px",
-              color: "rgba(255,255,255,0.55)",
-              pointerEvents: "none",
+              width: "100%",
+              maxWidth: 200,
+              aspectRatio: "3 / 2",
+              background: "linear-gradient(135deg, #c5bfae 0%, #8a8274 50%, #5a554a 100%)",
             }}
+          />
+        </div>
+
+        {[
+          { side: "left" as const, d: "M22 5.5H2M9 1L2 5.5 9 10" },
+          { side: "right" as const, d: "M0 5.5h20M13 1l7 4.5-7 4.5" },
+        ].map(({ side, d }) => (
+          <span
+            key={side}
+            aria-hidden="true"
+            style={{ ...roundButton(22), position: "absolute", top: "46%", [side]: 12 }}
           >
-            <span>← / →  Navigate</span>
-            <span style={{ opacity: 0.5 }}>·</span>
-            <span>02 / 12</span>
+            <svg width="9" height="5" viewBox="0 0 22 11" fill="none" stroke={text} strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round">
+              <path d={d} />
+            </svg>
+          </span>
+        ))}
+
+        <div style={{ padding: "10px 44px 8px" }}>
+          <div style={{ borderTop: `1px solid ${rule}`, paddingTop: 7 }}>
+            <div style={{ ...textCss(theme, "collectionTitle", 14), color: text }}>Split Rock Lighthouse</div>
+            <div style={{ ...textCss(theme, "meta", 6.5), letterSpacing: "0.14em", color: muted, marginTop: 4 }}>
+              Lake Superior, Minnesota &middot; September 2020
+            </div>
+            <div style={{ ...body, fontSize: 7, letterSpacing: "0.04em", color: muted, marginTop: 4 }}>
+              Nikon Z 6 &middot; 165mm &middot; f/9 &middot; 1/8s &middot; ISO 320
+            </div>
           </div>
         </div>
 
-        {/* Drawer */}
         <div
-          style={{
-            background: "#fff",
-            padding: 12,
-            display: "flex",
-            flexDirection: "column",
-            gap: 10,
-            color: "#2a2620",
-            boxShadow: "0 8px 24px rgba(0,0,0,0.3)",
-          }}
+          style={{ ...body, fontSize: 6, letterSpacing: "0.12em", textTransform: "uppercase", textAlign: "center", color: mix(text, 36, bg), paddingBottom: 8 }}
         >
-          <div>
-            <div style={{ ...labelStyle, letterSpacing: "2px", color: "#6b6258" }}>
-              Paris · 02 / 12
-            </div>
-            <div
-              style={{
-                ...titleStyle,
-                color: "#2a2620",
-                marginTop: 4,
-                lineHeight: 1.1,
-              }}
-            >
-              Sample Title
-            </div>
-            <div
-              style={{
-                width: 20,
-                height: 1,
-                background: theme.colorAccent,
-                marginTop: 8,
-              }}
-            />
-          </div>
-
-          <div
-            style={{
-              ...bodyStyle,
-              color: "#6b6258",
-              lineHeight: 1.4,
-            }}
-          >
-            “A short italic caption for this image.”
-          </div>
-
-          <div>
-            <div
-              style={{
-                ...labelStyle,
-                letterSpacing: "2px",
-                color: "#6b6258",
-                marginBottom: 4,
-              }}
-            >
-              Where · Paris
-            </div>
-            <div
-              style={{
-                height: 28,
-                border: "1px solid #c9c4bb",
-                background: "#f0ebdd",
-                position: "relative",
-              }}
-            >
-              <div
-                style={{
-                  position: "absolute",
-                  left: "50%",
-                  top: "50%",
-                  transform: "translate(-50%, -100%)",
-                  width: 6,
-                  height: 8,
-                  background: theme.colorAccent,
-                  borderRadius: "50% 50% 50% 0 / 60% 60% 40% 40%",
-                }}
-              />
-            </div>
-          </div>
-
-          <div>
-            <div
-              style={{
-                ...labelStyle,
-                letterSpacing: "2px",
-                color: "#6b6258",
-              }}
-            >
-              Camera
-            </div>
-            <div style={{ ...labelStyle, color: "#2a2620", marginTop: 2 }}>
-              Leica M11 · 35mm
-            </div>
-          </div>
+          Esc closes &middot; arrow keys move within the collection
         </div>
       </div>
     </div>

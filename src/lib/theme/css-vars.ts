@@ -159,6 +159,7 @@ ${perRoleVars}  --theme-body-font-size: ${theme.bodyFontSize}px;
   --theme-color-text-soft: ${theme.colorTextSoft};
   --theme-color-muted: ${theme.colorMuted};
   --theme-color-gallery-captions: ${theme.colorGalleryCaptions};
+  --theme-color-lightbox-bg: ${theme.colorLightboxBg};
   --theme-color-lightbox-text: ${theme.colorLightboxText};
   --theme-color-hero-overlay: ${theme.colorHeroOverlay};
   --theme-color-rule: ${theme.colorRule};

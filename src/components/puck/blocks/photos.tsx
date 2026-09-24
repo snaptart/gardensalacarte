@@ -41,10 +41,12 @@ function toLightbox(p: PhotoRef): LightboxPhoto {
   return {
     id: p.photoId || p.id,
     url: p.url,
+    thumbnailUrl: p.thumbnailUrl,
     title: displayTitle(p) || null,
     description: p.description,
     location: p.location,
     cameraSettings: p.cameraSettings,
+    takenAt: p.takenAt,
     width: p.width,
     height: p.height,
   };

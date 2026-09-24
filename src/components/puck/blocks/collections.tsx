@@ -2,6 +2,7 @@
 
 import { useEffect, useState, type CSSProperties } from "react";
 import { textStyleCss, type TextStyleValue } from "@/lib/theme/text-style-value";
+import { fetchGalleries, type GalleryListRow } from "@/lib/galleries-client";
 
 /**
  * Next Collection — the large link at the foot of a collection page that
@@ -22,7 +23,7 @@ export type NextCollectionProps = {
   marginBottom: number;
 };
 
-type GalleryRow = { slug: string; title: string; position: number; isPublished: boolean; href?: string };
+type GalleryRow = GalleryListRow;
 
 /** The collection after `slug` among the published ones, in admin order. */
 function nextAfter(rows: GalleryRow[], slug: string, wrap: boolean): GalleryRow | null {
@@ -38,10 +39,7 @@ export function NextCollectionRender({ editing, ...p }: NextCollectionProps & { 
 
   useEffect(() => {
     let cancelled = false;
-    fetch("/api/galleries")
-      .then((r) => r.json())
-      .then((data: GalleryRow[]) => !cancelled && setRows(Array.isArray(data) ? data : []))
-      .catch(() => !cancelled && setRows([]));
+    fetchGalleries().then((data) => !cancelled && setRows(data));
     return () => {
       cancelled = true;
     };
