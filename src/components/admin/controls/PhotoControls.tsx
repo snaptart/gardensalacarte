@@ -19,6 +19,7 @@ function refFromPicked(p: PickedPhoto): PhotoRef {
     description: p.description,
     location: p.location,
     cameraSettings: p.cameraSettings,
+    takenAt: p.takenAt,
   };
 }
 

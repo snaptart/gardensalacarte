@@ -23,6 +23,7 @@ interface Photo {
   description?: string | null;
   location?: string | null;
   cameraSettings?: CameraSettings;
+  takenAt?: string | null;
 }
 
 export interface PickedPhoto {
@@ -39,6 +40,7 @@ export interface PickedPhoto {
   description: string | null;
   location: string | null;
   cameraSettings: CameraSettings;
+  takenAt: string | null;
 }
 
 interface GalleryPhotoMultiPickerProps {
@@ -146,6 +148,7 @@ export default function GalleryPhotoMultiPicker({
         description: p.description ?? null,
         location: p.location ?? null,
         cameraSettings: p.cameraSettings ?? null,
+        takenAt: p.takenAt ?? null,
       }));
     if (ordered.length === 0) return;
     onConfirm(ordered);

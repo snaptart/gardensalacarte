@@ -99,6 +99,8 @@ export interface ThemeSettings {
   /** Captions, meta lines, small labels. */
   colorMuted: string;
   colorGalleryCaptions: string;
+  /** The lightbox scrim. Its greys (meta, rules, button rings) mix from this and colorLightboxText. */
+  colorLightboxBg: string;
   colorLightboxText: string;
   colorHeroOverlay: string;
   /** Hairline rules — captions dividers, header underline, table borders. */
@@ -229,6 +231,7 @@ export const THEME_DEFAULTS: ThemeSettings = {
   colorTextSoft: "#404040",
   colorMuted: "#737373",
   colorGalleryCaptions: "#525252",
+  colorLightboxBg: "#14130F",
   colorLightboxText: "#ffffff",
   colorHeroOverlay: "#ffffff",
   colorRule: "#e5e5e5",

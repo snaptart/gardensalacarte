@@ -85,7 +85,7 @@ export default async function GalleryPage({ params }: Props) {
       {galleryPhotos.length === 0 ? (
         <p style={{ color: "var(--theme-color-gallery-captions)" }}>No {siteConfig.labels.photos.toLowerCase()} in this {siteConfig.labels.gallery.toLowerCase()} yet.</p>
       ) : (
-        <GalleryGrid photos={galleryPhotos} lightboxSettings={lightboxSettings} />
+        <GalleryGrid photos={galleryPhotos} lightboxSettings={lightboxSettings} collectionTitle={gallery.title} />
       )}
     </div>
   );

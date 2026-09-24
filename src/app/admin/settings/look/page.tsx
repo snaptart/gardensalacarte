@@ -469,6 +469,11 @@ export default function LookAndFeelPage() {
           allowTransparent
         />
         <ColorField
+          label="Lightbox background"
+          value={themeDraft.colorLightboxBg}
+          onChange={(v) => updateTheme("colorLightboxBg", v)}
+        />
+        <ColorField
           label="Lightbox text"
           value={themeDraft.colorLightboxText}
           onChange={(v) => updateTheme("colorLightboxText", v)}

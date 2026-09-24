@@ -22,6 +22,7 @@ export async function loadPickedPhotos(data: unknown): Promise<Record<string, Li
         description: p.description,
         location: p.location,
         cameraSettings: p.cameraSettings as LibraryPhoto["cameraSettings"],
+        takenAt: p.takenAt ? p.takenAt.toISOString() : null,
         width: p.width ?? 800,
         height: p.height ?? 600,
         focalX: p.focalX ?? 50,

@@ -86,6 +86,7 @@ const MUSEUM_WHITE: ThemeSettings = {
   colorAccent: "#A4441F", // Oxide — links only
   colorGalleryCaptions: "#63605A", // Muted
   colorFooterText: "#63605A",
+  colorLightboxBg: "#14130F",
   colorLightboxText: "#FBFAF8",
   colorHeroOverlay: "#FBFAF8",
   colorRule: "#E0DCD3", // hairlines
