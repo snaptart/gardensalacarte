@@ -2,6 +2,18 @@
 
 import type { Config } from "@puckeditor/core";
 import { DropZone, usePuck } from "@puckeditor/core";
+import type { ComponentConfig } from "@puckeditor/core";
+import {
+  BreakpointVisibility,
+  hideOnField,
+  phoneColumnsField,
+  responsiveColumns,
+  responsiveGrid,
+  tabletColumnsField,
+  type Breakpoint,
+  type PhoneColumns,
+  type TabletColumns,
+} from "@/lib/puck/responsive";
 import type { JSONContent } from "@tiptap/react";
 import { renderRichText } from "@/lib/tiptap/render-html";
 import { richTextCss } from "@/lib/tiptap/rich-text-css";
@@ -56,6 +68,7 @@ import type { LibraryPhoto } from "@/lib/puck/photo-ref";
 import { NextCollectionRender, type NextCollectionProps } from "@/components/puck/blocks/collections";
 import type { FormWrapperProps } from "@/components/puck/form/FormWrapper";
 import {
+  FormFieldCell,
   TextFieldRender,
   TextAreaRender,
   SelectFieldRender,
@@ -134,6 +147,10 @@ type ColumnsProps = {
   gap: string;
   /** How columns of different heights line up. */
   align: "start" | "center" | "end" | "stretch";
+  /** Below which width the columns stack into one. */
+  stackBelow?: "phone" | "tablet" | "never";
+  /** Stacked, the order the columns come in: "2-1" puts the second first. Blank = as laid out. */
+  stackOrder?: string;
 };
 
 type RowsProps = {
@@ -163,6 +180,8 @@ type GalleryEmbedProps = {
   /** hang: the design's staggered two columns, the right one dropped lower. */
   layout: "grid" | "masonry" | "hang";
   columns: "2" | "3" | "4";
+  tabletColumns?: TabletColumns;
+  phoneColumns?: PhoneColumns;
   aspectRatio: GalleryAspect;
   gap: number;
   imageMaxWidth: number;
@@ -264,6 +283,8 @@ type GalleriesIndexProps = {
   sortOrder: "manual" | "position" | "newest" | "oldest" | "title-asc" | "title-desc";
   layout: "grid" | "list";
   columns: "1" | "2" | "3" | "4" | "5" | "6";
+  tabletColumns?: TabletColumns;
+  phoneColumns?: PhoneColumns;
   gap: number;
   showCount: boolean;
   /** Follows the count on a cover: "04 photographs". */
@@ -311,6 +332,8 @@ type LinkListProps = {
   items: LinkListItem[];
   layout: "vertical-list" | "horizontal-pills" | "button-stack" | "card-grid";
   columns: "1" | "2" | "3" | "4";
+  tabletColumns?: TabletColumns;
+  phoneColumns?: PhoneColumns;
   gap: number;
   alignment: "left" | "center" | "right";
   itemAlignment: "left" | "center" | "right";
@@ -413,6 +436,40 @@ export type Components = {
 };
 
 // ----- Puck config -----
+
+// ----- Columns: stacking -----
+
+// Written out in full so Tailwind finds every class. `order` applies only while
+// stacked; side by side, the columns keep their places.
+const STACK = {
+  phone: { grid: "grid-cols-1 @min-[40rem]:grid-cols-[var(--col-template)]", order: "order-[var(--stack-order)] @min-[40rem]:order-none" },
+  tablet: { grid: "grid-cols-1 @min-[48rem]:grid-cols-[var(--col-template)]", order: "order-[var(--stack-order)] @min-[48rem]:order-none" },
+  never: { grid: "grid-cols-[var(--col-template)]", order: "" },
+} as const;
+
+function permutations(items: number[]): number[][] {
+  if (items.length <= 1) return [items];
+  return items.flatMap((x, i) => permutations([...items.slice(0, i), ...items.slice(i + 1)]).map((rest) => [x, ...rest]));
+}
+
+/** Every order the columns could stack in, "Left first" style for two. */
+function stackOrderOptions(count: 2 | 3) {
+  const natural = { label: "As laid out", value: "" };
+  if (count === 2) return [natural, { label: "Right column first", value: "2-1" }];
+  return [
+    natural,
+    ...permutations([1, 2, 3])
+      .slice(1)
+      .map((order) => ({ label: order.join(" · "), value: order.join("-") })),
+  ];
+}
+
+/** "2-1-3" → each column's place in the stack: [2, 1, 3]. Null for the natural order or a stale value. */
+function stackPositions(order: string | undefined, count: number): number[] | null {
+  const seq = (order ?? "").split("-").map(Number);
+  if (seq.length !== count || new Set(seq).size !== count || seq.some((n) => !(n >= 1 && n <= count))) return null;
+  return Array.from({ length: count }, (_, i) => seq.indexOf(i + 1) + 1);
+}
 
 export const puckConfig: Config<Components> = {
   categories: {
@@ -815,6 +872,8 @@ export const puckConfig: Config<Components> = {
             { label: "6", value: "6" },
           ],
         },
+        tabletColumns: tabletColumnsField,
+        phoneColumns: phoneColumnsField,
         showCount: {
           type: "radio",
           label: "Photo count",
@@ -1064,6 +1123,8 @@ export const puckConfig: Config<Components> = {
             { label: "4", value: "4" },
           ],
         },
+        tabletColumns: tabletColumnsField,
+        phoneColumns: phoneColumnsField,
         gap: {
           type: "custom",
           label: "Gap",
@@ -1775,6 +1836,20 @@ export const puckConfig: Config<Components> = {
             { label: "Large", value: "gap-12" },
           ],
         },
+        stackBelow: {
+          type: "radio",
+          label: "Stack into one column",
+          options: [
+            { label: "On phones", value: "phone" },
+            { label: "Phones & tablets", value: "tablet" },
+            { label: "Never", value: "never" },
+          ],
+        },
+        stackOrder: {
+          type: "select",
+          label: "Stacked order",
+          options: [],
+        },
         align: {
           type: "radio",
           label: "Line up",
@@ -1807,10 +1882,15 @@ export const puckConfig: Config<Components> = {
             label: "Widths",
             options: data.props.columns === "3" ? threeColOptions : twoColOptions,
           },
+          stackOrder: {
+            type: "select" as const,
+            label: "Stacked order",
+            options: stackOrderOptions(data.props.columns === "3" ? 3 : 2),
+          },
         };
       },
-      defaultProps: { columns: "2", distribution: "equal", gap: "gap-8", align: "stretch" },
-      render: ({ columns, distribution, gap, align }) => {
+      defaultProps: { columns: "2", distribution: "equal", gap: "gap-8", align: "stretch", stackBelow: "phone", stackOrder: "" },
+      render: ({ columns, distribution, gap, align, stackBelow, stackOrder }) => {
         const colCount = columns === "3" ? 3 : 2;
 
         // Filter distribution options based on column count
@@ -1837,17 +1917,25 @@ export const puckConfig: Config<Components> = {
         const templateKey = `${colCount}-${dist}`;
         const gridTemplate = gridTemplates[templateKey] || (colCount === 3 ? "1fr 1fr 1fr" : "1fr 1fr");
 
-        // Side by side once the block itself is 640px wide, stacked below that.
-        // Measuring the block rather than the screen keeps the columns in the
-        // editor whatever its preview width, and on the site within any container.
+        // Side by side once the block itself is wide enough (640px, or 768px when
+        // tablets stack too), stacked below that. Measuring the block rather than
+        // the screen keeps the columns in the editor whatever its preview width,
+        // and on the site within any container.
+        const stack = STACK[stackBelow ?? "phone"];
+        const order = stackPositions(stackOrder, colCount);
         return (
           <div className="@container">
             <div
-              className={`puck-columns grid grid-cols-1 @min-[40rem]:grid-cols-[var(--col-template)] ${gap} ${COLUMN_ALIGN[align ?? "stretch"]}`}
+              className={`puck-columns grid ${stack.grid} ${gap} ${COLUMN_ALIGN[align ?? "stretch"]}`}
               style={{ "--col-template": gridTemplate } as React.CSSProperties}
             >
               {Array.from({ length: colCount }).map((_, i) => (
-                <DropZone key={i} zone={`column-${i}`} className="min-w-0" />
+                <DropZone
+                  key={i}
+                  zone={`column-${i}`}
+                  className={order ? `min-w-0 ${stack.order}` : "min-w-0"}
+                  style={order ? ({ "--stack-order": order[i] } as React.CSSProperties) : undefined}
+                />
               ))}
             </div>
           </div>
@@ -2270,6 +2358,8 @@ export const puckConfig: Config<Components> = {
             { label: "4 Columns", value: "4" },
           ],
         },
+        tabletColumns: tabletColumnsField,
+        phoneColumns: phoneColumnsField,
         aspectRatio: {
           type: "select",
           label: "Aspect ratio",
@@ -2417,7 +2507,7 @@ export const puckConfig: Config<Components> = {
         lightboxFadeSpeed: "medium",
         lightboxCaptionAlignment: "left",
       },
-      render: ({ gallerySlug, maxPhotos, layout, columns, aspectRatio, gap, imageMaxWidth, borderRadius, showMetadata, metadataFields, numbered, hangOffset, hangGap, captionTitleStyle, captionMetaStyle, useGlobalLightbox, lightboxMetadataFields, lightboxCornerRadius, lightboxCaptionPosition, lightboxFadeSpeed, lightboxCaptionAlignment, puck }) => {
+      render: ({ gallerySlug, maxPhotos, layout, columns, tabletColumns, phoneColumns, aspectRatio, gap, imageMaxWidth, borderRadius, showMetadata, metadataFields, numbered, hangOffset, hangGap, captionTitleStyle, captionMetaStyle, useGlobalLightbox, lightboxMetadataFields, lightboxCornerRadius, lightboxCaptionPosition, lightboxFadeSpeed, lightboxCaptionAlignment, puck }) => {
         if (!gallerySlug) {
           return (
             <div className="rounded border-2 border-dashed border-neutral-300 p-8 text-center text-neutral-400">
@@ -2432,6 +2522,8 @@ export const puckConfig: Config<Components> = {
             max={maxPhotos}
             layout={layout}
             columns={columns}
+            tabletColumns={tabletColumns}
+            phoneColumns={phoneColumns}
             aspectRatio={aspectRatio}
             gap={gap}
             imageMaxWidth={imageMaxWidth}
@@ -2806,6 +2898,8 @@ export const puckConfig: Config<Components> = {
             { label: "4", value: "4" },
           ],
         },
+        tabletColumns: tabletColumnsField,
+        phoneColumns: phoneColumnsField,
         dividers: {
           type: "radio",
           label: "Rules between rows",
@@ -2982,6 +3076,8 @@ export const puckConfig: Config<Components> = {
             { label: "4", value: "4" },
           ],
         },
+        tabletColumns: tabletColumnsField,
+        phoneColumns: phoneColumnsField,
         columnGap: {
           type: "custom",
           label: "Gap between columns",
@@ -3240,6 +3336,35 @@ export const puckConfig: Config<Components> = {
             <SliderField value={value ?? 0} onChange={onChange} min={0} max={32} step={1} unit="px" />
           ),
         },
+        panel: {
+          type: "radio",
+          label: "Panel behind the form",
+          options: [
+            { label: "Yes", value: true },
+            { label: "No", value: false },
+          ],
+        },
+        panelColor: {
+          type: "custom",
+          label: "Color",
+          render: ({ value, onChange }) => (
+            <ColorField value={value ?? ""} onChange={onChange} />
+          ),
+        },
+        panelPadding: {
+          type: "custom",
+          label: "Padding",
+          render: ({ value, onChange }) => (
+            <SliderField value={value ?? 48} onChange={onChange} min={0} max={96} step={4} unit="px" />
+          ),
+        },
+        panelRadius: {
+          type: "custom",
+          label: "Corner radius",
+          render: ({ value, onChange }) => (
+            <SliderField value={value ?? 0} onChange={onChange} min={0} max={32} step={1} unit="px" />
+          ),
+        },
       },
       defaultProps: {
         formName: "contact",
@@ -3258,6 +3383,10 @@ export const puckConfig: Config<Components> = {
         submitBgColor: "token:accent",
         submitHoverBgColor: "token:text",
         submitRadius: 2,
+        panel: true,
+        panelColor: "token:surface",
+        panelPadding: 48,
+        panelRadius: 0,
       },
       // Forms saved before these settings keep the look they had.
       resolveData: ({ props }) => ({ props: migrateForm(props) }),
@@ -3288,15 +3417,30 @@ export const puckConfig: Config<Components> = {
             { label: "URL", value: "url" },
           ],
         },
+        width: {
+          type: "radio",
+          label: "Width",
+          options: [
+            { label: "Full", value: "full" },
+            { label: "Half", value: "half" },
+          ],
+        },
       },
       defaultProps: {
+        width: "full",
         label: "Name",
         name: "name",
         placeholder: "",
         required: false,
         fieldType: "text",
       },
-      render: (props) => <TextFieldRender {...props} />,
+      // Inline: the field itself is the grid cell (in the editor too), so it can take half the row.
+      inline: true,
+      render: ({ puck, width, ...props }) => (
+        <FormFieldCell width={width} dragRef={puck.dragRef}>
+          <TextFieldRender {...props} />
+        </FormFieldCell>
+      ),
     },
 
     TextArea: {
@@ -3314,15 +3458,30 @@ export const puckConfig: Config<Components> = {
           ],
         },
         rows: { type: "number", label: "Rows", min: 2, max: 20 },
+        width: {
+          type: "radio",
+          label: "Width",
+          options: [
+            { label: "Full", value: "full" },
+            { label: "Half", value: "half" },
+          ],
+        },
       },
       defaultProps: {
+        width: "full",
         label: "Message",
         name: "message",
         placeholder: "",
         required: false,
         rows: 4,
       },
-      render: (props) => <TextAreaRender {...props} />,
+      // Inline: the field itself is the grid cell (in the editor too), so it can take half the row.
+      inline: true,
+      render: ({ puck, width, ...props }) => (
+        <FormFieldCell width={width} dragRef={puck.dragRef}>
+          <TextAreaRender {...props} />
+        </FormFieldCell>
+      ),
     },
 
     SelectField: {
@@ -3342,14 +3501,29 @@ export const puckConfig: Config<Components> = {
           type: "textarea",
           label: "Options (one per line, use value|label for custom values)",
         },
+        width: {
+          type: "radio",
+          label: "Width",
+          options: [
+            { label: "Full", value: "full" },
+            { label: "Half", value: "half" },
+          ],
+        },
       },
       defaultProps: {
+        width: "full",
         label: "Subject",
         name: "subject",
         required: false,
         options: "General Inquiry\nPrint Request\nCollaboration",
       },
-      render: (props) => <SelectFieldRender {...props} />,
+      // Inline: the field itself is the grid cell (in the editor too), so it can take half the row.
+      inline: true,
+      render: ({ puck, width, ...props }) => (
+        <FormFieldCell width={width} dragRef={puck.dragRef}>
+          <SelectFieldRender {...props} />
+        </FormFieldCell>
+      ),
     },
 
     RadioGroup: {
@@ -3369,14 +3543,29 @@ export const puckConfig: Config<Components> = {
           type: "textarea",
           label: "Options (one per line, use value|label for custom values)",
         },
+        width: {
+          type: "radio",
+          label: "Width",
+          options: [
+            { label: "Full", value: "full" },
+            { label: "Half", value: "half" },
+          ],
+        },
       },
       defaultProps: {
+        width: "full",
         label: "Preferred Contact",
         name: "preferred_contact",
         required: false,
         options: "email|Email\nphone|Phone",
       },
-      render: (props) => <RadioGroupRender {...props} />,
+      // Inline: the field itself is the grid cell (in the editor too), so it can take half the row.
+      inline: true,
+      render: ({ puck, width, ...props }) => (
+        <FormFieldCell width={width} dragRef={puck.dragRef}>
+          <RadioGroupRender {...props} />
+        </FormFieldCell>
+      ),
     },
 
     CheckboxGroup: {
@@ -3388,13 +3577,28 @@ export const puckConfig: Config<Components> = {
           type: "textarea",
           label: "Options (one per line, use value|label for custom values)",
         },
+        width: {
+          type: "radio",
+          label: "Width",
+          options: [
+            { label: "Full", value: "full" },
+            { label: "Half", value: "half" },
+          ],
+        },
       },
       defaultProps: {
+        width: "full",
         label: "Interests",
         name: "interests",
         options: "prints|Prints\ncommissions|Commissions\nworkshops|Workshops",
       },
-      render: (props) => <CheckboxGroupRender {...props} />,
+      // Inline: the field itself is the grid cell (in the editor too), so it can take half the row.
+      inline: true,
+      render: ({ puck, width, ...props }) => (
+        <FormFieldCell width={width} dragRef={puck.dragRef}>
+          <CheckboxGroupRender {...props} />
+        </FormFieldCell>
+      ),
     },
 
     Checkbox: {
@@ -3402,12 +3606,27 @@ export const puckConfig: Config<Components> = {
       fields: {
         label: { type: "text", label: "Label" },
         name: { type: "text", label: "Field name (key)" },
+        width: {
+          type: "radio",
+          label: "Width",
+          options: [
+            { label: "Full", value: "full" },
+            { label: "Half", value: "half" },
+          ],
+        },
       },
       defaultProps: {
+        width: "full",
         label: "I agree to the terms",
         name: "agree_terms",
       },
-      render: (props) => <CheckboxRender {...props} />,
+      // Inline: the field itself is the grid cell (in the editor too), so it can take half the row.
+      inline: true,
+      render: ({ puck, width, ...props }) => (
+        <FormFieldCell width={width} dragRef={puck.dragRef}>
+          <CheckboxRender {...props} />
+        </FormFieldCell>
+      ),
     },
   },
 };
@@ -3912,11 +4131,7 @@ function GalleriesIndexRender(props: GalleriesIndexProps) {
     margin: fullBleed ? `${marginTop}px 0 ${marginBottom}px` : `${marginTop}px auto ${marginBottom}px`,
   };
 
-  const gridStyle: React.CSSProperties = {
-    display: "grid",
-    gridTemplateColumns: `repeat(${colCount}, minmax(0, 1fr))`,
-    gap: `${gap}px`,
-  };
+  const grid = responsiveGrid(colCount, props.tabletColumns, props.phoneColumns);
 
   if (limited.length === 0) {
     return (
@@ -3991,8 +4206,8 @@ function GalleriesIndexRender(props: GalleriesIndexProps) {
   }
 
   return (
-    <div style={wrapperStyle}>
-      <div style={gridStyle}>
+    <div style={wrapperStyle} className="@container">
+      <div className={grid.className} style={{ ...grid.style, gap: `${gap}px` }}>
         {limited.map((g) => {
           const hovered = hoveredId === g.id;
           const href = collectionHref(g);
@@ -4022,7 +4237,7 @@ function GalleriesIndexRender(props: GalleriesIndexProps) {
           // Below the cover, the count sits at the end of the title's line.
           const titleEl =
             showTitle && count && !isOverlay ? (
-              <div style={{ display: "flex", alignItems: "baseline", justifyContent: "space-between", gap: 16 }}>
+              <div style={{ display: "flex", flexWrap: "wrap", alignItems: "baseline", justifyContent: "space-between", columnGap: 16, rowGap: 4 }}>
                 {titleText}
                 <span style={{ ...textStyleCss(undefined, "meta"), flexShrink: 0 }}>{count}</span>
               </div>
@@ -4316,11 +4531,11 @@ function LinkListRender(props: LinkListProps) {
     marginBottom: `${marginBottom}px`,
   };
 
-  if (layout === "card-grid") {
+  const grid = layout === "card-grid" ? responsiveGrid(colCount, props.tabletColumns, props.phoneColumns) : null;
+  if (grid) {
     containerStyle = {
       ...containerStyle,
-      display: "grid",
-      gridTemplateColumns: `repeat(${colCount}, minmax(0, 1fr))`,
+      ...grid.style,
       gap: `${gap}px`,
     };
   } else if (layout === "horizontal-pills") {
@@ -4359,8 +4574,8 @@ function LinkListRender(props: LinkListProps) {
     );
   }
 
-  return (
-    <div style={containerStyle}>
+  const content = (
+    <div className={grid?.className} style={containerStyle}>
       {safeItems.map((item, i) => {
         const hovered = hoveredId === item.id;
         const isLast = i === safeItems.length - 1;
@@ -4534,6 +4749,8 @@ function LinkListRender(props: LinkListProps) {
       })}
     </div>
   );
+  // A grid counts its columns by its own width, so it needs a container to measure.
+  return grid ? <div className="@container">{content}</div> : content;
 }
 
 // ----- Metadata fields picker -----
@@ -5707,6 +5924,8 @@ interface GalleryEmbedRendererProps {
   hangOffset: number;
   hangGap: number;
   columns: "2" | "3" | "4";
+  tabletColumns?: TabletColumns;
+  phoneColumns?: PhoneColumns;
   aspectRatio: GalleryAspect;
   gap: number;
   imageMaxWidth: number;
@@ -5726,10 +5945,8 @@ interface GalleryEmbedRendererProps {
 }
 
 const aspectRatioValues = GALLERY_ASPECT_CSS;
-const gridColClasses = { "2": "grid-cols-1 sm:grid-cols-2", "3": "grid-cols-1 sm:grid-cols-2 md:grid-cols-3", "4": "grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4" };
-const masonryColClasses = { "2": "columns-1 sm:columns-2", "3": "columns-1 sm:columns-2 md:columns-3", "4": "columns-1 sm:columns-2 md:columns-3 lg:columns-4" };
 
-function GalleryEmbedRenderer({ slug, max, layout, columns, aspectRatio, gap, imageMaxWidth, borderRadius, showMetadata, metadataFields, numbered, hangOffset, hangGap, captionTitleStyle, captionMetaStyle, useGlobalLightbox, lightboxMetadataFields, lightboxCornerRadius, lightboxCaptionPosition, lightboxFadeSpeed, lightboxCaptionAlignment, globalLightbox, serverPhotos }: GalleryEmbedRendererProps) {
+function GalleryEmbedRenderer({ slug, max, layout, columns, tabletColumns, phoneColumns, aspectRatio, gap, imageMaxWidth, borderRadius, showMetadata, metadataFields, numbered, hangOffset, hangGap, captionTitleStyle, captionMetaStyle, useGlobalLightbox, lightboxMetadataFields, lightboxCornerRadius, lightboxCaptionPosition, lightboxFadeSpeed, lightboxCaptionAlignment, globalLightbox, serverPhotos }: GalleryEmbedRendererProps) {
   const lbBase = globalLightbox ?? DEFAULT_LIGHTBOX;
   const lb: GlobalLightboxSettings = useGlobalLightbox ? lbBase : {
     metadataFields: lightboxMetadataFields ?? lbBase.metadataFields,
@@ -5774,6 +5991,9 @@ function GalleryEmbedRenderer({ slug, max, layout, columns, aspectRatio, gap, im
   }
 
   const gapStyle = { gap: `${gap}px` };
+  const colCount = Number(columns) || 3;
+  const gridCols = responsiveGrid(colCount, tabletColumns, phoneColumns);
+  const masonryCols = responsiveColumns(colCount, tabletColumns, phoneColumns);
 
   const titleCss = textStyleCss(captionTitleStyle, "photoTitle");
   const metaCss = textStyleCss(captionMetaStyle, "meta");
@@ -5918,9 +6138,9 @@ function GalleryEmbedRenderer({ slug, max, layout, columns, aspectRatio, gap, im
   }
 
   return (
-    <>
+    <div className="@container">
       {layout === "masonry" ? (
-        <div className={masonryColClasses[columns]} style={{ ...gapStyle, columnGap: `${gap}px` }}>
+        <div className={masonryCols.className} style={{ ...masonryCols.style, ...gapStyle, columnGap: `${gap}px` }}>
           {photos.map((photo, i) => (
             <div key={photo.id} style={{ marginBottom: `${gap}px` }} className="break-inside-avoid">
               {photoCard(photo, i, false)}
@@ -5928,7 +6148,7 @@ function GalleryEmbedRenderer({ slug, max, layout, columns, aspectRatio, gap, im
           ))}
         </div>
       ) : (
-        <div className={`grid ${gridColClasses[columns]}`} style={gapStyle}>
+        <div className={gridCols.className} style={{ ...gridCols.style, ...gapStyle }}>
           {photos.map((photo, i) => (
             <div key={photo.id}>
               {photoCard(photo, i, true)}
@@ -5944,7 +6164,7 @@ function GalleryEmbedRenderer({ slug, max, layout, columns, aspectRatio, gap, im
         settings={lb}
         collectionTitle={collectionTitle}
       />
-    </>
+    </div>
   );
 }
 
@@ -6027,5 +6247,19 @@ function StoriesIndexBlockRender({
 }
 
 // ----- Puck Data type re-export for convenience -----
+// Every block but the form fields can be left off phones, tablets or desktops.
+// (A form field hidden on one screen would still be required on it.)
+const FORM_FIELD_BLOCKS = new Set(["TextField", "TextArea", "SelectField", "RadioGroup", "CheckboxGroup", "Checkbox"]);
+for (const [name, component] of Object.entries(puckConfig.components) as [string, ComponentConfig<any>][]) {
+  if (FORM_FIELD_BLOCKS.has(name)) continue;
+  const Block = component.render;
+  component.fields = { ...component.fields, hideOn: hideOnField };
+  component.render = (props) => (
+    <BreakpointVisibility hideOn={props.hideOn as Breakpoint[] | undefined} editing={!!props.puck?.isEditing}>
+      <Block {...props} />
+    </BreakpointVisibility>
+  );
+}
+
 export type { Config };
 export type PuckData = Parameters<typeof import("@puckeditor/core").Render>[0]["data"];

@@ -4,6 +4,7 @@ import { useState, type CSSProperties, type ReactNode } from "react";
 import Lightbox, { type LightboxPhoto, type LightboxSettings } from "@/components/public/Lightbox";
 import { GALLERY_ASPECT_CSS, GALLERY_ASPECT_OPTIONS, type GalleryAspect } from "@/lib/theme/aspect";
 import { textStyleCss, type TextStyleValue } from "@/lib/theme/text-style-value";
+import { responsiveGrid, type PhoneColumns, type TabletColumns } from "@/lib/puck/responsive";
 import { freshPhoto, type LibraryPhoto, type PhotoRef } from "@/lib/puck/photo-ref";
 
 /**
@@ -160,18 +161,14 @@ export function PhotoPlateRender({ library, lightbox, editing, ...p }: PhotoPlat
 export type SelectedWorkProps = Spacing & {
   photos: PhotoRef[];
   columns: "2" | "3" | "4";
+  tabletColumns?: TabletColumns;
+  phoneColumns?: PhoneColumns;
   aspectRatio: GalleryAspect;
   columnGap: number;
   rowGap: number;
   showTitles: boolean;
   titleStyle: TextStyleValue;
   onClick: "lightbox" | "none";
-};
-
-const GRID_COLUMNS: Record<SelectedWorkProps["columns"], string> = {
-  "2": "sm:grid-cols-2",
-  "3": "sm:grid-cols-2 md:grid-cols-3",
-  "4": "sm:grid-cols-2 md:grid-cols-4",
 };
 
 export function SelectedWorkRender({ library, lightbox, editing, ...p }: SelectedWorkProps & PhotoBlockContext) {
@@ -189,12 +186,11 @@ export function SelectedWorkRender({ library, lightbox, editing, ...p }: Selecte
   }
 
   const titleCss = textStyleCss(p.titleStyle, "photoTitle");
+  const grid = responsiveGrid(Number(p.columns) || 3, p.tabletColumns, p.phoneColumns);
 
   return (
-    <div
-      className={`grid grid-cols-1 ${GRID_COLUMNS[p.columns] ?? GRID_COLUMNS["3"]}`}
-      style={{ ...spacing(p), columnGap: p.columnGap, rowGap: p.rowGap }}
-    >
+    <div className="@container" style={spacing(p)}>
+    <div className={grid.className} style={{ ...grid.style, columnGap: p.columnGap, rowGap: p.rowGap }}>
       {photos.map((photo, i) => {
         const title = displayTitle(photo);
         const picture = <Picture photo={photo} aspect={aspect} alt={title} />;
@@ -214,6 +210,7 @@ export function SelectedWorkRender({ library, lightbox, editing, ...p }: Selecte
       {p.onClick === "lightbox" && (
         <Lightbox photos={photos.map(toLightbox)} selectedIndex={openIndex} onClose={() => setOpenIndex(null)} settings={lightbox} />
       )}
+    </div>
     </div>
   );
 }

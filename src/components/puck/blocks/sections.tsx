@@ -1,4 +1,5 @@
 import type { CSSProperties, ReactNode } from "react";
+import { responsiveGrid, type PhoneColumns, type TabletColumns } from "@/lib/puck/responsive";
 import { textStyleCss, type TextStyleValue } from "@/lib/theme/text-style-value";
 
 /**
@@ -231,15 +232,11 @@ export type DetailsProps = Spacing & {
   /** rows: stacked with rules (Contact) · columns: side by side (About) · inline: one line (stats) */
   layout: "rows" | "columns" | "inline";
   columns: "2" | "3" | "4";
+  tabletColumns?: TabletColumns;
+  phoneColumns?: PhoneColumns;
   termStyle: TextStyleValue;
   descriptionStyle: TextStyleValue;
   dividers: boolean;
-};
-
-const GRID_COLUMNS: Record<DetailsProps["columns"], string> = {
-  "2": "md:grid-cols-2",
-  "3": "md:grid-cols-3",
-  "4": "md:grid-cols-4",
 };
 
 export function DetailsRender({ editing, ...p }: DetailsProps & { editing?: boolean }) {
@@ -273,15 +270,18 @@ export function DetailsRender({ editing, ...p }: DetailsProps & { editing?: bool
   }
 
   if (p.layout === "columns") {
+    const grid = responsiveGrid(Number(p.columns) || 3, p.tabletColumns, p.phoneColumns);
     return (
-      <dl className={`grid grid-cols-1 gap-x-6 gap-y-10 ${GRID_COLUMNS[p.columns] ?? "md:grid-cols-3"}`} style={{ ...spacing(p) }}>
-        {items.map((it) => (
-          <div key={it.id}>
-            <dt style={termCss}>{it.term}</dt>
-            <dd style={{ ...descriptionCss, margin: "14px 0 0", whiteSpace: "pre-line" }}>{description(it)}</dd>
-          </div>
-        ))}
-      </dl>
+      <div className="@container" style={spacing(p)}>
+        <dl className={`${grid.className} gap-x-6 gap-y-10`} style={grid.style}>
+          {items.map((it) => (
+            <div key={it.id}>
+              <dt style={termCss}>{it.term}</dt>
+              <dd style={{ ...descriptionCss, margin: "14px 0 0", whiteSpace: "pre-line" }}>{description(it)}</dd>
+            </div>
+          ))}
+        </dl>
+      </div>
     );
   }
 

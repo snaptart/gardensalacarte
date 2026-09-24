@@ -4,6 +4,7 @@ import { Children, isValidElement, useEffect, useState, type ReactElement, type 
 import { createUsePuck } from "@puckeditor/core";
 import { ChevronRight } from "lucide-react";
 import { PANEL_LAYOUTS, PANEL_TABS, type PanelGroup, type PanelLayout, type PanelTab } from "@/lib/puck/panel-layout";
+import { hideOnSummary, type Breakpoint } from "@/lib/puck/responsive";
 import { sameValue } from "./fieldTypes";
 
 /**
@@ -19,6 +20,13 @@ type Props = Record<string, unknown>;
 type Group = PanelGroup<Props> & { shown: string[] };
 
 const OPEN_KEY = "puck-panel-groups";
+
+const SHOW_ON: PanelGroup<Props> = {
+  tab: "layout",
+  title: "Visibility",
+  fields: ["hideOn"],
+  summary: (p) => hideOnSummary(p.hideOn as Breakpoint[] | undefined),
+};
 
 // Fields inside a group sit closer together than Puck's own one-field-per-row
 // spacing, with no rule between them. (Puck's field wrappers are the direct
@@ -62,11 +70,13 @@ export function PanelFields({ children }: { children: ReactNode; isLoading: bool
   });
 
   const applies = (name: string) => byName.has(name) && (layout.when?.[name]?.(props) ?? true);
-  const placed = new Set(layout.groups.flatMap((g) => g.fields));
+  // "Show on" is added to every block (config.tsx), so it gets its own Visibility group rather than a place in each layout.
+  const placed = new Set([...layout.groups.flatMap((g) => g.fields), "hideOn"]);
   const leftovers = [...byName.keys()].filter((n) => !placed.has(n));
   const groups: Group[] = [
     ...layout.groups,
     ...(leftovers.length ? [{ tab: "content" as const, title: "More", fields: leftovers }] : []),
+    ...(byName.has("hideOn") ? [SHOW_ON] : []),
   ]
     .map((g) => ({ ...g, shown: g.fields.filter(applies) }))
     .filter((g) => g.shown.length > 0);
