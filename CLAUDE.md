@@ -9,7 +9,7 @@ A custom photo CMS website rebuilding snaptart.com (previously Squarespace). Pho
 - **Database**: Vercel Postgres (Neon) via Drizzle ORM
 - **Auth**: NextAuth.js v5 (beta) — single admin, credentials provider
 - **Image Storage**: Vercel Blob (@vercel/blob)
-- **Email**: Resend (planned)
+- **Email**: Resend (form submission notifications)
 - **Drag-and-drop**: @dnd-kit/core + @dnd-kit/sortable
 - **Rich Text**: Tiptap (planned)
 - **Lightbox**: Custom built-in lightbox (GalleryGrid component)
@@ -72,7 +72,7 @@ src/
     │   ├── index.ts                        # Lazy DB connection via Proxy
     │   └── seed.ts                         # Seeds admin user + default site settings
     ├── (image uploads use @vercel/blob directly in API routes)
-    └── resend.ts                           # (planned)
+    └── resend.ts                           # Resend client + form notification emails (needs RESEND_API_KEY + RESEND_FROM_EMAIL)
 ```
 
 ### Database Schema (src/lib/db/schema.ts)
@@ -94,6 +94,7 @@ Tables defined with Drizzle ORM:
 - Route protection via proxy middleware (src/proxy.ts) — protects /admin/* except /admin/login
 - Admin layout (src/app/admin/layout.tsx) checks session; unauthenticated users see login page without sidebar
 - First admin user seeded via db:seed; more are added in Admin → Settings → Users (`/api/admin-users`). Any admin can add users and change passwords; nobody can delete their own account.
+- **`AUTH_SECRET` is required in production.** NextAuth reads it internally, so a missing value isn't caught by a code grep: `/api/auth/*` returns 500 and admin auth fails open. See `.env.example`.
 
 ### DB Connection Pattern
 - src/lib/db/index.ts exports a lazy Proxy-based `db` object
@@ -116,6 +117,14 @@ Tables defined with Drizzle ORM:
 - [ ] Phase 5: Short stories (password-protected)
 - [ ] Phase 6: Contact form (Resend)
 - [ ] Phase 7: Polish + SEO
+
+## Email Setup (per site)
+Form submission notifications are sent via Resend. Each site configures its own account:
+1. Create a Resend account, add the site's domain, and add the DNS records Resend lists (they live on a `send.` subdomain / DKIM selectors — only ADD records; never edit existing MX or root SPF records, which may serve the site's regular mailboxes).
+2. Create a **sending-only** API key scoped to the domain.
+3. In the site's Vercel project set `RESEND_API_KEY` and `RESEND_FROM_EMAIL` (e.g. `Site Name <noreply@example.com>`; the address must be on the verified domain but need not be a real mailbox).
+
+Recipient per form = the Form block's "Notification email", falling back to the site's Contact Email setting. If the env vars are unset, sends are skipped silently and submissions are still stored (Admin → Submissions). Submissions are rate-limited to 5 per IP per hour, counted against stored rows so the limit holds across serverless instances.
 
 ## Site config (shared defaults + per-site overrides)
 - `src/lib/site.config.defaults.ts` is owned by this repo: new config fields go here, with safe defaults.

@@ -3277,7 +3277,7 @@ export const puckConfig: Config<Components> = {
           ),
         },
         successMessage: { type: "textarea", label: "Success message" },
-        recipientEmail: { type: "text", label: "Notification email (not used yet)" },
+        recipientEmail: { type: "text", label: "Notification email (defaults to the site's contact email)" },
         fieldTextStyle: {
           type: "custom",
           label: "Text style",
