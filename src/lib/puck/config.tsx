@@ -475,7 +475,12 @@ function stackPositions(order: string | undefined, count: number): number[] | nu
 
 export const puckConfig: Config<Components> = {
   categories: {
-    content: { components: ["RichText", "ImageBlock", "Button", "LinkList", "GalleryEmbed", "GalleriesIndex", "Carousel", "FieldMap"] },
+    content: {
+      components: [
+        "RichText", "ImageBlock", "Button", "LinkList", "GalleryEmbed", "GalleriesIndex", "Carousel",
+        ...(siteConfig.features.fieldMap ? (["FieldMap"] as const) : []),
+      ],
+    },
     layout: { components: ["Columns", "Rows", "Spacer", "Container"] },
     hero: { components: ["Hero", "HeroSlideshow"] },
     stories: { title: "Stories", components: ["StoriesIndexBlock"] },
@@ -514,6 +519,10 @@ export const puckConfig: Config<Components> = {
         if (!html) return <></>;
         return (
           <>
+    // With the Field Map switched off the block stays registered, so a page that already
+    // holds one still loads, but it is kept out of the block list (uncategorised blocks
+    // would otherwise land in "Other").
+    ...(siteConfig.features.fieldMap ? {} : { fieldMap: { components: ["FieldMap" as const], visible: false } }),
             <style>{RICH_TEXT_CSS}</style>
             <div
               className="richtext-render mx-auto max-w-none"
@@ -2807,6 +2816,7 @@ export const puckConfig: Config<Components> = {
     SectionHeader: {
       label: "Section Header",
       fields: {
+        if (!siteConfig.features.fieldMap) return <></>;
         title: { type: "text", label: "Title" },
         linkLabel: { type: "text", label: "Link text" },
         link: {

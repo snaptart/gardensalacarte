@@ -117,6 +117,14 @@ Tables defined with Drizzle ORM:
 - [ ] Phase 6: Contact form (Resend)
 - [ ] Phase 7: Polish + SEO
 
+## Site config (shared defaults + per-site overrides)
+- `src/lib/site.config.defaults.ts` is owned by this repo: new config fields go here, with safe defaults.
+- `src/lib/site.config.ts` is owned by each site. This repo ships it once as a stub and never edits it again,
+  so a site merging updates from here never conflicts on it.
+- `features.fieldMap` (off by default; `NEXT_PUBLIC_FEATURE_FIELD_MAP=true` in `.env.local` turns it on locally)
+  gates the Field Map block, the `/map/[slug]` region pages, the placement editor and the gallery form's map fields.
+- `rewrites` lets a site add its own URL rewrites; `next.config.ts` returns them.
+
 ## Notes
 - Next.js 16 renamed `middleware.ts` to `proxy.ts`
 - Fonts: EB Garamond (serif, headings/public) + Inter (sans, admin/body)
