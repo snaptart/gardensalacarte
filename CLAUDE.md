@@ -93,7 +93,7 @@ Tables defined with Drizzle ORM:
 - NextAuth v5 with credentials provider (src/lib/auth.ts)
 - Route protection via proxy middleware (src/proxy.ts) — protects /admin/* except /admin/login
 - Admin layout (src/app/admin/layout.tsx) checks session; unauthenticated users see login page without sidebar
-- Single admin user seeded via db:seed
+- First admin user seeded via db:seed; more are added in Admin → Settings → Users (`/api/admin-users`). Any admin can add users and change passwords; nobody can delete their own account.
 
 ### DB Connection Pattern
 - src/lib/db/index.ts exports a lazy Proxy-based `db` object
