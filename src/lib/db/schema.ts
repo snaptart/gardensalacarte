@@ -99,6 +99,28 @@ export const pages = pgTable("pages", {
   updatedAt: timestamp("updated_at").defaultNow().notNull(),
 });
 
+// A page's content as it was just before a change made outside its editor
+// (copying blocks in, applying block defaults), so the change can be undone.
+export const pageRevisions = pgTable(
+  "page_revisions",
+  {
+    id: uuid("id").defaultRandom().primaryKey(),
+    pageId: uuid("page_id")
+      .notNull()
+      .references(() => pages.id, { onDelete: "cascade" }),
+    content: jsonb("content"),
+    // What was about to happen, e.g. "Copied a Hero block in" — shown in the undo list
+    reason: text("reason").notNull(),
+    // Revisions written by one action share a batch, so the action can be undone as a whole
+    batchId: uuid("batch_id"),
+    createdAt: timestamp("created_at").defaultNow().notNull(),
+  },
+  (t) => ({
+    pageIdx: index("page_revisions_page_idx").on(t.pageId),
+    batchIdx: index("page_revisions_batch_idx").on(t.batchId),
+  })
+);
+
 export const galleries = pgTable("galleries", {
   id: uuid("id").defaultRandom().primaryKey(),
   title: text("title").notNull(),
