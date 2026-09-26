@@ -85,6 +85,9 @@ Tables defined with Drizzle ORM:
 - **photos** — id, blob_url, url, thumbnail_url, title, description, location, latitude/longitude, camera_settings (jsonb), tags (text[]), width, height, focal_x/y, taken_at, created_at, updated_at — *standalone; no gallery FK on the photo itself*
 - **gallery_photos** *(junction)* — gallery_id (FK→galleries, cascade), photo_id (FK→photos, cascade), position, created_at; composite PK on (gallery_id, photo_id), index on photo_id. A photo can belong to many galleries; per-gallery ordering lives here.
 - **page_elements** — id, page_id (FK→pages), element_type, content (jsonb), position, created_at
+- **site_settings** also has `favicon_url`, `favicon_dark_url`, `favicon_shape` ("square" | "round"; null = square), `share_image_url` (Settings → Identity → Browser icon & sharing).
+
+**Site icons**: `/favicon.ico`, `/site-icon/[file]` and `/manifest.webmanifest` render the uploaded icon (any size, via sharp) or a first-letter monogram. There are no static icon files in `src/app`; a site sets its icon in the admin.
 
 **Reading photos**: use `selectPhotosForGallery(galleryId)` / `selectPhotosForGalleries(ids)` from `src/lib/db/photo-queries.ts`. Returns flat photo rows joined with the junction (`galleryId` and `position` come from `gallery_photos`).
 **Writing memberships**: `addPhotoToGallery`, `setPhotoGalleries`, `selectGalleryIdsForPhoto` in the same module.
@@ -107,7 +110,7 @@ Tables defined with Drizzle ORM:
 - Menu items API: GET (public) / POST+PUT+DELETE (auth required), PUT supports bulk reorder via `{ items: [{ id, position }] }`
 - Galleries API: GET (public) / POST+PUT+DELETE (auth required), PUT supports bulk reorder, auto-generates slug from title
 - Photos API: GET (public, filterable by `galleryId` or `gallerySlug`; admin-only `?id=X` returns photo + galleryIds) / POST+PUT+DELETE (auth required). POST accepts `galleryIds: string[]` (or legacy single `galleryId`). PUT single accepts `galleryIds` to replace memberships; PUT bulk patch accepts `galleryId` (move = replace) or `addToGalleryId` (add). DELETE without `galleryId` deletes the photo and its blob; DELETE with `galleryId` removes only that membership and garbage-collects the photo if it has no remaining memberships.
-- Upload API: POST (auth required) — accepts multipart file, uploads to Vercel Blob, returns blobUrl/url
+- Upload API: POST (auth required) — accepts multipart file, uploads to Vercel Blob, returns blobUrl/url. `kind=asset` (site icons) skips the thumbnail/EXIF step and also accepts SVG.
 
 ## Implementation Progress
 - [x] Phase 1: Project scaffold, auth, DB schema, admin login, sidebar

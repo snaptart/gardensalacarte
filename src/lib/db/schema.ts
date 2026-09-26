@@ -26,6 +26,13 @@ export const siteSettings = pgTable("site_settings", {
   bio: text("bio"),
   location: text("location"),
   logoUrl: text("logo_url"),
+  // Browser-tab and home-screen icon, resized on request by /site-icon/*
+  faviconUrl: text("favicon_url"),
+  faviconDarkUrl: text("favicon_dark_url"),
+  // "square" (the whole image, fitted) | "round" (cropped to a circle)
+  faviconShape: text("favicon_shape"),
+  // Link-preview image for pages that don't set their own
+  shareImageUrl: text("share_image_url"),
   instagramUrl: text("instagram_url"),
   footerText: text("footer_text"),
   footerAlignment: text("footer_alignment").notNull().default("center"),
