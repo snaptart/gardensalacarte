@@ -89,6 +89,7 @@ Tables defined with Drizzle ORM:
 - **site_settings** also has `favicon_url`, `favicon_dark_url`, `favicon_shape` ("square" | "round"; null = square), `share_image_url` (Settings → Identity → Browser icon & sharing).
 
 **Site icons**: `/favicon.ico`, `/site-icon/[file]` and `/manifest.webmanifest` render the uploaded icon (any size, via sharp) or a first-letter monogram. There are no static icon files in `src/app`; a site sets its icon in the admin.
+**Block defaults**: stored in the active theme preset (`themeSettings.blockDefaults` + `blockDefaultsPast`). New blocks start with them (`useEditorConfig()` in the editors); existing blocks change only via Settings → Block defaults → Apply. Which blocks/props qualify: `src/lib/puck/block-defaults.ts`.
 **Page addresses** never change with the title; `slug` is edited explicitly and checked by `src/lib/page-slugs.ts` (pages and stories share one namespace).
 
 **Reading photos**: use `selectPhotosForGallery(galleryId)` / `selectPhotosForGalleries(ids)` from `src/lib/db/photo-queries.ts`. Returns flat photo rows joined with the junction (`galleryId` and `position` come from `gallery_photos`).
@@ -115,6 +116,7 @@ Tables defined with Drizzle ORM:
 - Upload API: POST (auth required) — accepts multipart file, uploads to Vercel Blob, returns blobUrl/url. `kind=asset` (site icons) skips the thumbnail/EXIF step and also accepts SVG.
 - Pages/Stories API: POST `{ duplicateId }` copies a page/story (unpublished, unique slug). PUT changes `slug` only when sent (409 with a message if taken/reserved).
 - `/api/pages/copy-blocks` POST `{ targetId, fragment }` appends blocks (with nested zones, fresh ids) to another page; `/api/pages/revisions` GET `?pageId=` / POST `{ revisionId | batchId }` restores.
+- `/api/block-defaults` GET/PUT; `/api/block-defaults/apply` POST (dry run or apply, returns `batchId` for undo). All admin-only.
 
 ## Implementation Progress
 - [x] Phase 1: Project scaffold, auth, DB schema, admin login, sidebar
